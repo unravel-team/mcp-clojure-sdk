@@ -1,29 +1,48 @@
-.calva/output-window/
-.calva/repl.calva-repl
-.classpath
-.clj-kondo/.cache
-.cpcache
-.eastwood
-.factorypath
-.hg/
-.hgignore
-.java-version
-.lein-*
-.lsp/.cache
-.lsp/sqlite.db
-.nrepl-history
+# Artifacts
+**/classes
+**/target
+**/.artifacts
+**/.cpcache
+**/.DS_Store
+**/.gradle
+logs/
+
+# 12-factor App Configuration
+.envrc
+
+# User-specific stuff
+.idea/**/workspace.xml
+.idea/**/tasks.xml
+.idea/**/usage.statistics.xml
+.idea/**/shelf
+.idea/**/statistic.xml
+.idea/dictionaries/**
+.idea/libraries/**
+
+# File-based project format
+*.iws
+*.ipr
+
+# Cursive Clojure plugin
+.idea/replstate.xml
+*.iml
+
+/example/example/**
+artifacts
+projects/**/pom.xml
+
+# nrepl
 .nrepl-port
-.portal/vs-code.edn
-.project
-.rebel_readline_history
-.settings
-.socket-repl-port
-.sw*
-.vscode
-*.class
-*.jar
-*.swp
-*~
-/checkouts
-/classes
-/target
+
+# clojure-lsp
+.lsp/.cache
+
+# clj-kondo
+.clj-kondo/.cache
+
+# Calva VS Code Extension
+.calva/output-window/output.calva-repl
+
+# Metaclj tempfiles
+.antqtool.lastupdated
+.enrich-classpath-repl
