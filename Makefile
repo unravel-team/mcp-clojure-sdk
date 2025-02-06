@@ -149,14 +149,11 @@ check-zprint:
 check: check-tagref check-cljkondo check-zprint    ## Check that the code is well linted and well formatted
 	@echo "All checks passed!"
 
-test-all:
-	clojure -M:poly test :all
-
 test-coverage:
 	clojure -X:dev:test:clofidence
 
-test:    ## Run Poly tests for the code
-	clojure -M:poly test
+test:    ## Run all the tests for the code
+	clojure -T:build test
 
 install-antq:
 	@if [ -f .antqtool.lastupdated ] && find .antqtool.lastupdated -mtime +15 -print | grep -q .; then \
@@ -174,7 +171,10 @@ upgrade-libs: .antqtool.lastupdated install-antq    ## Install all the deps to t
 	clojure -Tantq outdated :check-clojure-tools true :upgrade true
 
 build: check    ## Build the deployment artifact
-	@echo "Run deps-new build commands here!"
+	clojure -T:build ci
+
+install: build    ## Install the artifact locally
+	clojure -T:build install
 
 deploy: build    ## Deploy the current code to production
 	@echo "Run fly.io deployment commands here!"
