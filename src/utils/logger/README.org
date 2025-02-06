@@ -1,0 +1,21 @@
+#+title: Structured Logging in Clojure
+
+* What is this project?
+This is a template Clojure project showcasing how to configure Log4J2 as the logging backend properly, to output structured logs from the project. These logs can then be consumed by a collector like [[https://vector.dev/][Vector]] and forwarded to a tool like [[https://grafana.com/oss/loki/][Loki]] for visualisation.
+
+To install the template, run the following code:
+#+begin_src sh :eval no
+  clojure -Sdeps '{:deps {io.github.vedang/clj-logging {:git/sha "e009d366c827705f513ef9018ffd920a49ce19da"}}}' -Tnew create :template me.vedang/logger :name yourprojectname/logger
+#+end_src
+
+Note that this assumes you have installed ~deps-new~ as your ~new~ "tool" via:
+
+#+begin_src sh
+clojure -Ttools install-latest :lib io.github.seancorfield/deps-new :as new
+#+end_src
+
+* References used to build this project:
+- https://github.com/stuartsierra/log.dev
+- https://www.loggly.com/blog/benchmarking-java-logging-frameworks/
+- https://logging.apache.org/log4j/2.x/manual/async.html
+- https://krishankantsinghal.medium.com/logback-slf4j-log4j2-understanding-them-and-learn-how-to-use-d33deedd0c46
