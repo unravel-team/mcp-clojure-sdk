@@ -37,4 +37,4 @@
 (defmacro with-context
   [ctx-map & body]
   `(log/with-context (assoc ~ctx-map ::log/formatter json/write-value-as-string)
-                     ~@body))
+     ~@body))
