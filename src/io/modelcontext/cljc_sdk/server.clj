@@ -96,7 +96,7 @@
         (.start! transport))
       this)
     (stop! [this]
-      (when-let [protocol @(:protocol this)] (stop! (:transport protocol)))
+      (when-let [protocol @(:protocol this)] (core/stop! (:transport protocol)))
       this))
 
 (defn create-server
