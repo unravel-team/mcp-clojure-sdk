@@ -16,32 +16,51 @@
 (def gen-property-type
   (gen/elements ["string" "number" "boolean" "array" "object"]))
 
+(def gen-property-with-description
+  (gen/hash-map :type gen-property-type :description gen/string-alphanumeric))
+
+(def gen-property-without-description (gen/hash-map :type gen-property-type))
+
 (def gen-property
-  (gen/hash-map :type gen-property-type
-                :description (gen/frequency [[9 gen/string-alphanumeric]
-                                             [1 (gen/return nil)]])))
+  (gen/frequency [[9 gen-property-with-description]
+                  [1 gen-property-without-description]]))
 
 (def gen-properties (gen/map gen/string-alphanumeric gen-property))
 
-(def gen-input-schema
+(def gen-input-schema-with-properties
   (gen/hash-map :type (gen/return "object")
-                :properties (gen/frequency [[9 gen-properties]
-                                            [1 (gen/return nil)]])
+                :properties gen-properties
                 :required (gen/vector gen/string-alphanumeric)))
 
+(def gen-input-schema-without-properties
+  (gen/hash-map :type (gen/return "object")
+                :required (gen/vector gen/string-alphanumeric)))
+
+(def gen-input-schema
+  (gen/frequency [[9 gen-input-schema-with-properties]
+                  [1 gen-input-schema-without-properties]]))
+
+
 ;; Tool property tests
+(def gen-tool-with-description
+  (gen/hash-map :name gen/string-alphanumeric
+                :description gen/string-alphanumeric
+                :input-schema gen-input-schema))
+
+(def gen-tool-without-description
+  (gen/hash-map :name gen/string-alphanumeric :input-schema gen-input-schema))
+
+(def gen-tool
+  (gen/frequency [[9 gen-tool-with-description]
+                  [1 gen-tool-without-description]]))
+
 (defspec tool-validity
          100
-         (prop/for-all [name gen/string-alphanumeric description
-                        (gen/frequency [[9 gen/string-alphanumeric]
-                                        [1 (gen/return nil)]]) input-schema
-                        gen-input-schema]
-                       (let [tool {:name name,
-                                   :description description,
-                                   :input-schema input-schema}]
-                         (s/valid? ::specs/tool tool))))
+         (prop/for-all [tool gen-tool] (specs/valid-tool? tool)))
 
 ;; Resource property tests
+;; // Rewrite the resource-validity test to look like the tool-validity test
+;; // above AI!
 (defspec resource-validity
          100
          (prop/for-all [uri gen-uri name gen/string-alphanumeric description
@@ -53,7 +72,7 @@
                                        :name name,
                                        :description description,
                                        :mime-type mime-type}]
-                         (s/valid? ::specs/resource resource))))
+                         (specs/valid-resource? resource))))
 
 ;; Prompt property tests
 (def gen-argument
@@ -79,7 +98,7 @@
             arguments (gen/vector gen-argument)]
            (let [prompt (merge {:name prompt-name, :arguments arguments}
                                (when description {:description description}))]
-             (s/valid? ::specs/prompt prompt))))
+             (specs/valid-prompt? prompt))))
 
 ;; Mutation tests - verify that invalid data is rejected
 (defspec invalid-tool-rejection
@@ -89,7 +108,7 @@
                                                          gen/boolean gen/ratio])
                                       :input-schema
                                         (gen/hash-map :type gen/small-integer))]
-                       (not (s/valid? ::specs/tool tool))))
+                       (not (specs/valid-tool? tool))))
 
 (defspec invalid-resource-rejection
          100
@@ -98,7 +117,7 @@
             (gen/hash-map
               :uri (gen/one-of [gen/small-integer gen/boolean gen/ratio])
               :name (gen/one-of [gen/small-integer gen/boolean gen/ratio]))]
-           (not (s/valid? ::specs/resource resource))))
+           (not (specs/valid-resource? resource))))
 
 (defspec invalid-prompt-rejection
          100
@@ -107,4 +126,4 @@
             (gen/hash-map
               :name (gen/one-of [gen/small-integer gen/boolean gen/ratio])
               :arguments (gen/one-of [gen/small-integer gen/string gen/ratio]))]
-           (not (s/valid? ::specs/prompt prompt))))
+           (not (specs/valid-prompt? prompt))))
