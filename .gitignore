@@ -46,3 +46,4 @@ projects/**/pom.xml
 # Metaclj tempfiles
 .antqtool.lastupdated
 .enrich-classpath-repl
+.aider*

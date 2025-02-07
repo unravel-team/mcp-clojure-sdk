@@ -2,7 +2,6 @@
   (:require [clojure.test.check.clojure-test :refer [defspec]]
             [clojure.test.check.generators :as gen]
             [clojure.test.check.properties :as prop]
-            [clojure.spec.alpha :as s]
             [io.modelcontext.cljc-sdk.specs :as specs]))
 
 ;; Custom generators
@@ -89,32 +88,39 @@
                        (specs/valid-resource? resource)))
 
 ;; Prompt property tests
-;; // rewrite the `prompt-validity` test to match the `resource-validity` test
-;; // above ai!
 (def gen-argument
   (gen/hash-map :name gen/string-alphanumeric
-                :description (gen/frequency [[9 gen/string-alphanumeric]
-                                             [1 (gen/return nil)]])
-                :required (gen/frequency [[9 gen/boolean]
-                                          [1 (gen/return nil)]])))
+                :description gen/string-alphanumeric
+                :required gen/boolean))
 
-(def gen-content
-  (gen/hash-map :content-type (gen/elements ["text" "image" "resource"])
-                :text (gen/frequency [[9 gen/string-alphanumeric]
-                                      [1 (gen/return nil)]])))
+(def gen-argument-without-description
+  (gen/hash-map :name gen/string-alphanumeric :required gen/boolean))
 
-(def gen-message
-  (gen/hash-map :role (gen/elements ["user" "assistant"]) :content gen-content))
+(def gen-argument-without-required
+  (gen/hash-map :name gen/string-alphanumeric
+                :description gen/string-alphanumeric))
+
+(def gen-argument-basic (gen/hash-map :name gen/string-alphanumeric))
+
+(def gen-arguments
+  (gen/vector (gen/frequency
+                [[5 gen-argument] [2 gen-argument-without-description]
+                 [2 gen-argument-without-required] [1 gen-argument-basic]])))
+
+(def gen-prompt-with-description
+  (gen/hash-map :name gen/string-alphanumeric
+                :description gen/string-alphanumeric
+                :arguments gen-arguments))
+
+(def gen-prompt-basic
+  (gen/hash-map :name gen/string-alphanumeric :arguments gen-arguments))
+
+(def gen-prompt
+  (gen/frequency [[4 gen-prompt-with-description] [1 gen-prompt-basic]]))
 
 (defspec prompt-validity
          100
-         (prop/for-all
-           [prompt-name gen/string-alphanumeric description
-            (gen/frequency [[9 gen/string-alphanumeric] [1 (gen/return nil)]])
-            arguments (gen/vector gen-argument)]
-           (let [prompt (merge {:name prompt-name, :arguments arguments}
-                               (when description {:description description}))]
-             (specs/valid-prompt? prompt))))
+         (prop/for-all [prompt gen-prompt] (specs/valid-prompt? prompt)))
 
 ;; Mutation tests - verify that invalid data is rejected
 (defspec invalid-tool-rejection
