@@ -18,26 +18,20 @@
 (defn- handle-initialize
   [server-name server-version capabilities client-info]
   (log/info :msg "Client connected" :client client-info)
-  {:protocol-version specs/latest-protocol-version
-   :capabilities @capabilities
-   :server-info {:server-name server-name
-                 :server-version server-version}})
+  {:protocol-version specs/latest-protocol-version,
+   :capabilities @capabilities,
+   :server-info {:server-name server-name, :server-version server-version}})
 
-(defn- handle-list-tools
-  [tools]
-  {:tools (mapv :tool (vals @tools))})
+(defn- handle-list-tools [tools] {:tools (mapv :tool (vals @tools))})
 
 (defn- handle-call-tool
   [tools name arguments]
   (if-let [{:keys [handler]} (get @tools name)]
-    (try 
-      {:content [(handler arguments)]}
-      (catch Exception e
-        {:content [{:type "text"
-                   :text (str "Error: " (.getMessage e))}]
-         :is-error true}))
-    (throw (ex-info "Tool not found" 
-                   {:code specs/method-not-found}))))
+    (try {:content [(handler arguments)]}
+         (catch Exception e
+           {:content [{:type "text", :text (str "Error: " (.getMessage e))}],
+            :is-error true}))
+    (throw (ex-info "Tool not found" {:code specs/method-not-found}))))
 
 (defn- handle-list-resources
   [resources]
@@ -47,38 +41,42 @@
   [resources uri]
   (if-let [{:keys [handler]} (get @resources uri)]
     {:contents [(handler uri)]}
-    (throw (ex-info "Resource not found"
-                   {:code specs/method-not-found}))))
+    (throw (ex-info "Resource not found" {:code specs/method-not-found}))))
 
-(defn- handle-list-prompts
-  [prompts]
-  {:prompts (mapv :prompt (vals @prompts))})
+(defn- handle-list-prompts [prompts] {:prompts (mapv :prompt (vals @prompts))})
 
 (defn- handle-get-prompt
   [prompts name arguments]
   (if-let [{:keys [handler]} (get @prompts name)]
     (handler arguments)
-    (throw (ex-info "Prompt not found"
-                   {:code specs/method-not-found}))))
+    (throw (ex-info "Prompt not found" {:code specs/method-not-found}))))
 
 (defn- init-handlers!
   [server-name server-version protocol tools resources prompts]
-  (core/handle-request! protocol "initialize" 
-                       #(handle-initialize server-name server-version 
-                                         (:capabilities %) (:client-info %)))
-  (core/handle-request! protocol "tools/list" 
-                       (fn [_] (handle-list-tools tools)))
-  (core/handle-request! protocol "tools/call"
-                       #(handle-call-tool tools (:name %) (:arguments %)))
-  (core/handle-request! protocol "resources/list"
-                       (fn [_] (handle-list-resources resources)))
-  (core/handle-request! protocol "resources/read"
-                       #(handle-read-resource resources (:uri %)))
-  (core/handle-request! protocol "prompts/list"
-                       (fn [_] (handle-list-prompts prompts)))
-  (core/handle-request! protocol "prompts/get"
-                       #(handle-get-prompt prompts (:name %) (:arguments %)))
-  protocol)
+  (core/handle-request! protocol
+                        "initialize"
+                        #(handle-initialize server-name
+                                            server-version
+                                            (:capabilities %)
+                                            (:client-info %)))
+  (core/handle-request! protocol
+                        "tools/list"
+                        (fn [_] (handle-list-tools tools)))
+  (core/handle-request! protocol
+                        "tools/call"
+                        #(handle-call-tool tools (:name %) (:arguments %)))
+  (core/handle-request! protocol
+                        "resources/list"
+                        (fn [_] (handle-list-resources resources)))
+  (core/handle-request! protocol
+                        "resources/read"
+                        #(handle-read-resource resources (:uri %)))
+  (core/handle-request! protocol
+                        "prompts/list"
+                        (fn [_] (handle-list-prompts prompts)))
+  (core/handle-request! protocol
+                        "prompts/get"
+                        #(handle-get-prompt prompts (:name %) (:arguments %))))
 
 (defrecord Server [server-name server-version tools resources prompts protocol
                    capabilities]
@@ -108,12 +106,13 @@
     (start! [this transport]
       (let [protocol (core/create-protocol transport)]
         ;; Initialize handlers and update our protocol
-        (reset! (:protocol this) (init-handlers! server-name
-                                                 server-version
-                                                 protocol
-                                                 tools
-                                                 resources
-                                                 prompts))
+        (init-handlers! server-name
+                        server-version
+                        protocol
+                        tools
+                        resources
+                        prompts)
+        (reset! (:protocol this) protocol)
         (.start! transport))
       this)
     (stop! [this]
