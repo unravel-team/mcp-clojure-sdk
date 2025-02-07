@@ -15,6 +15,11 @@
   (stop! [this]
     "Stop the server"))
 
+;;; // Refactor the `init-handlers` function. Pull out as many
+;;; // handle-* functions as possible, instead of defining them all in
+;;; // a giant let binding. Make sure that the protocol is updated
+;;; // properly and all the handlers are // registered correctly. Make
+;;; // sure we are returning the correct value. ai!
 (defn- init-handlers!
   [server-name server-version protocol tools resources prompts]
   (let [handle-initialize
@@ -56,7 +61,8 @@
     (core/handle-request! protocol "resources/list" handle-list-resources)
     (core/handle-request! protocol "resources/read" handle-read-resource)
     (core/handle-request! protocol "prompts/list" handle-list-prompts)
-    (core/handle-request! protocol "prompts/get" handle-get-prompt)))
+    (core/handle-request! protocol "prompts/get" handle-get-prompt)
+    protocol))
 
 (defrecord Server [server-name server-version tools resources prompts protocol
                    capabilities]
@@ -85,14 +91,13 @@
       this)
     (start! [this transport]
       (let [protocol (core/create-protocol transport)]
-        ;; Initialize handlers
-        (init-handlers! server-name
-                        server-version
-                        protocol
-                        tools
-                        resources
-                        prompts)
-        (reset! (:protocol this) protocol)
+        ;; Initialize handlers and update our protocol
+        (reset! (:protocol this) (init-handlers! server-name
+                                                 server-version
+                                                 protocol
+                                                 tools
+                                                 resources
+                                                 prompts))
         (.start! transport))
       this)
     (stop! [this]
