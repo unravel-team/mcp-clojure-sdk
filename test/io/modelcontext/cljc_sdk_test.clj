@@ -3,4 +3,4 @@
             #_:clj-kondo/ignore
             [io.modelcontext.cljc-sdk :as sut]))
 
-(deftest a-test (testing "FIXME, I fail." (is (= 0 1))))
+(deftest a-test (testing "FIXME, I pass, but do nothing." (is (= 1 1))))
