@@ -109,7 +109,19 @@
                 :prompts (atom {}),
                 :protocol (atom nil),
                 :capabilities (atom {:tools {}})}))
-
+;;// Refactor this code. I do not want a macro called defserver. I want a
+;;function
+;;// called make-server, and this function should take a map. The map should
+;;have
+;;// the following shape:
+;;//
+;;// {:name server-name :version server-version :tools [] :prompts []
+;;:resources
+;;// []}
+;;//
+;;// The tools, prompts and resources arrays should have maps in them, each map
+;;// representing one tool (or prompt or resource)
+;;// AI!
 (defmacro defserver
   "Define an MCP server with the given name and version"
   [name version & body]
