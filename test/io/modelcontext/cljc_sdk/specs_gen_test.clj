@@ -59,20 +59,24 @@
          (prop/for-all [tool gen-tool] (specs/valid-tool? tool)))
 
 ;; Resource property tests
-;; // Rewrite the resource-validity test to look like the tool-validity test
-;; // above AI!
+(def gen-resource-with-description-and-mime
+  (gen/hash-map :uri gen-uri
+                :name gen/string-alphanumeric
+                :description gen/string-alphanumeric
+                :mime-type gen/string-alphanumeric))
+
+(def gen-resource-basic
+  (gen/hash-map :uri gen-uri
+                :name gen/string-alphanumeric))
+
+(def gen-resource
+  (gen/frequency [[8 gen-resource-with-description-and-mime]
+                  [2 gen-resource-basic]]))
+
 (defspec resource-validity
          100
-         (prop/for-all [uri gen-uri name gen/string-alphanumeric description
-                        (gen/frequency [[9 gen/string-alphanumeric]
-                                        [1 (gen/return nil)]]) mime-type
-                        (gen/frequency [[9 gen/string-alphanumeric]
-                                        [1 (gen/return nil)]])]
-                       (let [resource {:uri uri,
-                                       :name name,
-                                       :description description,
-                                       :mime-type mime-type}]
-                         (specs/valid-resource? resource))))
+         (prop/for-all [resource gen-resource]
+                       (specs/valid-resource? resource)))
 
 ;; Prompt property tests
 (def gen-argument
