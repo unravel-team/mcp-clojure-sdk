@@ -34,13 +34,14 @@
     "-Dorg.eclipse.jetty.util.log.class=org.eclipse.jetty.util.log.Slf4jLog"
     "-Dlog4j2.contextSelector=org.apache.logging.log4j.core.async.AsyncLoggerContextSelector"
     "-Dlog4j2.configurationFile=logger/log4j2-dev.xml"
-    "-Dlogging.level=DEBUG"]},
+    "-Dbabashka.json.provider=metosin/jsonista" "-Dlogging.level=DEBUG"]},
   :test {:extra-deps {io.github.cognitect-labs/test-runner {:git/sha "dfb30dd",
                                                             :git/tag "v0.5.1"},
                       org.clojure/test.check {:mvn/version "1.1.1"}},
          :extra-paths ["test"]}},
  :deps {me.vedang/logger {:local/root "utils/logger"},
         metosin/jsonista {:mvn/version "0.3.13"},
+        org.babashka/json {:mvn/version "0.1.6"},
         org.clojure/clojure {:mvn/version "1.12.0"},
         org.clojure/core.async {:mvn/version "1.7.701"}},
  :paths ["src" "resources"]}

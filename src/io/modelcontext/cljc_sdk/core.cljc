@@ -1,7 +1,7 @@
 (ns io.modelcontext.cljc-sdk.core
   (:require [clojure.core.async :as a]
             [io.modelcontext.cljc-sdk.specs :as specs]
-            [jsonista.core :as json]
+            [babashka.json :as json]
             [me.vedang.logger.interface :as log]))
 
 (defprotocol Transport
@@ -47,11 +47,9 @@
    :id id,
    :error {:code code, :message message, :data data}})
 
-(defn- encode-message [msg] (json/write-value-as-string msg))
+(defn- encode-message [msg] (json/write-str msg))
 
-(defn- decode-message
-  [msg]
-  (json/read-value msg json/keyword-keys-object-mapper))
+(defn- decode-message [msg] (json/read-str msg))
 
 (defrecord JsonRpcProtocol [transport request-handlers notification-handlers
                             pending-requests]
