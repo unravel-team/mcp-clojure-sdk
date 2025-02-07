@@ -15,54 +15,70 @@
   (stop! [this]
     "Stop the server"))
 
-;;; // Refactor the `init-handlers` function. Pull out as many
-;;; // handle-* functions as possible, instead of defining them all in
-;;; // a giant let binding. Make sure that the protocol is updated
-;;; // properly and all the handlers are // registered correctly. Make
-;;; // sure we are returning the correct value. ai!
+(defn- handle-initialize
+  [server-name server-version capabilities client-info]
+  (log/info :msg "Client connected" :client client-info)
+  {:protocol-version specs/latest-protocol-version
+   :capabilities @capabilities
+   :server-info {:server-name server-name
+                 :server-version server-version}})
+
+(defn- handle-list-tools
+  [tools]
+  {:tools (mapv :tool (vals @tools))})
+
+(defn- handle-call-tool
+  [tools name arguments]
+  (if-let [{:keys [handler]} (get @tools name)]
+    (try 
+      {:content [(handler arguments)]}
+      (catch Exception e
+        {:content [{:type "text"
+                   :text (str "Error: " (.getMessage e))}]
+         :is-error true}))
+    (throw (ex-info "Tool not found" 
+                   {:code specs/method-not-found}))))
+
+(defn- handle-list-resources
+  [resources]
+  {:resources (mapv :resource (vals @resources))})
+
+(defn- handle-read-resource
+  [resources uri]
+  (if-let [{:keys [handler]} (get @resources uri)]
+    {:contents [(handler uri)]}
+    (throw (ex-info "Resource not found"
+                   {:code specs/method-not-found}))))
+
+(defn- handle-list-prompts
+  [prompts]
+  {:prompts (mapv :prompt (vals @prompts))})
+
+(defn- handle-get-prompt
+  [prompts name arguments]
+  (if-let [{:keys [handler]} (get @prompts name)]
+    (handler arguments)
+    (throw (ex-info "Prompt not found"
+                   {:code specs/method-not-found}))))
+
 (defn- init-handlers!
   [server-name server-version protocol tools resources prompts]
-  (let [handle-initialize
-          (fn [{:keys [protocol-version capabilities client-info]}]
-            (log/info :msg "Client connected" :client client-info)
-            {:protocol-version specs/latest-protocol-version,
-             :capabilities @capabilities,
-             :server-info {:server-name server-name,
-                           :server-version server-version}})
-        handle-list-tools (fn [_] {:tools (mapv :tool (vals @tools))})
-        handle-call-tool (fn [{:keys [name arguments]}]
-                           (if-let [{:keys [handler]} (get @tools name)]
-                             (try {:content [(handler arguments)]}
-                                  (catch Exception e
-                                    {:content [{:type "text",
-                                                :text (str "Error: "
-                                                           (.getMessage e))}],
-                                     :is-error true}))
-                             (throw (ex-info "Tool not found"
-                                             {:code specs/method-not-found}))))
-        handle-list-resources (fn [_]
-                                {:resources (mapv :resource (vals @resources))})
-        handle-read-resource (fn [{:keys [uri]}]
-                               (if-let [{:keys [handler]} (get @resources uri)]
-                                 {:contents [(handler uri)]}
-                                 (throw (ex-info "Resource not found"
-                                                 {:code
-                                                  specs/method-not-found}))))
-        handle-list-prompts (fn [_] {:prompts (mapv :prompt (vals @prompts))})
-        handle-get-prompt (fn [{:keys [name arguments]}]
-                            (if-let [{:keys [handler]} (get @prompts name)]
-                              (handler arguments)
-                              (throw (ex-info "Prompt not found"
-                                              {:code
-                                               specs/method-not-found}))))]
-    (core/handle-request! protocol "initialize" handle-initialize)
-    (core/handle-request! protocol "tools/list" handle-list-tools)
-    (core/handle-request! protocol "tools/call" handle-call-tool)
-    (core/handle-request! protocol "resources/list" handle-list-resources)
-    (core/handle-request! protocol "resources/read" handle-read-resource)
-    (core/handle-request! protocol "prompts/list" handle-list-prompts)
-    (core/handle-request! protocol "prompts/get" handle-get-prompt)
-    protocol))
+  (core/handle-request! protocol "initialize" 
+                       #(handle-initialize server-name server-version 
+                                         (:capabilities %) (:client-info %)))
+  (core/handle-request! protocol "tools/list" 
+                       (fn [_] (handle-list-tools tools)))
+  (core/handle-request! protocol "tools/call"
+                       #(handle-call-tool tools (:name %) (:arguments %)))
+  (core/handle-request! protocol "resources/list"
+                       (fn [_] (handle-list-resources resources)))
+  (core/handle-request! protocol "resources/read"
+                       #(handle-read-resource resources (:uri %)))
+  (core/handle-request! protocol "prompts/list"
+                       (fn [_] (handle-list-prompts prompts)))
+  (core/handle-request! protocol "prompts/get"
+                       #(handle-get-prompt prompts (:name %) (:arguments %)))
+  protocol)
 
 (defrecord Server [server-name server-version tools resources prompts protocol
                    capabilities]
