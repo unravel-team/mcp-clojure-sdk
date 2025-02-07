@@ -109,22 +109,27 @@
                 :prompts (atom {}),
                 :protocol (atom nil),
                 :capabilities (atom {:tools {}})}))
-;;// Refactor this code. I do not want a macro called defserver. I want a
-;;function
-;;// called make-server, and this function should take a map. The map should
-;;have
-;;// the following shape:
-;;//
-;;// {:name server-name :version server-version :tools [] :prompts []
-;;:resources
-;;// []}
-;;//
-;;// The tools, prompts and resources arrays should have maps in them, each map
-;;// representing one tool (or prompt or resource)
-;;// AI!
-(defmacro defserver
-  "Define an MCP server with the given name and version"
-  [name version & body]
-  `(let [server# (create-server ~name ~version)]
-     ~@body
-     server#))
+
+(defn make-server
+  "Create and configure an MCP server from a configuration map.
+   Config map should have the shape:
+   {:name \"server-name\"
+    :version \"1.0.0\"
+    :tools [{:name \"tool-name\"
+             :description \"Tool description\"
+             :schema {...}
+             :handler (fn [args] ...)}]
+    :prompts [{:name \"prompt-name\"
+               :description \"Prompt description\"
+               :handler (fn [args] ...)}]
+    :resources [{:uri \"resource-uri\"
+                 :type \"text\"
+                 :handler (fn [uri] ...)}]}"
+  [{:keys [name version tools prompts resources]}]
+  (let [server (create-server name version)]
+    (doseq [{:keys [name description schema handler]} tools]
+      (register-tool! server name description schema handler))
+    (doseq [resource resources]
+      (register-resource! server resource (:handler resource)))
+    (doseq [prompt prompts] (register-prompt! server prompt (:handler prompt)))
+    server))
