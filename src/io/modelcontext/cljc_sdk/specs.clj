@@ -82,11 +82,11 @@
 (s/def ::mime-type string?)
 
 ;; Resources
-(s/def ::uri-scheme #{"file" "http" "https" "data" "resource"})
+(def valid-uri-scheme? #{"file" "http" "https" "data" "resource"})
 (s/def ::uri
   (s/and string?
          #(try (let [uri (java.net.URI. %)]
-                 (contains? ::uri-scheme (.getScheme uri)))
+                 (valid-uri-scheme? (.getScheme uri)))
                (catch Exception _ false))))
 (s/def ::name string?)
 (s/def ::description string?)
@@ -101,7 +101,9 @@
 (defn explain-resource [resource] (s/explain-str ::resource resource))
 ;; Prompts
 (s/def ::role #{"user" "assistant"})
-(s/def ::argument (s/keys :req-un [::name] :opt-un [::description ::required]))
+(s/def :argument/required boolean?)
+(s/def ::argument
+  (s/keys :req-un [::name] :opt-un [::description :argument/required]))
 (s/def ::arguments (s/coll-of ::argument))
 (s/def ::content-type #{"text" "image" "resource"})
 (s/def ::text string?)
@@ -124,13 +126,13 @@
 
 ;; Tools
 (s/def ::type #{"object"})
-(s/def ::property-type #{"string" "number" "boolean" "array" "object"})
-(s/def ::property (s/keys :req-un [::type] :opt-un [::description]))
+(s/def :property/type #{"string" "number" "boolean" "array" "object"})
+(s/def ::property (s/keys :req-un [:property/type] :opt-un [::description]))
 (s/def ::properties (s/map-of string? ::property))
-(s/def ::required (s/coll-of string?))
+(s/def :properties/required (s/coll-of string?))
 
 (s/def ::input-schema
-  (s/keys :req-un [::type] :opt-un [::properties ::required]))
+  (s/keys :req-un [::type] :opt-un [::properties :properties/required]))
 
 (s/def ::tool (s/keys :req-un [::name ::input-schema] :opt-un [::description]))
 
