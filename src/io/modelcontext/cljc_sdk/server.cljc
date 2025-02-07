@@ -4,16 +4,11 @@
             [me.vedang.logger.interface :as log]))
 
 (defprotocol MCPServer
-  (register-tool! [this tool-name description schema handler]
-    "Register a tool")
-  (register-resource! [this resource handler]
-    "Register a resource")
-  (register-prompt! [this prompt handler]
-    "Register a prompt")
-  (start! [this transport]
-    "Start the server with given transport")
-  (stop! [this]
-    "Stop the server"))
+  (register-tool! [this tool-name description schema handler])
+  (register-resource! [this resource handler])
+  (register-prompt! [this prompt handler])
+  (start! [this transport])
+  (stop! [this]))
 
 (defn- handle-initialize
   [server-name server-version capabilities client-info]
@@ -78,46 +73,54 @@
                         "prompts/get"
                         #(handle-get-prompt prompts (:name %) (:arguments %))))
 
+;; Moved record to a def for better reuse [ref: babashka_protocols_gotcha]
+(def server-functions
+  {:register-tool!
+   (fn [this tool-name description schema handler]
+     (let [tool
+             {:name tool-name, :description description, :input-schema schema}]
+       (when-not (specs/valid-tool? tool)
+         (throw (ex-info "Invalid tool definition"
+                         {:explain (specs/explain-tool tool)})))
+       (swap! (:tools this) assoc tool-name {:tool tool, :handler handler}))
+     this),
+   :register-resource! (fn [this resource handler]
+                         (when-not (specs/valid-resource? resource)
+                           (throw (ex-info "Invalid resource"
+                                           {:explain (specs/explain-resource
+                                                       resource)})))
+                         (swap! (:resources this) assoc
+                           (:uri resource)
+                           {:resource resource, :handler handler})
+                         this),
+   :register-prompt! (fn [this prompt handler]
+                       (when-not (specs/valid-prompt? prompt)
+                         (throw (ex-info "Invalid prompt"
+                                         {:explain (specs/explain-prompt
+                                                     prompt)})))
+                       (swap! (:prompts this) assoc
+                         (:name prompt)
+                         {:prompt prompt, :handler handler})
+                       this),
+   :start! (fn [this transport]
+             (let [protocol (core/create-protocol transport)]
+               ;; Initialize handlers and update our protocol
+               (init-handlers! (:server-name this)
+                               (:server-version this)
+                               protocol
+                               (:tools this)
+                               (:resources this)
+                               (:prompts this))
+               (reset! (:protocol this) protocol)
+               (.start! transport))
+             this),
+   :stop! (fn [this]
+            (when-let [protocol @(:protocol this)]
+              (core/stop! (:transport protocol)))
+            this)})
+
 (defrecord Server [server-name server-version tools resources prompts protocol
-                   capabilities]
-  MCPServer
-    (register-tool! [this tool-name description schema handler]
-      (let [tool
-              {:name tool-name, :description description, :input-schema schema}]
-        (when-not (specs/valid-tool? tool)
-          (throw (ex-info "Invalid tool definition"
-                          {:explain (specs/explain-tool tool)})))
-        (swap! tools assoc tool-name {:tool tool, :handler handler}))
-      this)
-    (register-resource! [this resource handler]
-      (when-not (specs/valid-resource? resource)
-        (throw (ex-info "Invalid resource"
-                        {:explain (specs/explain-resource resource)})))
-      (swap! resources assoc
-        (:uri resource)
-        {:resource resource, :handler handler})
-      this)
-    (register-prompt! [this prompt handler]
-      (when-not (specs/valid-prompt? prompt)
-        (throw (ex-info "Invalid prompt"
-                        {:explain (specs/explain-prompt prompt)})))
-      (swap! prompts assoc (:name prompt) {:prompt prompt, :handler handler})
-      this)
-    (start! [this transport]
-      (let [protocol (core/create-protocol transport)]
-        ;; Initialize handlers and update our protocol
-        (init-handlers! server-name
-                        server-version
-                        protocol
-                        tools
-                        resources
-                        prompts)
-        (reset! (:protocol this) protocol)
-        (.start! transport))
-      this)
-    (stop! [this]
-      (when-let [protocol @(:protocol this)] (core/stop! (:transport protocol)))
-      this))
+                   capabilities])
 
 (defn create-server
   "Create a new MCP server with the given name and version"
@@ -153,3 +156,28 @@
       (register-resource! server resource (:handler resource)))
     (doseq [prompt prompts] (register-prompt! server prompt (:handler prompt)))
     server))
+
+;;; [tag: babashka_protocols_gotcha]
+;;;
+;;; Babashka needs Records to extend Protocols explicitly. It does not
+;;; understand the "implement Protocol as part of the Record definition" style.
+;;;
+#?(:bb (extend-protocol MCPServer
+         Server
+           (register-tool! [this tool-name description schema handler]
+             ((get server-functions :register-tool!)
+               this
+               tool-name
+               description
+               schema
+               handler))
+           (register-resource! [this resource handler]
+             ((get server-functions :register-resource!) this resource handler))
+           (register-prompt! [this prompt handler]
+             ((get server-functions :register-prompt!) this prompt handler))
+           (start! [this transport]
+             ((get server-functions :start!) this transport))
+           (stop! [this] ((get server-functions :stop!) this)))
+   :clj (extend Server
+          MCPServer
+            server-functions))
