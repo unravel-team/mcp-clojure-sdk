@@ -76,14 +76,12 @@
                 :mime-type gen/string-alphanumeric))
 
 (def gen-resource-basic
-  (gen/hash-map :uri gen-uri 
-                :name gen/string-alphanumeric))
+  (gen/hash-map :uri gen-uri :name gen/string-alphanumeric))
 
 (def gen-resource
   (gen/frequency [[5 gen-resource-with-description-and-mime]
                   [2 gen-resource-with-only-description]
-                  [2 gen-resource-with-only-mime]
-                  [1 gen-resource-basic]]))
+                  [2 gen-resource-with-only-mime] [1 gen-resource-basic]]))
 
 (defspec resource-validity
          100
@@ -91,6 +89,8 @@
                        (specs/valid-resource? resource)))
 
 ;; Prompt property tests
+;; // rewrite the `prompt-validity` test to match the `resource-validity` test
+;; // above ai!
 (def gen-argument
   (gen/hash-map :name gen/string-alphanumeric
                 :description (gen/frequency [[9 gen/string-alphanumeric]
