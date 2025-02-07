@@ -1,0 +1,4 @@
+;;; Run with clj -M calculator_server.bb
+{:deps {io.modelcontext/cljc-sdk {:local/root ".."},
+        me.vedang/logger {:local/root "../utils/logger"}},
+ :paths ["."]}
