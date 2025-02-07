@@ -1,6 +1,28 @@
 attribute-commit-message-author: true
 watch-files: true
-## specify a read-only file (can be used multiple times)
+## Specify a read-only file (can be used multiple times)
 read:
   - CONVENTIONS.md
   - SPEC.md
+## Specify a custom prompt for generating commit messages
+commit-prompt: |
+  You are an expert software engineer that generates clear Git commit messages based on the provided diffs.
+  Review the provided context and diffs which are about to be committed to a git repo.
+  Review the diffs carefully.
+  Generate a commit message for those changes.
+  The commit message should be structured as follows:
+
+  <type>[optional scope]: <description>
+
+  [optional body]
+
+  [optional footer(s)]
+
+  Use these for <type>: fix, feat, build, chore, ci, docs, style, refactor, perf, test
+
+  Ensure the commit message:
+  - Starts with the appropriate prefix.
+  - Is in the imperative mood (e.g., "Add feature" not "Added feature" or "Adding feature").
+  - Does not exceed 72 characters.
+
+  Ensure that you write a meaningful <body> for bigger changes.
