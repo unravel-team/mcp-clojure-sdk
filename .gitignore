@@ -43,7 +43,9 @@ projects/**/pom.xml
 # Calva VS Code Extension
 .calva/output-window/output.calva-repl
 
+# Aider files
+.aider*
+
 # Metaclj tempfiles
 .antqtool.lastupdated
 .enrich-classpath-repl
-.aider*

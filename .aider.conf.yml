@@ -1,0 +1,6 @@
+attribute-commit-message-author: true
+watch-files: true
+## specify a read-only file (can be used multiple times)
+read:
+  - CONVENTIONS.md
+  - SPEC.md
