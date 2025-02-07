@@ -59,6 +59,8 @@
          (prop/for-all [tool gen-tool] (specs/valid-tool? tool)))
 
 ;; Resource property tests
+;; // Also create the versions gen-resource-with-only-description, and
+;; // gen-resource-with-only-mime AI!
 (def gen-resource-with-description-and-mime
   (gen/hash-map :uri gen-uri
                 :name gen/string-alphanumeric
@@ -66,8 +68,7 @@
                 :mime-type gen/string-alphanumeric))
 
 (def gen-resource-basic
-  (gen/hash-map :uri gen-uri
-                :name gen/string-alphanumeric))
+  (gen/hash-map :uri gen-uri :name gen/string-alphanumeric))
 
 (def gen-resource
   (gen/frequency [[8 gen-resource-with-description-and-mime]
