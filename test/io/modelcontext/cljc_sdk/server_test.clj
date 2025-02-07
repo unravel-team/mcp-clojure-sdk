@@ -3,20 +3,20 @@
             [io.modelcontext.cljc-sdk.server :as server]
             [io.modelcontext.cljc-sdk.transport.stdio :as stdio]))
 
-;;; // Rewrite all the tests in this file to work with the new
-;;; server/make-server
-;;; // function ai!
 (deftest server-basic-functionality
   (testing "Server creation and tool registration"
-    (let [server (server/defserver
-                   "test-server"
-                   "1.0.0"
-                   (server/register-tool!
-                     "greet"
-                     "Greet someone"
-                     {:type "object", :properties {"name" {:type "string"}}}
-                     (fn [{:keys [name]}]
-                       {:type "text", :text (str "Hello, " name "!")})))]
+    (let [server (server/make-server
+                   {:name "test-server",
+                    :version "1.0.0",
+                    :tools [{:name "greet",
+                             :description "Greet someone",
+                             :schema {:type "object",
+                                      :properties {"name" {:type "string"}}},
+                             :handler (fn [{:keys [name]}]
+                                        {:type "text",
+                                         :text (str "Hello, " name "!")})}],
+                    :prompts [],
+                    :resources []})]
       (is (some? server))
       (testing "Tool listing"
         (let [tools (-> @(:tools server)
@@ -35,15 +35,18 @@
 (deftest server-full-protocol
   (testing "Complete server protocol interaction"
     (let [transport (stdio/create-stdio-transport)
-          server (server/defserver
-                   "test-server"
-                   "1.0.0"
-                   (server/register-tool!
-                     "greet"
-                     "Greet someone"
-                     {:type "object", :properties {"name" {:type "string"}}}
-                     (fn [{:keys [name]}]
-                       {:type "text", :text (str "Hello, " name "!")})))]
+          server (server/make-server
+                   {:name "test-server",
+                    :version "1.0.0",
+                    :tools [{:name "greet",
+                             :description "Greet someone",
+                             :schema {:type "object",
+                                      :properties {"name" {:type "string"}}},
+                             :handler (fn [{:keys [name]}]
+                                        {:type "text",
+                                         :text (str "Hello, " name "!")})}],
+                    :prompts [],
+                    :resources []})]
       (try (server/start! server transport)
            ;; Here we'd typically simulate client requests through the
            ;; transport but we'll keep this simple for now
