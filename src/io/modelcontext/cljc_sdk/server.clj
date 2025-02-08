@@ -23,9 +23,7 @@
   [tools name arguments]
   (if-let [{:keys [handler]} (get @tools name)]
     (try {:content [(handler arguments)]}
-         (catch #?(:clj Exception
-                   :cljs js/Object)
-           e
+         (catch Exception e
            {:content [{:type "text", :text (str "Error: " (.getMessage e))}],
             :is-error true}))
     (throw (ex-info "Tool not found" {:code specs/method-not-found}))))
@@ -75,7 +73,6 @@
                         "prompts/get"
                         #(handle-get-prompt prompts (:name %) (:arguments %))))
 
-;; Moved record to a def for better reuse [ref: babashka_protocols_gotcha]
 (def server-functions
   {:register-tool!
    (fn [this tool-name description schema handler]
@@ -124,6 +121,10 @@
 (defrecord Server [server-name server-version tools resources prompts protocol
                    capabilities])
 
+(extend Server
+  MCPServer
+    server-functions)
+
 (defn create-server
   "Create a new MCP server with the given name and version"
   [name version]
@@ -158,28 +159,3 @@
       (register-resource! server resource (:handler resource)))
     (doseq [prompt prompts] (register-prompt! server prompt (:handler prompt)))
     server))
-
-;;; [tag: babashka_protocols_gotcha]
-;;;
-;;; Babashka needs Records to extend Protocols explicitly. It does not
-;;; understand the "implement Protocol as part of the Record definition" style.
-;;;
-#?(:bb (extend-protocol MCPServer
-         Server
-           (register-tool! [this tool-name description schema handler]
-             ((get server-functions :register-tool!)
-               this
-               tool-name
-               description
-               schema
-               handler))
-           (register-resource! [this resource handler]
-             ((get server-functions :register-resource!) this resource handler))
-           (register-prompt! [this prompt handler]
-             ((get server-functions :register-prompt!) this prompt handler))
-           (start! [this transport]
-             ((get server-functions :start!) this transport))
-           (stop! [this] ((get server-functions :stop!) this)))
-   :clj (extend Server
-          MCPServer
-            server-functions))
