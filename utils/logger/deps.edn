@@ -23,10 +23,13 @@
         org.apache.logging.log4j/log4j-core {:mvn/version "2.24.3"},
         ;; Needed for logging from inside javax.servlet
         org.apache.logging.log4j/log4j-web {:mvn/version "2.24.3"},
-        ;; Use pedestal.log as the primary clojure facade
+        ;; Use pedestal.log as the primary clojure facade. On
+        ;; Babashka, we use taoensso.timbre (which is built-in)
+        ;; instead of pedestal.log. [tag: babashka_logging]
         io.pedestal/pedestal.log {:mvn/version "0.7.2"},
-        com.taoensso/timbre {:mvn/version "6.6.1"},
-        ;; Use jsonista.core to format log as json
+        ;; Use jsonista.core to format log as json. On Babashka, we
+        ;; use Cheshire, which is built-in. babashka.json makes the
+        ;; choice transparently. [tag: babashka_json]
         metosin/jsonista {:mvn/version "0.3.13"},
         org.babashka/json {:mvn/version "0.1.6"},
         ;; Use SLF4j as the primary facade for gathering all logs.

@@ -1,9 +1,13 @@
 (ns me.vedang.logger.interface
-  (:require [babashka.json :as json]
-            #?(:bb [taoensso.timbre :as log]
-               :clj [io.pedestal.log :as log])))
+  (:require
+    ;; [ref: babashka_json]
+    [babashka.json :as json]
+    ;; [ref: babashka_logging]
+    #?(:bb [taoensso.timbre :as log]
+       :clj [io.pedestal.log :as log])))
 ;; [ref: babashka_reader_conditionals]
 ;; [ref: reader_conditionals]
+
 (defmacro trace
   [& keyvals]
   `(log/trace ::log/formatter json/write-str ~@keyvals))
