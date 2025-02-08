@@ -8,9 +8,12 @@
 ;; [ref: babashka_reader_conditionals]
 ;; [ref: reader_conditionals]
 
+;; // Look at how I've written the reader conditional in the `trace` defmacro
+;; // and update all the other macros accordingly. ai!
 (defmacro trace
   [& keyvals]
-  `(log/trace ::log/formatter json/write-str ~@keyvals))
+  #?(:bb `(log/trace ~@keyvals)
+     :clj `(log/trace ::log/formatter json/write-str ~@keyvals)))
 
 (defmacro debug
   [& keyvals]
