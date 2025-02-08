@@ -8,8 +8,6 @@
 ;; [ref: babashka_reader_conditionals]
 ;; [ref: reader_conditionals]
 
-;; // Look at how I've written the reader conditional in the `trace` defmacro
-;; // and update all the other macros accordingly. ai!
 (defmacro trace
   [& keyvals]
   #?(:bb `(log/trace ~@keyvals)
@@ -17,15 +15,23 @@
 
 (defmacro debug
   [& keyvals]
-  `(log/debug ::log/formatter json/write-str ~@keyvals))
+  #?(:bb `(log/debug ~@keyvals)
+     :clj `(log/debug ::log/formatter json/write-str ~@keyvals)))
 
-(defmacro info [& keyvals] `(log/info ::log/formatter json/write-str ~@keyvals))
+(defmacro info
+  [& keyvals]
+  #?(:bb `(log/info ~@keyvals)
+     :clj `(log/info ::log/formatter json/write-str ~@keyvals)))
 
-(defmacro warn [& keyvals] `(log/warn ::log/formatter json/write-str ~@keyvals))
+(defmacro warn
+  [& keyvals]
+  #?(:bb `(log/warn ~@keyvals)
+     :clj `(log/warn ::log/formatter json/write-str ~@keyvals)))
 
 (defmacro error
   [& keyvals]
-  `(log/error ::log/formatter json/write-str ~@keyvals))
+  #?(:bb `(log/error ~@keyvals)
+     :clj `(log/error ::log/formatter json/write-str ~@keyvals)))
 
 (defmacro spy
   "Logs expr and its value at DEBUG level, returns value."
