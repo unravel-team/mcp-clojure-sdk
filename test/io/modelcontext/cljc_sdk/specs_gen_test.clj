@@ -53,6 +53,13 @@
   (gen/frequency [[9 gen-tool-with-description]
                   [1 gen-tool-without-description]]))
 
+(declare tool-validity
+         resource-validity
+         prompt-validity
+         invalid-tool-rejection
+         invalid-resource-rejection
+         invalid-prompt-rejection)
+
 (defspec tool-validity
          100
          (prop/for-all [tool gen-tool] (specs/valid-tool? tool)))
