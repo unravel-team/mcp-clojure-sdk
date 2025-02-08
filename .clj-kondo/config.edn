@@ -1,0 +1,2 @@
+{:config-in-ns {me.vedang.logger.interface {:linters {:unused-binding {:level
+                                                                       :off}}}}}

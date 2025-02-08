@@ -1,10 +1,10 @@
 (ns me.vedang.logger.interface
-  (:require
-    ;; [ref: babashka_json]
-    [babashka.json :as json]
-    ;; [ref: babashka_logging]
-    #?(:bb [taoensso.timbre :as log]
-       :clj [io.pedestal.log :as log])))
+  #?(:bb (:require [babashka.json :as json]
+                   [taoensso.timbre :as log])
+     :clj (:require [babashka.json :as json]
+                    [io.pedestal.log :as log])))
+;; [ref: babashka_json]
+;; [ref: babashka_logging]
 ;; [ref: babashka_reader_conditionals]
 ;; [ref: reader_conditionals]
 
@@ -40,7 +40,10 @@
         expr' (gensym "expr")]
     `(let [~value' ~expr
            ~expr' ~(list 'quote expr)]
-       (log/debug :spy ~expr' :returns ~value' ::log/formatter json/write-str)
+       #?(:bb (log/debug :spy ~expr' :returns ~value')
+          :clj (log/debug :spy ~expr'
+                          :returns ~value'
+                          ::log/formatter json/write-str))
        ~value')))
 
 (defmacro with-context
