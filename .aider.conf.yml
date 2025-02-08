@@ -26,3 +26,5 @@ commit-prompt: |
   - Does not exceed 72 characters.
 
   Ensure that you write a meaningful <body> for bigger changes.
+
+  Return only the commit message.
