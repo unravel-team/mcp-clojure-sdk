@@ -23,7 +23,9 @@
   [tools name arguments]
   (if-let [{:keys [handler]} (get @tools name)]
     (try {:content [(handler arguments)]}
-         (catch Exception e
+         (catch #?(:clj Exception
+                   :cljs js/Object)
+           e
            {:content [{:type "text", :text (str "Error: " (.getMessage e))}],
             :is-error true}))
     (throw (ex-info "Tool not found" {:code specs/method-not-found}))))

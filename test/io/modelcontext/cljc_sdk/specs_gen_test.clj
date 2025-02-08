@@ -53,7 +53,7 @@
   (gen/frequency [[9 gen-tool-with-description]
                   [1 gen-tool-without-description]]))
 
-(declare tool-validity
+(declare tool-validity ;; [ref: clj_kondo_needs_forward_declaration]
          resource-validity
          prompt-validity
          invalid-tool-rejection
@@ -156,3 +156,13 @@
               :name (gen/one-of [gen/small-integer gen/boolean gen/ratio])
               :arguments (gen/one-of [gen/small-integer gen/string gen/ratio]))]
            (not (specs/valid-prompt? prompt))))
+
+;;; [tag: clj_kondo_needs_forward_declaration]
+;;;
+;;; Macros like `defspec` create functions with the name we pass as the first
+;;; argument. Since these variables are created in the namespace, we need to
+;;; tell clj-kondo about them, otherwise it gets confused and throws Unresolved
+;;; Symbol
+;;;
+;;; From:
+;;; https://stackoverflow.com/questions/61727582/how-to-avoid-unresolved-symbol-with-clj-kond-when-using-hugsql-def-db-fns-macro
