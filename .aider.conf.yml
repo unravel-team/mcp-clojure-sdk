@@ -27,4 +27,4 @@ commit-prompt: |
 
   Ensure that you write a meaningful <body> for bigger changes.
 
-  Return only the commit message.
+  Reply only with the commit message, without any additional text or explanations.
