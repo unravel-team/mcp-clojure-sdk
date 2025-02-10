@@ -123,6 +123,8 @@
                                         {:type "text", :text message})}]})
           _ (server/start! server transport)]
       ;; // use a/alts! in a a/go block here to wait on a timeout of 500 or
+      ;; // on the message to be in sent-ch. Only then check the
+      ;; // :sent-messages ai!
       (testing "Tool list request"
         (a/>!! (:received-ch transport)
                "{\"jsonrpc\":\"2.0\",\"id\":\"1\",\"method\":\"tools/list\"}")
