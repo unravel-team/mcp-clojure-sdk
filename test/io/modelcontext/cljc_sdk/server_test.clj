@@ -4,6 +4,7 @@
             [clojure.test :refer [deftest is testing]]
             [io.modelcontext.cljc-sdk.core :as core]
             [io.modelcontext.cljc-sdk.server :as server]
+            [io.modelcontext.cljc-sdk.specs :as specs]
             [io.modelcontext.cljc-sdk.transport.stdio :as stdio]))
 
 (deftest server-basic-functionality
@@ -163,7 +164,7 @@
                   json/read-str
                   :error
                   :code
-                  (= -32603)))))
+                  (= specs/method-not-found)))))
       (server/stop! server))))
 
 (deftest server-lifecycle

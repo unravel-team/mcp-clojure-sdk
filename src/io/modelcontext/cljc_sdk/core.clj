@@ -85,16 +85,21 @@
             (try (let [result (handler (:params decoded))
                        response (create-response (:id decoded) result)]
                    (send! (:transport protocol) (encode-message response)))
-                 ;; // add a new catch clause to catch the ex-info we // //
-                 ;; // throw, and re-throw it. It will already have the
-                 ;; // data we want the caller to see. ai!
+                 (catch clojure.lang.ExceptionInfo e
+                   (let [data (ex-data e)
+                         error-resp (create-error (:id decoded)
+                                                (:code data specs/internal-error)
+                                                (.getMessage e)
+                                                (:data data))]
+                     (send! (:transport protocol)
+                            (encode-message error-resp))))
                  (catch Exception e
                    (log/error :msg "Error handling request" :error e)
                    (let [error-resp (create-error (:id decoded)
-                                                  specs/internal-error
-                                                  (str "Internal error: "
-                                                       (.getMessage e))
-                                                  {:type "internal.error"})]
+                                                specs/internal-error
+                                                (str "Internal error: "
+                                                     (.getMessage e))
+                                                {:type "internal.error"})]
                      (send! (:transport protocol)
                             (encode-message error-resp)))))
             (let [error-resp (create-error (:id decoded)
