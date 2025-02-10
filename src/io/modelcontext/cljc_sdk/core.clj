@@ -74,53 +74,63 @@
     (handle-notification! [_this method handler]
       (swap! notification-handlers assoc method handler)))
 
-;; // refactor this function. ai!
+(defn- handle-request
+  [protocol decoded handler]
+  (try (let [result (handler (:params decoded))
+             response (create-response (:id decoded) result)]
+         (send! (:transport protocol) (encode-message response)))
+       (catch clojure.lang.ExceptionInfo e
+         (let [data (ex-data e)
+               error-resp (create-error (:id decoded)
+                                        (:code data specs/internal-error)
+                                        (.getMessage e)
+                                        (:data data))]
+           (send! (:transport protocol) (encode-message error-resp))))
+       (catch Exception e
+         (log/error :msg "Error handling request" :error e)
+         (let [error-resp (create-error (:id decoded)
+                                        specs/internal-error
+                                        (str "Internal error: " (.getMessage e))
+                                        {:type "internal.error"})]
+           (send! (:transport protocol) (encode-message error-resp))))))
+
+(defn- handle-notification
+  [protocol decoded handler]
+  (try (handler (:params decoded))
+       (catch Exception e
+         (log/error :msg "Error handling notification" :error e))))
+
+(defn- handle-response
+  [protocol decoded]
+  (when-let [response-ch (get @(:pending-requests protocol) (:id decoded))]
+    (if (:error decoded)
+      (a/>!! response-ch (ex-info "RPC Error" (:error decoded)))
+      (a/>!! response-ch (:result decoded)))
+    (swap! (:pending-requests protocol) dissoc (:id decoded))))
+
+(defn- handle-method-not-found
+  [protocol decoded]
+  (let [error-resp (create-error (:id decoded)
+                                 specs/method-not-found
+                                 "Method not found")]
+    (send! (:transport protocol) (encode-message error-resp))))
+
 (defn- handle-incoming-message
   [protocol msg]
   (let [decoded (decode-message msg)]
     (cond
       ;; Handle requests
       (and (:method decoded) (:id decoded))
-        (let [handler (get @(:request-handlers protocol) (:method decoded))]
-          (if handler
-            (try
-              (let [result (handler (:params decoded))
-                    response (create-response (:id decoded) result)]
-                (send! (:transport protocol) (encode-message response)))
-              (catch clojure.lang.ExceptionInfo e
-                (let [data (ex-data e)
-                      error-resp (create-error (:id decoded)
-                                               (:code data specs/internal-error)
-                                               (.getMessage e)
-                                               (:data data))]
-                  (send! (:transport protocol) (encode-message error-resp))))
-              (catch Exception e
-                (log/error :msg "Error handling request" :error e)
-                (let [error-resp (create-error (:id decoded)
-                                               specs/internal-error
-                                               (str "Internal error: "
-                                                    (.getMessage e))
-                                               {:type "internal.error"})]
-                  (send! (:transport protocol) (encode-message error-resp)))))
-            (let [error-resp (create-error (:id decoded)
-                                           specs/method-not-found
-                                           "Method not found")]
-              (send! (:transport protocol) (encode-message error-resp)))))
+        (if-let [handler (get @(:request-handlers protocol) (:method decoded))]
+          (handle-request protocol decoded handler)
+          (handle-method-not-found protocol decoded))
       ;; Handle notifications
-      (:method decoded)
-        (when-let [handler (get @(:notification-handlers protocol)
-                                (:method decoded))]
-          (try (handler (:params decoded))
-               (catch Exception e
-                 (log/error :msg "Error handling notification" :error e))))
+      (:method decoded) (when-let [handler (get @(:notification-handlers
+                                                   protocol)
+                                                (:method decoded))]
+                          (handle-notification protocol decoded handler))
       ;; Handle responses
-      (:id decoded) (when-let [response-ch (get @(:pending-requests protocol)
-                                                (:id decoded))]
-                      (if (:error decoded)
-                        (a/>!! response-ch
-                               (ex-info "RPC Error" (:error decoded)))
-                        (a/>!! response-ch (:result decoded)))
-                      (swap! (:pending-requests protocol) dissoc (:id decoded)))
+      (:id decoded) (handle-response protocol decoded)
       :else (log/warn :msg "Received invalid message" :message decoded))))
 
 (defn create-protocol
