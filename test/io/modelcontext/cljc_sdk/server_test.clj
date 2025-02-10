@@ -178,7 +178,6 @@
         (server/stop! server)
         (is (not @(:running? transport)))))))
 
-;; // use the timeout pattern to wait for sent-messages here ai!
 (deftest initialization-protocol
   (testing "Initialize request handling"
     (let [transport (create-mock-transport)
@@ -188,7 +187,9 @@
       (a/>!!
         (:received-ch transport)
         "{\"jsonrpc\":\"2.0\",\"id\":\"1\",\"method\":\"initialize\",\"params\":{\"protocolVersion\":\"DRAFT-2025-v1\",\"capabilities\":{},\"clientInfo\":{\"name\":\"test-client\",\"version\":\"1.0.0\"}}}")
-      (let [response (first @(:sent-messages transport))]
+      (let [timeout (a/timeout 500)
+            [response _] (a/alts!! [(:sent-ch transport) timeout])]
+        (is (some? response) "Response received before timeout")
         (is (string? response))
         (is (re-find #"DRAFT-2025-v1" response))
         (is (re-find #"test-server" response)))
