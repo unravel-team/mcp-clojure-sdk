@@ -20,13 +20,16 @@
 (defn- handle-list-tools [tools] {:tools (mapv :tool (vals @tools))})
 
 (defn- handle-call-tool
-  [tools name arguments]
-  (if-let [{:keys [handler]} (get @tools name)]
+  [tools tool-name arguments]
+  (if-let [{:keys [handler]} (get @tools tool-name)]
     (try {:content [(handler arguments)]}
          (catch Exception e
            {:content [{:type "text", :text (str "Error: " (.getMessage e))}],
             :is-error true}))
-    (throw (ex-info "Tool not found" {:code specs/method-not-found}))))
+    (throw (ex-info "Tool not found"
+                    {:code specs/method-not-found,
+                     :message "The requested tool was not found",
+                     :data {:tool-name tool-name}}))))
 
 (defn- handle-list-resources
   [resources]
@@ -36,7 +39,10 @@
   [resources uri]
   (if-let [{:keys [handler]} (get @resources uri)]
     {:contents [(handler uri)]}
-    (throw (ex-info "Resource not found" {:code specs/method-not-found}))))
+    (throw (ex-info "Resource not found"
+                    {:code specs/method-not-found,
+                     :message "The requested resource was not found",
+                     :data {:uri uri}}))))
 
 (defn- handle-list-prompts [prompts] {:prompts (mapv :prompt (vals @prompts))})
 
@@ -44,7 +50,10 @@
   [prompts name arguments]
   (if-let [{:keys [handler]} (get @prompts name)]
     (handler arguments)
-    (throw (ex-info "Prompt not found" {:code specs/method-not-found}))))
+    (throw (ex-info "Prompt not found"
+                    {:code specs/method-not-found,
+                     :message "The requested prompt was not found",
+                     :data {:prompt-name name}}))))
 
 (defn- init-handlers!
   [server-name server-version protocol tools resources prompts]

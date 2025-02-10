@@ -89,7 +89,9 @@
                    (log/error :msg "Error handling request" :error e)
                    (let [error-resp (create-error (:id decoded)
                                                   specs/internal-error
-                                                  (.getMessage e))]
+                                                  (str "Internal error: "
+                                                       (.getMessage e))
+                                                  {:type "internal.error"})]
                      (send! (:transport protocol)
                             (encode-message error-resp)))))
             (let [error-resp (create-error (:id decoded)
