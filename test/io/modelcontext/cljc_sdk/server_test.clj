@@ -56,16 +56,22 @@
            (finally (server/stop! server))))))
 
 ;; Mock transport for testing
-(defrecord MockTransport [sent-messages received-ch running?]
+(defrecord MockTransport [sent-messages sent-ch received-ch running?]
   core/Transport
     (start! [this] (reset! running? true) this)
-    (stop! [_this] (reset! running? false) (a/close! received-ch))
-    (send! [_this message] (swap! sent-messages conj message))
+    (stop! [_this]
+      (reset! running? false)
+      (a/close! received-ch)
+      (a/close! sent-ch))
+    (send! [_this message]
+      (when @running?
+        (swap! sent-messages conj message)
+        (a/put! sent-ch message)))
     (receive! [_this] (a/<!! received-ch)))
 
 (defn create-mock-transport
   []
-  (->MockTransport (atom []) (a/chan 1024) (atom false)))
+  (->MockTransport (atom []) (a/chan) (a/chan 1024) (atom false)))
 
 (deftest server-initialization
   (testing "Server creation with basic configuration"
@@ -116,10 +122,7 @@
                              :handler (fn [{:keys [message]}]
                                         {:type "text", :text message})}]})
           _ (server/start! server transport)]
-      ;; // when I run these lines of code one by one on the REPL, they
-      ;; // work correctly. But when running the test automatically, the
-      ;; // response is nil. Maybe it's a timing related bug? but I can
-      ;; // reproduce it consistently. what is happening here ai?
+      ;; // use a/alts! in a a/go block here to wait on a timeout of 500 or
       (testing "Tool list request"
         (a/>!! (:received-ch transport)
                "{\"jsonrpc\":\"2.0\",\"id\":\"1\",\"method\":\"tools/list\"}")
