@@ -178,6 +178,7 @@
         (server/stop! server)
         (is (not @(:running? transport)))))))
 
+;; // use the timeout pattern to wait for sent-messages here ai!
 (deftest initialization-protocol
   (testing "Initialize request handling"
     (let [transport (create-mock-transport)
