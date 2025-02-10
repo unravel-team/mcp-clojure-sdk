@@ -74,6 +74,7 @@
     (handle-notification! [_this method handler]
       (swap! notification-handlers assoc method handler)))
 
+;; // refactor this function. ai!
 (defn- handle-incoming-message
   [protocol msg]
   (let [decoded (decode-message msg)]
@@ -82,26 +83,25 @@
       (and (:method decoded) (:id decoded))
         (let [handler (get @(:request-handlers protocol) (:method decoded))]
           (if handler
-            (try (let [result (handler (:params decoded))
-                       response (create-response (:id decoded) result)]
-                   (send! (:transport protocol) (encode-message response)))
-                 (catch clojure.lang.ExceptionInfo e
-                   (let [data (ex-data e)
-                         error-resp (create-error (:id decoded)
-                                                (:code data specs/internal-error)
-                                                (.getMessage e)
-                                                (:data data))]
-                     (send! (:transport protocol)
-                            (encode-message error-resp))))
-                 (catch Exception e
-                   (log/error :msg "Error handling request" :error e)
-                   (let [error-resp (create-error (:id decoded)
-                                                specs/internal-error
-                                                (str "Internal error: "
-                                                     (.getMessage e))
-                                                {:type "internal.error"})]
-                     (send! (:transport protocol)
-                            (encode-message error-resp)))))
+            (try
+              (let [result (handler (:params decoded))
+                    response (create-response (:id decoded) result)]
+                (send! (:transport protocol) (encode-message response)))
+              (catch clojure.lang.ExceptionInfo e
+                (let [data (ex-data e)
+                      error-resp (create-error (:id decoded)
+                                               (:code data specs/internal-error)
+                                               (.getMessage e)
+                                               (:data data))]
+                  (send! (:transport protocol) (encode-message error-resp))))
+              (catch Exception e
+                (log/error :msg "Error handling request" :error e)
+                (let [error-resp (create-error (:id decoded)
+                                               specs/internal-error
+                                               (str "Internal error: "
+                                                    (.getMessage e))
+                                               {:type "internal.error"})]
+                  (send! (:transport protocol) (encode-message error-resp)))))
             (let [error-resp (create-error (:id decoded)
                                            specs/method-not-found
                                            "Method not found")]
