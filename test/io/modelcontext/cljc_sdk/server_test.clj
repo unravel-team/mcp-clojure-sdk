@@ -122,13 +122,12 @@
                              :handler (fn [{:keys [message]}]
                                         {:type "text", :text message})}]})
           _ (server/start! server transport)]
-      ;; // use a/alts! in a a/go block here to wait on a timeout of 500 or
-      ;; // on the message to be in sent-ch. Only then check the
-      ;; // :sent-messages ai!
       (testing "Tool list request"
         (a/>!! (:received-ch transport)
                "{\"jsonrpc\":\"2.0\",\"id\":\"1\",\"method\":\"tools/list\"}")
-        (let [response (first @(:sent-messages transport))]
+        (let [timeout (a/timeout 500)
+              [response _] (a/alts!! [(:sent-ch transport) timeout])]
+          (is (some? response) "Response received before timeout")
           (is (string? response))
           (is (-> response
                   json/read-str
@@ -141,7 +140,9 @@
         (a/>!!
           (:received-ch transport)
           "{\"jsonrpc\":\"2.0\",\"id\":\"2\",\"method\":\"tools/call\",\"params\":{\"name\":\"echo\",\"arguments\":{\"message\":\"test\"}}}")
-        (let [response (second @(:sent-messages transport))]
+        (let [timeout (a/timeout 500)
+              [response _] (a/alts!! [(:sent-ch transport) timeout])]
+          (is (some? response) "Response received before timeout")
           (is (string? response))
           (is (-> response
                   json/read-str
@@ -154,7 +155,9 @@
         (a/>!!
           (:received-ch transport)
           "{\"jsonrpc\":\"2.0\",\"id\":\"3\",\"method\":\"tools/call\",\"params\":{\"name\":\"invalid\"}}")
-        (let [response (nth @(:sent-messages transport) 2)]
+        (let [timeout (a/timeout 500)
+              [response _] (a/alts!! [(:sent-ch transport) timeout])]
+          (is (some? response) "Response received before timeout")
           (is (string? response))
           (is (-> response
                   json/read-str
