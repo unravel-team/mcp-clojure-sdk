@@ -85,6 +85,9 @@
             (try (let [result (handler (:params decoded))
                        response (create-response (:id decoded) result)]
                    (send! (:transport protocol) (encode-message response)))
+                 ;; // add a new catch clause to catch the ex-info we // //
+                 ;; // throw, and re-throw it. It will already have the
+                 ;; // data we want the caller to see. ai!
                  (catch Exception e
                    (log/error :msg "Error handling request" :error e)
                    (let [error-resp (create-error (:id decoded)
