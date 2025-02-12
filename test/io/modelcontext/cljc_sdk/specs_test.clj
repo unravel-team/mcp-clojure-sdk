@@ -16,9 +16,7 @@
                       :required ["a" "b"]}}]
       (is (specs/valid-tool? full-tool))))
   (testing "Invalid tool definitions"
-    (testing "Missing required fields" ;; // rename input-schema to
-                                       ;; // inputSchema everywhere in this
-                                       ;; // file ai
+    (testing "Missing required fields"
       (let [no-name {:input-schema {:type "object"}}]
         (is (not (specs/valid-tool? no-name))))
       (let [no-schema {:name "test"}] (is (not (specs/valid-tool? no-schema)))))

@@ -26,29 +26,28 @@
 
 (def gen-properties (gen/map gen/string-alphanumeric gen-property))
 
-(def gen-input-schema-with-properties
+(def gen-inputSchema-with-properties
   (gen/hash-map :type (gen/return "object")
                 :properties gen-properties
                 :required (gen/vector gen/string-alphanumeric)))
 
-(def gen-input-schema-without-properties
+(def gen-inputSchema-without-properties
   (gen/hash-map :type (gen/return "object")
                 :required (gen/vector gen/string-alphanumeric)))
 
-(def gen-input-schema
-  (gen/frequency [[9 gen-input-schema-with-properties]
-                  [1 gen-input-schema-without-properties]]))
+(def gen-inputSchema
+  (gen/frequency [[9 gen-inputSchema-with-properties]
+                  [1 gen-inputSchema-without-properties]]))
 
 
 ;; Tool property tests
-;; // rename input-schema to inputSchema everywhere in this file ai!
 (def gen-tool-with-description
   (gen/hash-map :name gen/string-alphanumeric
                 :description gen/string-alphanumeric
-                :input-schema gen-input-schema))
+                :inputSchema gen-inputSchema))
 
 (def gen-tool-without-description
-  (gen/hash-map :name gen/string-alphanumeric :input-schema gen-input-schema))
+  (gen/hash-map :name gen/string-alphanumeric :inputSchema gen-inputSchema))
 
 (def gen-tool
   (gen/frequency [[9 gen-tool-with-description]
@@ -136,7 +135,7 @@
          (prop/for-all [tool
                         (gen/hash-map :name (gen/one-of [gen/small-integer
                                                          gen/boolean gen/ratio])
-                                      :input-schema
+                                      :inputSchema
                                         (gen/hash-map :type gen/small-integer))]
                        (not (specs/valid-tool? tool))))
 

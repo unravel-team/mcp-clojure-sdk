@@ -85,8 +85,8 @@
 (def server-functions
   {:register-tool!
    (fn [this tool-name description schema handler]
-     (let [tool ;; // rename input-schema to inputSchema ai
-             {:name tool-name, :description description, :input-schema schema}]
+     (let [tool
+             {:name tool-name, :description description, :inputSchema schema}]
        (when-not (specs/valid-tool? tool)
          (throw (ex-info "Invalid tool definition"
                          {:explain (specs/explain-tool tool)})))
