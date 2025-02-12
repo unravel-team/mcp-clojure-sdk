@@ -4,11 +4,11 @@
 
 (deftest test-tool-validation
   (testing "Valid tool definitions"
-    (let [simple-tool {:name "greet", :input-schema {:type "object"}}]
+    (let [simple-tool {:name "greet", :inputSchema {:type "object"}}]
       (is (specs/valid-tool? simple-tool)))
     (let [full-tool {:name "add-numbers",
                      :description "Add two numbers together",
-                     :input-schema
+                     :inputSchema
                      {:type "object",
                       :properties
                       {"a" {:type "number", :description "First number"},
@@ -21,11 +21,11 @@
         (is (not (specs/valid-tool? no-name))))
       (let [no-schema {:name "test"}] (is (not (specs/valid-tool? no-schema)))))
     (testing "Invalid schema type"
-      (let [invalid-type {:name "test", :input-schema {:type "invalid"}}]
+      (let [invalid-type {:name "test", :inputSchema {:type "invalid"}}]
         (is (not (specs/valid-tool? invalid-type)))))
     (testing "Invalid property types"
       (let [invalid-prop {:name "test",
-                          :input-schema {:type "object",
+                          :inputSchema {:type "object",
                                          :properties {"test" {:type
                                                               "invalid"}}}}]
         (is (not (specs/valid-tool? invalid-prop)))))))
@@ -37,7 +37,7 @@
     (let [full-resource {:uri "https://example.com/data.json",
                          :name "Data",
                          :description "Example data file",
-                         :mime-type "application/json"}]
+                         :mimeType "application/json"}]
       (is (specs/valid-resource? full-resource))))
   (testing "Invalid resource definitions"
     (testing "Missing required fields"
