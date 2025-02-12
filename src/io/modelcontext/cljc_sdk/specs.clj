@@ -6,17 +6,17 @@
 (def jsonrpc-version "2.0")
 
 ;; Basic types
-(s/def ::request-id
+(s/def ::id
   (s/or :str string?
         :num number?))
 (s/def ::method string?)
-(s/def ::progress-token
+(s/def ::progressToken
   (s/or :str string?
         :num number?))
 (s/def ::cursor string?)
 
 ;; Meta parameters
-(s/def ::meta-params (s/keys :opt-un [::progress-token]))
+(s/def ::_meta (s/keys :opt-un [::progressToken]))
 
 ;; Parameters
 (s/def ::params (s/nilable (s/map-of keyword? any?)))
@@ -24,16 +24,17 @@
 ;; Basic message components
 (s/def ::jsonrpc #(= jsonrpc-version %))
 (s/def ::result map?)
-(s/def ::error-code int?)
-(s/def ::error-message string?)
-(s/def ::error-data any?)
+(s/def ::code int?)
+(s/def ::message string?)
+(s/def ::data any?)
 
 ;; Error object
 (s/def ::error
-  (s/keys :req-un [::error-code ::error-message] :opt-un [::error-data]))
+  (s/keys :req-un [::code ::message] :opt-un [::data]))
 
 ;; JSON-RPC Messages
-(s/def ::request (s/keys :req-un [::jsonrpc ::id ::method] :opt-un [::params]))
+(s/def ::request (s/keys :req-un [::jsonrpc ::id ::method] 
+                        :opt-un [::params]))
 
 (s/def ::notification (s/keys :req-un [::jsonrpc ::method] :opt-un [::params]))
 
@@ -49,29 +50,30 @@
 (def internal-error -32603)
 
 ;; Implementation info
-(s/def ::implementation (s/keys :req-un [::name ::version]))
+(s/def ::clientInfo (s/keys :req-un [::name ::version]))
+(s/def ::serverInfo (s/keys :req-un [::name ::version]))
 
 ;; Capabilities
-(s/def ::roots-capability (s/keys :opt-un [::list-changed]))
+(s/def ::roots (s/keys :opt-un [::listChanged]))
 
-(s/def ::prompts-capability (s/keys :opt-un [::list-changed]))
+(s/def ::prompts (s/keys :opt-un [::listChanged]))
 
-(s/def ::resources-capability (s/keys :opt-un [::subscribe ::list-changed]))
+(s/def ::resources (s/keys :opt-un [::subscribe ::listChanged]))
 
-(s/def ::tools-capability (s/keys :opt-un [::list-changed]))
+(s/def ::tools (s/keys :opt-un [::listChanged]))
 
-(s/def ::client-capabilities
+(s/def ::capabilities
   (s/keys :opt-un [::experimental ::roots ::sampling]))
 
-(s/def ::server-capabilities
+(s/def ::capabilities
   (s/keys :opt-un [::experimental ::logging ::prompts ::resources ::tools]))
 
 ;; Initialization
-(s/def ::initialize-request
+(s/def ::initialize
   (s/merge ::request (s/keys :req-un [::protocolVersion ::capabilities
-                                      ::clientInfo])))
+                                     ::clientInfo])))
 
-(s/def ::initialize-result
+(s/def ::initialize
   (s/keys :req-un [::protocolVersion ::capabilities ::serverInfo]
           :opt-un [::instructions]))
 
@@ -79,7 +81,7 @@
 (s/def ::uri string?)
 (s/def ::name string?)
 (s/def ::description string?)
-(s/def ::mime-type string?)
+(s/def ::mimeType string?)
 
 ;; Resources
 (def valid-uri-scheme? #{"file" "http" "https" "data" "resource"})
