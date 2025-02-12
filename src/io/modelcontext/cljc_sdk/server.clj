@@ -13,9 +13,9 @@
 (defn- handle-initialize
   [server-name server-version capabilities client-info]
   (log/info :msg "Client connected" :client client-info)
-  {:protocol-version specs/latest-protocol-version,
-   :capabilities @capabilities,
-   :server-info {:server-name server-name, :server-version server-version}})
+  {:protocolVersion specs/latest-protocol-version,
+   :capabilities capabilities,
+   :serverInfo {:name server-name, :version server-version}})
 
 (defn- handle-list-tools [tools] {:tools (mapv :tool (vals @tools))})
 
@@ -62,7 +62,7 @@
                         #(handle-initialize server-name
                                             server-version
                                             (:capabilities %)
-                                            (:client-info %)))
+                                            (:clientInfo %)))
   (core/handle-request! protocol
                         "tools/list"
                         (fn [_] (handle-list-tools tools)))
@@ -113,8 +113,8 @@
    :start! (fn [this transport]
              (let [protocol (core/create-protocol transport)]
                ;; Initialize handlers and update our protocol
-               (init-handlers! (:server-name this)
-                               (:server-version this)
+               (init-handlers! (:name this)
+                               (:version this)
                                protocol
                                (:tools this)
                                (:resources this)
@@ -127,8 +127,7 @@
               (core/stop! (:transport protocol)))
             this)})
 
-(defrecord Server [server-name server-version tools resources prompts protocol
-                   capabilities])
+(defrecord Server [name version tools resources prompts protocol capabilities])
 
 (extend Server
   MCPServer
@@ -137,8 +136,8 @@
 (defn create-server
   "Create a new MCP server with the given name and version"
   [name version]
-  (map->Server {:server-name name,
-                :server-version version,
+  (map->Server {:name name,
+                :version version,
                 :tools (atom {}),
                 :resources (atom {}),
                 :prompts (atom {}),

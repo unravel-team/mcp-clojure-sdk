@@ -81,8 +81,8 @@
                                       :tools [],
                                       :prompts [],
                                       :resources []})]
-      (is (= "test-server" (:server-name server)))
-      (is (= "1.0.0" (:server-version server)))
+      (is (= "test-server" (:name server)))
+      (is (= "1.0.0" (:version server)))
       (is (= {} @(:tools server)))
       (is (= {} @(:resources server)))
       (is (= {} @(:prompts server))))))
@@ -192,6 +192,14 @@
             [response _] (a/alts!! [(:sent-ch transport) timeout])]
         (is (some? response) "Response received before timeout")
         (is (string? response))
-        (is (re-find #"DRAFT-2025-v1" response))
-        (is (re-find #"test-server" response)))
+        (let [resp (json/read-str response)]
+          (is (-> resp
+                  :result
+                  :protocolVersion
+                  (= "DRAFT-2025-v1")))
+          (is (-> resp
+                  :result
+                  :serverInfo
+                  :name
+                  (= "test-server")))))
       (server/stop! server))))

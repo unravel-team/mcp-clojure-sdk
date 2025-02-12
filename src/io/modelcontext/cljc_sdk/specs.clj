@@ -68,11 +68,11 @@
 
 ;; Initialization
 (s/def ::initialize-request
-  (s/merge ::request (s/keys :req-un [::protocol-version ::capabilities
-                                      ::client-info])))
+  (s/merge ::request (s/keys :req-un [::protocolVersion ::capabilities
+                                      ::clientInfo])))
 
 (s/def ::initialize-result
-  (s/keys :req-un [::protocol-version ::capabilities ::server-info]
+  (s/keys :req-un [::protocolVersion ::capabilities ::serverInfo]
           :opt-un [::instructions]))
 
 ;; Resource content
