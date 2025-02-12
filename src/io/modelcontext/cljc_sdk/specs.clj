@@ -29,12 +29,10 @@
 (s/def ::data any?)
 
 ;; Error object
-(s/def ::error
-  (s/keys :req-un [::code ::message] :opt-un [::data]))
+(s/def ::error (s/keys :req-un [::code ::message] :opt-un [::data]))
 
 ;; JSON-RPC Messages
-(s/def ::request (s/keys :req-un [::jsonrpc ::id ::method] 
-                        :opt-un [::params]))
+(s/def ::request (s/keys :req-un [::jsonrpc ::id ::method] :opt-un [::params]))
 
 (s/def ::notification (s/keys :req-un [::jsonrpc ::method] :opt-un [::params]))
 
@@ -62,8 +60,7 @@
 
 (s/def ::tools (s/keys :opt-un [::listChanged]))
 
-(s/def ::capabilities
-  (s/keys :opt-un [::experimental ::roots ::sampling]))
+(s/def ::capabilities (s/keys :opt-un [::experimental ::roots ::sampling]))
 
 (s/def ::capabilities
   (s/keys :opt-un [::experimental ::logging ::prompts ::resources ::tools]))
@@ -71,7 +68,7 @@
 ;; Initialization
 (s/def ::initialize
   (s/merge ::request (s/keys :req-un [::protocolVersion ::capabilities
-                                     ::clientInfo])))
+                                      ::clientInfo])))
 
 (s/def ::initialize
   (s/keys :req-un [::protocolVersion ::capabilities ::serverInfo]
@@ -133,6 +130,7 @@
 (s/def ::properties (s/map-of string? ::property))
 (s/def :properties/required (s/coll-of string?))
 
+;; // rename input-schema to inputSchema ai!
 (s/def ::input-schema
   (s/keys :req-un [::type] :opt-un [::properties :properties/required]))
 
