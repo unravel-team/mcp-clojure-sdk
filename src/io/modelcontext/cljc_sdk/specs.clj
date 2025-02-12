@@ -130,11 +130,10 @@
 (s/def ::properties (s/map-of string? ::property))
 (s/def :properties/required (s/coll-of string?))
 
-;; // rename input-schema to inputSchema ai!
-(s/def ::input-schema
+(s/def ::inputSchema
   (s/keys :req-un [::type] :opt-un [::properties :properties/required]))
 
-(s/def ::tool (s/keys :req-un [::name ::input-schema] :opt-un [::description]))
+(s/def ::tool (s/keys :req-un [::name ::inputSchema] :opt-un [::description]))
 
 ;; Helper functions for tool validation
 (defn valid-tool? [tool] (s/valid? ::tool tool))
