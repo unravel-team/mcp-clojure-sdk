@@ -16,7 +16,9 @@
                       :required ["a" "b"]}}]
       (is (specs/valid-tool? full-tool))))
   (testing "Invalid tool definitions"
-    (testing "Missing required fields"
+    (testing "Missing required fields" ;; // rename input-schema to
+                                       ;; // inputSchema everywhere in this
+                                       ;; // file ai
       (let [no-name {:input-schema {:type "object"}}]
         (is (not (specs/valid-tool? no-name))))
       (let [no-schema {:name "test"}] (is (not (specs/valid-tool? no-schema)))))
@@ -26,8 +28,8 @@
     (testing "Invalid property types"
       (let [invalid-prop {:name "test",
                           :inputSchema {:type "object",
-                                         :properties {"test" {:type
-                                                              "invalid"}}}}]
+                                        :properties {"test" {:type
+                                                             "invalid"}}}}]
         (is (not (specs/valid-tool? invalid-prop)))))))
 
 (deftest test-resource-validation

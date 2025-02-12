@@ -41,6 +41,7 @@
 
 
 ;; Tool property tests
+;; // rename input-schema to inputSchema everywhere in this file ai!
 (def gen-tool-with-description
   (gen/hash-map :name gen/string-alphanumeric
                 :description gen/string-alphanumeric
