@@ -393,6 +393,129 @@
   (s/keys :req-un [::role]
           :req [(or :content/text :content/data :content/resource)]))
 
+;;; Tools
+(s/def :list-tools/method #{"tools/list"})
+(s/def :request/list-tools
+  (s/merge :request/paginated (s/keys :req-un [:list-tools/method])))
+
+(s/def :list-tools/tools (s/coll-of ::tool))
+(s/def :result/list-tools
+  (s/merge :result/paginated (s/keys :req-un [:list-tools/tools])))
+
+(s/def :call-tool/method #{"tools/call"})
+(s/def :call-tool/arguments (s/map-of string? any?))
+(s/def :call-tool/params
+  (s/keys :req-un [:tool/name]
+          :opt-un [:call-tool/arguments]))
+(s/def :request/call-tool
+  (s/merge ::request (s/keys :req-un [:call-tool/method
+                                     :call-tool/params])))
+
+(s/def :call-tool/content
+  (s/coll-of (s/or :text ::text-content
+                   :image ::image-content
+                   :audio ::audio-content
+                   :resource ::embedded-resource)))
+(s/def :call-tool/isError boolean?)
+(s/def :result/call-tool
+  (s/merge ::result (s/keys :req-un [:call-tool/content]
+                           :opt-un [:call-tool/isError])))
+
+(s/def :tool/name string?)
+(s/def :tool/description string?)
+(s/def :tool/properties (s/map-of string? any?))
+(s/def :tool/required (s/coll-of string?))
+(s/def :tool/inputSchema
+  (s/keys :req-un [:schema/type]
+          :opt-un [:tool/properties :tool/required]))
+(s/def ::tool
+  (s/keys :req-un [:tool/name :tool/inputSchema]
+          :opt-un [:tool/description]))
+
+(s/def :tool-list-changed/method #{"notifications/tools/list_changed"})
+(s/def :notification/tool-list-changed
+  (s/merge ::notification (s/keys :req-un [:tool-list-changed/method])))
+
+;;; Logging
+(s/def :set-level/method #{"logging/setLevel"})
+(s/def ::level #{"debug" "info" "notice" "warning" "error" "critical" "alert" "emergency"})
+(s/def :set-level/params (s/keys :req-un [::level]))
+(s/def :request/set-level
+  (s/merge ::request (s/keys :req-un [:set-level/method
+                                     :set-level/params])))
+
+(s/def :logging-message/method #{"notifications/message"})
+(s/def :logging-message/logger string?)
+(s/def :logging-message/data any?)
+(s/def :logging-message/params
+  (s/keys :req-un [::level :logging-message/data]
+          :opt-un [:logging-message/logger]))
+(s/def :notification/logging-message
+  (s/merge ::notification (s/keys :req-un [:logging-message/method
+                                          :logging-message/params])))
+
+;;; Sampling
+(s/def :create-message/method #{"sampling/createMessage"})
+(s/def :create-message/messages (s/coll-of ::sampling-message))
+(s/def :create-message/modelPreferences ::model-preferences)
+(s/def :create-message/systemPrompt string?)
+(s/def :create-message/includeContext #{"none" "thisServer" "allServers"})
+(s/def :create-message/temperature number?)
+(s/def :create-message/maxTokens number?)
+(s/def :create-message/stopSequences (s/coll-of string?))
+(s/def :create-message/metadata any?)
+(s/def :create-message/params
+  (s/keys :req-un [:create-message/messages :create-message/maxTokens]
+          :opt-un [:create-message/modelPreferences
+                  :create-message/systemPrompt
+                  :create-message/includeContext
+                  :create-message/temperature
+                  :create-message/stopSequences
+                  :create-message/metadata]))
+(s/def :request/create-message
+  (s/merge ::request (s/keys :req-un [:create-message/method
+                                     :create-message/params])))
+
+(s/def :sampling-message/model string?)
+(s/def :sampling-message/stopReason string?)
+(s/def ::sampling-message
+  (s/keys :req-un [::role]
+          :opt-un [:sampling-message/model
+                  :sampling-message/stopReason]))
+
+(s/def :model-hint/name string?)
+(s/def ::model-hint
+  (s/keys :opt-un [:model-hint/name]))
+
+(s/def :model-preferences/hints (s/coll-of ::model-hint))
+(s/def :model-preferences/costPriority number?)
+(s/def :model-preferences/speedPriority number?)
+(s/def :model-preferences/intelligencePriority number?)
+(s/def ::model-preferences
+  (s/keys :opt-un [:model-preferences/hints
+                  :model-preferences/costPriority
+                  :model-preferences/speedPriority
+                  :model-preferences/intelligencePriority]))
+
+;;; Roots
+(s/def :list-roots/method #{"roots/list"})
+(s/def :request/list-roots
+  (s/merge ::request (s/keys :req-un [:list-roots/method])))
+
+(s/def :root/uri string?)
+(s/def :root/name string?)
+(s/def ::root
+  (s/keys :req-un [:root/uri]
+          :opt-un [:root/name]))
+
+(s/def :list-roots/roots (s/coll-of ::root))
+(s/def :result/list-roots
+  (s/merge ::result (s/keys :req-un [:list-roots/roots])))
+
+(s/def :roots-list-changed/method #{"notifications/roots/list_changed"})
+(s/def :notification/roots-list-changed
+  (s/merge ::notification (s/keys :req-un [:roots-list-changed/method])))
+
 
 ;; Helper functions for resource validation
 (defn valid-resource? [resource] (s/valid? ::resource resource))
