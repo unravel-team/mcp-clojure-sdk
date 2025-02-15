@@ -215,7 +215,7 @@
 (s/def :paginated-request/params (s/keys :opt-un [::cursor]))
 (s/def :request/paginated
   (s/merge ::request (s/keys :opt-un [:paginated-request/params])))
-
+(s/def :result/paginated) ;; // implement ai!
 ;; Resource content
 (s/def ::uri string?)
 (s/def ::name string?)
