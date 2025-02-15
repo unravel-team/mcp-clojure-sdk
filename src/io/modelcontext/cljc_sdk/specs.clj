@@ -107,6 +107,46 @@
 (s/def :notification/cancelled
   (s/merge ::notification (s/keys :req-un [:cancelled-notification/method
                                            :cancelled-notification/params])))
+;;; Initialization
+;;
+;; This request is sent from the client to the server when it first connects,
+;; asking it to begin initialization
+(s/def ::protocolVersion string?)
+(s/def :initialize-request/method #{"initialize"})
+(s/def :initialize-request/params
+  ;; The latest version of the Model Context Protocol that the client
+  ;; supports. The client MAY decide to support older versions as well.
+  (s/keys :req-un [::protocolVersion :client/capabilities ::clientInfo]))
+(s/def :request/initialize
+  (s/merge ::request (s/keys :req-un [:initialize-request/method
+                                      :initialize-request/params])))
+
+;; After receiving an initialize request from the client, the server sends this
+;; response.
+(s/def :initialize/instructions string?)
+(s/def :result/initialize
+  ;; The version of the Model Context Protocol that the server wants to
+  ;; use. This may not match the version that the client requested. If the
+  ;; client cannot support this version, it MUST disconnect.
+  (s/merge ::result (s/keys :req-un [::protocolVersion :server/capabilities
+                                     ::serverInfo]
+                            ;; Instructions describing how to use the
+                            ;; server and its features. This can be used by
+                            ;; clients to improve the LLM's understanding
+                            ;; of available tools, resources, etc. It can
+                            ;; be thought of like a "hint" to the model.
+                            ;; For example, this information MAY be added
+                            ;; to the system prompt.
+                            :opt-un [:initialize/instructions])))
+
+;; This notification is sent from the client to the server after initialization
+;; has finished.
+(s/def :initialized-notification/method #{"notifications/initialized"})
+(s/def :notification/initialized
+  (s/merge ::notification (s/keys :req-un [:initialized-notification/method])))
+
+
+
 ;; Implementation info
 (s/def ::clientInfo (s/keys :req-un [::name ::version]))
 (s/def ::serverInfo (s/keys :req-un [::name ::version]))
@@ -124,15 +164,6 @@
 
 (s/def ::capabilities
   (s/keys :opt-un [::experimental ::logging ::prompts ::resources ::tools]))
-
-;; Initialization
-(s/def ::initialize
-  (s/merge ::request (s/keys :req-un [::protocolVersion ::capabilities
-                                      ::clientInfo])))
-
-(s/def ::initialize
-  (s/keys :req-un [::protocolVersion ::capabilities ::serverInfo]
-          :opt-un [::instructions]))
 
 ;; Resource content
 (s/def ::uri string?)
