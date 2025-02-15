@@ -67,4 +67,51 @@
       (let [invalid-arg-type {:name "test", :arguments "not-a-list"}]
         (is (not (specs/valid-prompt? invalid-arg-type)))))))
 
-;; // what other tests should I add here ai?
+(deftest test-message-content-validation
+  (testing "Valid message contents"
+    (let [text-content {:type "text", :text "Hello world"}]
+      (is (specs/valid-text-content? text-content)))
+    (let [image-content
+            {:type "image", :data "base64data...", :mimeType "image/png"}]
+      (is (specs/valid-image-content? image-content)))
+    (let [audio-content
+            {:type "audio", :data "base64data...", :mimeType "audio/mp3"}]
+      (is (specs/valid-audio-content? audio-content))))
+  (testing "Invalid message contents"
+    (testing "Missing required fields"
+      (is (not (specs/valid-text-content? {:type "text"})))
+      (is (not (specs/valid-image-content? {:type "image", :data "test"})))
+      (is (not (specs/valid-audio-content? {:type "audio",
+                                            :mimeType "audio/mp3"}))))))
+
+(deftest test-sampling-validation
+  (testing "Valid sampling messages"
+    (let [message {:role "assistant",
+                   :content {:type "text", :text "any text is fine"}}]
+      (is (specs/valid-sampling-message? message))))
+  (testing "Valid model preferences"
+    (let [preferences {:hints [{:name "claude-3"}],
+                       :costPriority 0.8,
+                       :speedPriority 0.5,
+                       :intelligencePriority 0.9}]
+      (is (specs/valid-model-preferences? preferences)))))
+
+(deftest test-root-validation
+  (testing "Valid root definitions"
+    (let [simple-root {:uri "file:///workspace"}]
+      (is (specs/valid-root? simple-root)))
+    (let [named-root {:uri "file:///projects", :name "Projects Directory"}]
+      (is (specs/valid-root? named-root))))
+  (testing "Invalid root definitions"
+    (testing "Missing required fields"
+      (let [no-uri {:name "Invalid Root"}]
+        (is (not (specs/valid-root? no-uri)))))))
+
+(deftest test-implementation-validation
+  (testing "Valid implementation info"
+    (let [impl {:name "test-client", :version "1.0.0"}]
+      (is (specs/valid-implementation? impl))))
+  (testing "Invalid implementation info"
+    (testing "Missing required fields"
+      (is (not (specs/valid-implementation? {:name "test-only"})))
+      (is (not (specs/valid-implementation? {:version "1.0.0"}))))))

@@ -810,23 +810,23 @@
 (defn explain-root [root] (s/explain-str ::root root))
 
 ;; Helper functions for message content validation
-(defn valid-text-content? [content] (s/valid? ::text-content content))
+(defn valid-text-content? [content] (s/valid? :content/text content))
 
-(defn valid-image-content? [content] (s/valid? ::image-content content))
+(defn valid-image-content? [content] (s/valid? :content/image content))
 
-(defn valid-audio-content? [content] (s/valid? ::audio-content content))
+(defn valid-audio-content? [content] (s/valid? :content/audio content))
 
-(defn valid-embedded-resource? [content] (s/valid? ::embedded-resource content))
+(defn valid-embedded-resource? [content] (s/valid? :resource/embedded content))
 
-(defn explain-text-content [content] (s/explain-str ::text-content content))
+(defn explain-text-content [content] (s/explain-str :content/text content))
 
-(defn explain-image-content [content] (s/explain-str ::image-content content))
+(defn explain-image-content [content] (s/explain-str :content/image content))
 
-(defn explain-audio-content [content] (s/explain-str ::audio-content content))
+(defn explain-audio-content [content] (s/explain-str :content/audio content))
 
 (defn explain-embedded-resource
   [content]
-  (s/explain-str ::embedded-resource content))
+  (s/explain-str :resource/embedded content))
 
 ;; Helper functions for sampling validation
 (defn valid-sampling-message? [msg] (s/valid? ::sampling-message msg))
