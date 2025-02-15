@@ -616,20 +616,48 @@
 (s/def :audio-content/data string?)
 (s/def :audio-content/mimeType string?)
 
-(s/def :model-hint/name string?)
-(s/def ::model-hint (s/keys :opt-un [:model-hint/name]))
-
-(s/def :model-preferences/hints (s/coll-of ::model-hint))
-(s/def :model-preferences/costPriority number?)
-(s/def :model-preferences/speedPriority number?)
-(s/def :model-preferences/intelligencePriority number?)
+;;; Model Preferences
+;; The server's preferences for model selection, requested of the client during
+;; sampling.
+;;
+;; Because LLMs can vary along multiple dimensions, choosing the "best" model
+;; is
+;; rarely straightforward.  Different models excel in different areas—some are
+;; faster but less capable, others are more capable but more expensive, and so
+;; on. This interface allows servers to express their priorities across
+;; multiple dimensions to help clients make an appropriate selection for their
+;; use case.
+;;
+;; These preferences are always advisory. The client MAY ignore them. It is
+;; also up to the client to decide how to interpret these preferences and how
+;; to balance them against other considerations.
 (s/def ::model-preferences
   (s/keys :opt-un [:model-preferences/hints :model-preferences/costPriority
                    :model-preferences/speedPriority
                    :model-preferences/intelligencePriority]))
+;; Optional hints to use for model selection. If multiple hints are specified,
+;; the client MUST evaluate them in order. The client SHOULD prioritize these
+;; hints over the numeric priorities, but MAY still use the priorities to
+;; select
+;; from ambiguous matches.
+(s/def :model-preferences/hints (s/coll-of ::model-hint))
+(s/def :model-preferences/costPriority number?)
+(s/def :model-preferences/speedPriority number?)
+(s/def :model-preferences/intelligencePriority number?)
+;; A hint for a model name. The client SHOULD treat this as a substring of a
+;; model name; for example:
+;;  - `claude-3-5-sonnet` should match `claude-3-5-sonnet-20241022`
+;;  - `sonnet` should match `claude-3-5-sonnet-20241022`,
+;;  `claude-3-sonnet-20240229`, etc.
+;;  - `claude` should match any Claude model
+;;
+;; The client MAY also map the string to a different provider's model name or a
+;; different model family, as long as it fills a similar niche; for example:
+;;  - `gemini-1.5-flash` could match `claude-3-haiku-20240307`
+(s/def :model-hint/name string?)
+(s/def ::model-hint (s/keys :opt-un [:model-hint/name]))
 
-
-
+;; // write CompleteRequest and CompleteResult specs ai!
 ;;; Roots
 (s/def :list-roots/method #{"roots/list"})
 (s/def :request/list-roots
