@@ -737,6 +737,9 @@
         :call-tool :request/call-tool
         :list-tools :request/list-tools))
 
+;; // create ClientNotification spec by referring to ClientRequest and
+;; // :request/client ai!
+
 ;; Helper functions for resource validation
 (defn valid-resource? [resource] (s/valid? ::resource resource))
 
