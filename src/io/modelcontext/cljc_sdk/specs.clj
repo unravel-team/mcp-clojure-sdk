@@ -664,10 +664,10 @@
   (s/or :prompt-ref :ref/prompt
         :resource-ref :ref/resource))
 (s/def :complete/argument
-  (s/keys :req-un [:prompt-argument/name :argument/value]))
-(s/def :argument/value string?)
-(s/def :complete/params
-  (s/keys :req-un [:complete/ref :complete/argument]))
+  (s/keys :req-un [:complete-argument/name :complete-argument/value]))
+(s/def :complete-argument/name string?)
+(s/def :complete-argument/value string?)
+(s/def :complete/params (s/keys :req-un [:complete/ref :complete/argument]))
 (s/def :request/complete
   (s/merge ::request (s/keys :req-un [:complete/method :complete/params])))
 
@@ -683,28 +683,44 @@
 
 ;;; Reference Types
 (s/def :ref/type #{"ref/prompt" "ref/resource"})
-(s/def :ref/prompt
-  (s/keys :req-un [:ref/type :prompt/name]))
-(s/def :ref/resource
-  (s/keys :req-un [:ref/type :resource/uri]))
+(s/def :ref/prompt (s/keys :req-un [:ref/type :prompt/name]))
+(s/def :ref/resource (s/keys :req-un [:ref/type :resource/uri]))
 
 ;;; Roots
+;; Sent from the server to request a list of root URIs from the client. Roots
+;; allow servers to ask for specific directories or files to operate on. A
+;; common example for roots is providing a set of repositories or directories a
+;; server should operate on.
+;;
+;; This request is typically used when the server needs to understand the file
+;; system structure or access specific locations that the client has permission
+;; to read from.
 (s/def :list-roots/method #{"roots/list"})
 (s/def :request/list-roots
   (s/merge ::request (s/keys :req-un [:list-roots/method])))
 
-(s/def :root/uri string?)
-(s/def :root/name string?)
-(s/def ::root (s/keys :req-un [:root/uri] :opt-un [:root/name]))
-
+;; The client's response to a roots/list request from the server. This result
+;; contains an array of Root objects, each representing a root directory or
+;; file
+;; that the server can operate on.
 (s/def :list-roots/roots (s/coll-of ::root))
 (s/def :result/list-roots
   (s/merge ::result (s/keys :req-un [:list-roots/roots])))
 
+;; Represents a root directory or file that the server can operate on.
+(s/def :root/uri string?)
+(s/def :root/name string?)
+(s/def ::root (s/keys :req-un [:root/uri] :opt-un [:root/name]))
+
+;; A notification from the client to the server, informing it that the list of
+;; roots has changed.
+;;
+;; This notification should be sent whenever the client adds, removes, or
+;; modifies any root. The server should then request an updated list of roots
+;; using the ListRootsRequest.
 (s/def :roots-list-changed/method #{"notifications/roots/list_changed"})
 (s/def :notification/roots-list-changed
   (s/merge ::notification (s/keys :req-un [:roots-list-changed/method])))
-
 
 ;; Helper functions for resource validation
 (defn valid-resource? [resource] (s/valid? ::resource resource))
