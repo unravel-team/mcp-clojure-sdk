@@ -3,7 +3,8 @@ watch-files: true
 ## Specify a read-only file (can be used multiple times)
 read:
   - CONVENTIONS.md
-  - SPEC.md
+  - doc/specification-schema.ts
+  - src/io/modelcontext/cljc_sdk/specs.clj
 ## Specify a custom prompt for generating commit messages
 commit-prompt: |
   You are an expert software engineer that generates clear Git commit messages based on the provided diffs.
