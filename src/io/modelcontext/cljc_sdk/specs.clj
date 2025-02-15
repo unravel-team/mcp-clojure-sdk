@@ -525,9 +525,6 @@
 ;; in the loop) and decide whether to approve it.
 (s/def :create-message/method #{"sampling/createMessage"})
 (s/def :create-message/messages (s/coll-of ::sampling-message))
-;; The server's preferences for which model to select. The client MAY ignore
-;; these preferences.
-(s/def :create-message/modelPreferences ::model-preferences)
 ;; An optional system prompt the server wants to use for sampling. The client
 ;; MAY modify or omit this prompt.
 (s/def :create-message/systemPrompt string?)
@@ -656,6 +653,12 @@
 ;;  - `gemini-1.5-flash` could match `claude-3-haiku-20240307`
 (s/def :model-hint/name string?)
 (s/def ::model-hint (s/keys :opt-un [:model-hint/name]))
+;;; FIXME: For some reason, the compiler cannot find ::model-preferences if I
+;;; use the spec before the definition. I don't know why, I'll look into it
+;;; later.
+;; The server's preferences for which model to select. The client MAY ignore
+;; these preferences.
+(s/def :create-message/modelPreferences ::model-preferences)
 
 ;;; Completion
 ;; A request from the client to the server, to ask for completion options.
