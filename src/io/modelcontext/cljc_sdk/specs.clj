@@ -1,52 +1,112 @@
 (ns io.modelcontext.cljc-sdk.specs
   (:require [clojure.spec.alpha :as s]))
 
+;; JSON-RPC types
+(s/def :jsonrpc/message
+  (s/or :jsonrpc-request :jsonrpc/request
+        :jsonrpc-notification :jsonrpc/notification
+        :jsonrpc-response :jsonprc/response
+        :jsonrpc-error :jsonrpc/error))
+
 ;; Protocol constants
 (def latest-protocol-version "DRAFT-2025-v1")
 (def jsonrpc-version "2.0")
 
-;; Basic types
-(s/def ::id
-  (s/or :str string?
-        :num number?))
-(s/def ::method string?)
+;;; Base Interface: Request
+;; A progress token, used to associate progress notifications with the original
+;; request.
 (s/def ::progressToken
   (s/or :str string?
         :num number?))
+;; An opaque token used to represent a cursor for pagination.
 (s/def ::cursor string?)
-
-;; Meta parameters
-(s/def ::_meta (s/keys :opt-un [::progressToken]))
-
+(s/def ::method string?)
+;; _meta: If specified, the caller is requesting out-of-band progress
+;; notifications for this request (as represented by
+;; notifications/progress). The value of this parameter is an opaque
+;; token that will be attached to any subsequent notifications. The
+;; receiver is not obligated to provide these notifications.
+(s/def :request/_meta (s/keys :opt-un [::progressToken]))
 ;; Parameters
-(s/def ::params (s/nilable (s/map-of keyword? any?)))
+(s/def ::unknown-params (s/nilable (s/map-of keyword? any?)))
+(s/def :request/params
+  (s/merge (s/keys :opt-un [:request/_meta]) ::unknown-params))
+(s/def ::request (s/keys :req-un [::method] :opt-un [:request/params]))
 
-;; Basic message components
+;;; Base interface: Notification
+(s/def ::additional-metadata (s/map-of keyword? any?))
+;; _meta: This parameter name is reserved by MCP to allow clients and servers
+;; to
+;; attach additional metadata to their notifications.
+(s/def :notification/_meta ::additional-metadata)
+(s/def :notification/params
+  (s/merge (s/keys :opt-un [:notification/_meta]) ::unknown-params))
+(s/def ::notification
+  (s/keys :req-un [::method] :opt-un [:notification/params]))
+
+;;; Base interface: Result
+;; _meta: This result property is reserved by the protocol to allow clients and
+;; servers to attach additional metadata to their responses.
+(s/def :result/_meta ::additional-metadata)
+(s/def ::result (s/merge (s/keys :opt-un [:result/_meta]) ::unknown-params))
+
+
+;;; JSON-RPC
 (s/def ::jsonrpc #(= jsonrpc-version %))
-(s/def ::result map?)
-(s/def ::code int?)
-(s/def ::message string?)
-(s/def ::data any?)
-
-;; Error object
-(s/def ::error (s/keys :req-un [::code ::message] :opt-un [::data]))
-
-;; JSON-RPC Messages
-(s/def ::request (s/keys :req-un [::jsonrpc ::id ::method] :opt-un [::params]))
-
-(s/def ::notification (s/keys :req-un [::jsonrpc ::method] :opt-un [::params]))
-
-(s/def ::response (s/keys :req-un [::jsonrpc ::id] :opt-un [::result]))
-
-(s/def ::error-response (s/keys :req-un [::jsonrpc ::id ::error]))
-
+(s/def :request/id
+  (s/or :str string?
+        :num number?))
 ;; Standard error codes
 (def parse-error -32700)
 (def invalid-request -32600)
 (def method-not-found -32601)
 (def invalid-params -32602)
 (def internal-error -32603)
+;; The error type that occurred.
+(s/def :error/code
+  #{parse-error invalid-request method-not-found invalid-params internal-error})
+;; A short description of the error. The message SHOULD be limited to a concise
+;; single sentence.
+(s/def :error/message string?)
+;; Additional information about the error. The value of this member is defined
+;; by the sender (e.g. detailed error information, nested errors etc.).
+(s/def :error/data any?)
+(s/def ::error
+  (s/keys :req-un [:error/code :error/message] :opt-un [:error/data]))
 
+;; JSONRPCRequest: A request that expects a response.
+(s/def :jsonrpc/request
+  (s/merge ::request (s/keys :req-un [::jsonrpc :request/id])))
+;; JSONRPCNotification: A notification which does not expect a response.
+(s/def :jsonrpc/notification
+  (s/merge ::notification (s/keys :req-un [::jsonrpc])))
+;; JSONRPCResponse: A successful (non-error) response to a request.
+(s/def :jsonrpc/response (s/keys :req-un [::jsonrpc :request/id ::result]))
+;; JSONRPCError: A response to a request that indicates an error occurred.
+(s/def :jsonrpc/error (s/keys :req-un [::jsonrpc :request/id ::error]))
+
+;; Cancellation
+;;
+;; This notification can be sent by either side to indicate that it is
+;; cancelling a previously-issued request.
+;;
+;; The request SHOULD still be in-flight, but due to communication latency, it
+;; is always possible that this notification MAY arrive after the request has
+;; already finished.
+;;
+;; This notification indicates that the result will be unused, so any
+;; associated processing SHOULD cease.
+;;
+;; A client MUST NOT attempt to cancel its `initialize` request.
+(s/def ::requestId :request/id)
+(s/def ::reason string?)
+(s/def :cancelled-notification/method #{"notifications/cancelled"})
+(s/def :cancelled-notification/params
+  (s/keys :req-un [::requestId] :opt-un [::reason]))
+
+(s/def :notification/cancelled
+  (s/merge ::notification (s/keys :req-un [:cancelled-notification/method
+                                           :cancelled-notification/params])))
 ;; Implementation info
 (s/def ::clientInfo (s/keys :req-un [::name ::version]))
 (s/def ::serverInfo (s/keys :req-un [::name ::version]))
