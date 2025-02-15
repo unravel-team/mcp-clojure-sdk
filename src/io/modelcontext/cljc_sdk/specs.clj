@@ -247,9 +247,6 @@
 
 ;; Sent from the client to the server, to read a specific resource URI.
 (s/def :read-resource/method #{"resources/read"})
-;; The URI of the resource to read. The URI can use any protocol; it is up to
-;; the server how to interpret it.
-(s/def :resource/uri string?)
 (s/def :read-resource/params (s/keys :req-un [:resource/uri]))
 (s/def :request/read-resource
   (s/merge ::request (s/keys :req-un [:read-resource/method
@@ -267,46 +264,77 @@
   (s/merge ::result (s/keys :req-un [:read-resource/contents])))
 
 ;;; Resource List Changed Notification
+;; An optional notification from the server to the client, informing
+;; it that the list of resources it can read from has changed. This
+;; may be issued by servers without any previous subscription from the
+;; client.
 (s/def :resource-list-changed/method #{"notifications/resources/list_changed"})
 (s/def :notification/resource-list-changed
   (s/merge ::notification (s/keys :req-un [:resource-list-changed/method])))
 
 ;;; Resource Subscribe/Unsubscribe
+;; Sent from the client to request resources/updated notifications from the
+;; server whenever a particular resource changes.
 (s/def :subscribe/method #{"resources/subscribe"})
 (s/def :subscribe/params (s/keys :req-un [:resource/uri]))
 (s/def :request/subscribe
   (s/merge ::request (s/keys :req-un [:subscribe/method :subscribe/params])))
 
+;; Sent from the client to request cancellation of resources/updated
+;; notifications from the server. This should follow a previous
+;; resources/subscribe request.
 (s/def :unsubscribe/method #{"resources/unsubscribe"})
 (s/def :unsubscribe/params (s/keys :req-un [:resource/uri]))
 (s/def :request/unsubscribe
-  (s/merge ::request (s/keys :req-un [:unsubscribe/method :unsubscribe/params])))
+  (s/merge ::request (s/keys :req-un [:unsubscribe/method
+                                      :unsubscribe/params])))
 
 ;;; Resource Updated Notification
+;; A notification from the server to the client, informing it that a
+;; resource has changed and may need to be read again. This should
+;; only be sent if the client previously sent a resources/subscribe
+;; request.
 (s/def :resource-updated/method #{"notifications/resources/updated"})
 (s/def :resource-updated/params (s/keys :req-un [:resource/uri]))
 (s/def :notification/resource-updated
   (s/merge ::notification (s/keys :req-un [:resource-updated/method
-                                          :resource-updated/params])))
+                                           :resource-updated/params])))
 
 ;;; Resource
+;; A known resource that the server is capable of reading.
+;; The URI of this resource.
+(s/def :resource/uri string?)
+;; A human-readable name for this resource. This can be used by clients to
+;; populate UI elements.
 (s/def :resource/name string?)
+;; A description of what this resource represents. This can be used by clients
+;; to improve the LLM's understanding of available resources. It can be thought
+;; of like a "hint" to the model.
 (s/def :resource/description string?)
+;; The MIME type of this resource, if known.
 (s/def :resource/mimeType string?)
 (s/def ::resource
   (s/merge ::annotated (s/keys :req-un [:resource/uri :resource/name]
-                              :opt-un [:resource/description 
-                                     :resource/mimeType])))
+                               :opt-un [:resource/description
+                                        :resource/mimeType])))
 
 ;;; Resource Template
+;; A template description for resources available on the server.
+;; A URI template (according to RFC 6570) that can be used to construct
+;; resource
+;; URIs.
 (s/def :resource-template/uriTemplate string?)
 (s/def ::resource-template
-  (s/merge ::annotated 
-           (s/keys :req-un [:resource-template/uriTemplate :resource/name]
-                   :opt-un [:resource/description :resource/mimeType])))
+  (s/merge ::annotated (s/keys
+                         :req-un [:resource-template/uriTemplate :resource/name]
+                         :opt-un [:resource/description :resource/mimeType])))
 
 ;;; Resource Contents
+;; The contents of a specific resource or sub-resource.
+(s/def ::resource-contents
+  (s/keys :req-un [:resource/uri] :opt-un [:resource/mimeType]))
 (s/def :resource/text string?)
+;; A base64-encoded string representing the binary data of the item.
 (s/def :resource/blob string?)
 
 (s/def :resource/text-resource
@@ -315,55 +343,53 @@
 (s/def :resource/blob-resource
   (s/merge ::resource-contents (s/keys :req-un [:resource/blob])))
 
-(s/def ::resource-contents
-  (s/keys :req-un [:resource/uri]
-          :opt-un [:resource/mimeType]))
-
 ;;; Prompts
+;; Sent from the client to request a list of prompts and prompt templates the
+;; server has.
 (s/def :list-prompts/method #{"prompts/list"})
 (s/def :request/list-prompts
   (s/merge :request/paginated (s/keys :req-un [:list-prompts/method])))
 
+;; The server's response to a prompts/list request from the client.
 (s/def :list-prompts/prompts (s/coll-of ::prompt))
 (s/def :result/list-prompts
   (s/merge :result/paginated (s/keys :req-un [:list-prompts/prompts])))
 
+;;; Get Prompt
+;; Used by the client to get a prompt provided by the server.
 (s/def :get-prompt/method #{"prompts/get"})
-(s/def :prompt/arguments (s/map-of string? string?))
-(s/def :get-prompt/params 
-  (s/keys :req-un [:prompt/name]
-          :opt-un [:prompt/arguments]))
+(s/def :get-prompt/arguments (s/map-of string? string?))
+(s/def :get-prompt/params
+  (s/keys :req-un [:prompt/name] :opt-un [:get-prompt/arguments]))
 (s/def :request/get-prompt
-  (s/merge ::request (s/keys :req-un [:get-prompt/method
-                                     :get-prompt/params])))
+  (s/merge ::request (s/keys :req-un [:get-prompt/method :get-prompt/params])))
 
+;; The server's response to a prompts/get request from the client.
 (s/def :get-prompt/messages (s/coll-of ::prompt-message))
 (s/def :result/get-prompt
   (s/merge ::result (s/keys :req-un [:get-prompt/messages]
-                           :opt-un [:prompt/description])))
+                            :opt-un [:prompt/description])))
 
 ;;; Prompt
 (s/def :prompt/name string?)
+(s/def :prompt/description string?)
 (s/def :prompt/arguments (s/coll-of ::prompt-argument))
 (s/def ::prompt
   (s/keys :req-un [:prompt/name]
           :opt-un [:prompt/description :prompt/arguments]))
 
 ;;; Prompt Argument
+;; Describes an argument that a prompt can accept.
 (s/def :prompt-argument/name string?)
 (s/def :prompt-argument/description string?)
+;; Whether this argument must be provided.
 (s/def :prompt-argument/required boolean?)
 (s/def ::prompt-argument
   (s/keys :req-un [:prompt-argument/name]
-          :opt-un [:prompt-argument/description
-                  :prompt-argument/required]))
-
-;;; Prompt List Changed Notification
-(s/def :prompt-list-changed/method #{"notifications/prompts/list_changed"})
-(s/def :notification/prompt-list-changed
-  (s/merge ::notification (s/keys :req-un [:prompt-list-changed/method])))
+          :opt-un [:prompt-argument/description :prompt-argument/required]))
 
 ;;; Role
+;; The sender or recipient of messages and data in a conversation.
 (s/def ::role #{"user" "assistant"})
 
 ;;; Message Content Types
@@ -374,20 +400,23 @@
 (s/def :content/resource ::resource-contents)
 
 (s/def ::text-content
-  (s/merge ::annotated 
-           (s/keys :req-un [:content/type :content/text])))
+  (s/merge ::annotated (s/keys :req-un [:content/type :content/text])))
 
 (s/def ::image-content
-  (s/merge ::annotated 
-           (s/keys :req-un [:content/type :content/data :content/mimeType])))
+  (s/merge ::annotated (s/keys :req-un [:content/type :content/data
+                                        :content/mimeType])))
 
 (s/def ::audio-content
-  (s/merge ::annotated 
-           (s/keys :req-un [:content/type :content/data :content/mimeType])))
+  (s/merge ::annotated (s/keys :req-un [:content/type :content/data
+                                        :content/mimeType])))
 
 (s/def ::embedded-resource
-  (s/merge ::annotated 
-           (s/keys :req-un [:content/type :content/resource])))
+  (s/merge ::annotated (s/keys :req-un [:content/type :content/resource])))
+
+;;; Prompt List Changed Notification
+(s/def :prompt-list-changed/method #{"notifications/prompts/list_changed"})
+(s/def :notification/prompt-list-changed
+  (s/merge ::notification (s/keys :req-un [:prompt-list-changed/method])))
 
 (s/def ::prompt-message
   (s/keys :req-un [::role]
@@ -405,11 +434,9 @@
 (s/def :call-tool/method #{"tools/call"})
 (s/def :call-tool/arguments (s/map-of string? any?))
 (s/def :call-tool/params
-  (s/keys :req-un [:tool/name]
-          :opt-un [:call-tool/arguments]))
+  (s/keys :req-un [:tool/name] :opt-un [:call-tool/arguments]))
 (s/def :request/call-tool
-  (s/merge ::request (s/keys :req-un [:call-tool/method
-                                     :call-tool/params])))
+  (s/merge ::request (s/keys :req-un [:call-tool/method :call-tool/params])))
 
 (s/def :call-tool/content
   (s/coll-of (s/or :text ::text-content
@@ -419,18 +446,16 @@
 (s/def :call-tool/isError boolean?)
 (s/def :result/call-tool
   (s/merge ::result (s/keys :req-un [:call-tool/content]
-                           :opt-un [:call-tool/isError])))
+                            :opt-un [:call-tool/isError])))
 
 (s/def :tool/name string?)
 (s/def :tool/description string?)
 (s/def :tool/properties (s/map-of string? any?))
 (s/def :tool/required (s/coll-of string?))
 (s/def :tool/inputSchema
-  (s/keys :req-un [:schema/type]
-          :opt-un [:tool/properties :tool/required]))
+  (s/keys :req-un [:schema/type] :opt-un [:tool/properties :tool/required]))
 (s/def ::tool
-  (s/keys :req-un [:tool/name :tool/inputSchema]
-          :opt-un [:tool/description]))
+  (s/keys :req-un [:tool/name :tool/inputSchema] :opt-un [:tool/description]))
 
 (s/def :tool-list-changed/method #{"notifications/tools/list_changed"})
 (s/def :notification/tool-list-changed
@@ -438,11 +463,11 @@
 
 ;;; Logging
 (s/def :set-level/method #{"logging/setLevel"})
-(s/def ::level #{"debug" "info" "notice" "warning" "error" "critical" "alert" "emergency"})
+(s/def ::level
+  #{"debug" "info" "notice" "warning" "error" "critical" "alert" "emergency"})
 (s/def :set-level/params (s/keys :req-un [::level]))
 (s/def :request/set-level
-  (s/merge ::request (s/keys :req-un [:set-level/method
-                                     :set-level/params])))
+  (s/merge ::request (s/keys :req-un [:set-level/method :set-level/params])))
 
 (s/def :logging-message/method #{"notifications/message"})
 (s/def :logging-message/logger string?)
@@ -452,7 +477,7 @@
           :opt-un [:logging-message/logger]))
 (s/def :notification/logging-message
   (s/merge ::notification (s/keys :req-un [:logging-message/method
-                                          :logging-message/params])))
+                                           :logging-message/params])))
 
 ;;; Sampling
 (s/def :create-message/method #{"sampling/createMessage"})
@@ -466,36 +491,30 @@
 (s/def :create-message/metadata any?)
 (s/def :create-message/params
   (s/keys :req-un [:create-message/messages :create-message/maxTokens]
-          :opt-un [:create-message/modelPreferences
-                  :create-message/systemPrompt
-                  :create-message/includeContext
-                  :create-message/temperature
-                  :create-message/stopSequences
-                  :create-message/metadata]))
+          :opt-un [:create-message/modelPreferences :create-message/systemPrompt
+                   :create-message/includeContext :create-message/temperature
+                   :create-message/stopSequences :create-message/metadata]))
 (s/def :request/create-message
   (s/merge ::request (s/keys :req-un [:create-message/method
-                                     :create-message/params])))
+                                      :create-message/params])))
 
 (s/def :sampling-message/model string?)
 (s/def :sampling-message/stopReason string?)
 (s/def ::sampling-message
   (s/keys :req-un [::role]
-          :opt-un [:sampling-message/model
-                  :sampling-message/stopReason]))
+          :opt-un [:sampling-message/model :sampling-message/stopReason]))
 
 (s/def :model-hint/name string?)
-(s/def ::model-hint
-  (s/keys :opt-un [:model-hint/name]))
+(s/def ::model-hint (s/keys :opt-un [:model-hint/name]))
 
 (s/def :model-preferences/hints (s/coll-of ::model-hint))
 (s/def :model-preferences/costPriority number?)
 (s/def :model-preferences/speedPriority number?)
 (s/def :model-preferences/intelligencePriority number?)
 (s/def ::model-preferences
-  (s/keys :opt-un [:model-preferences/hints
-                  :model-preferences/costPriority
-                  :model-preferences/speedPriority
-                  :model-preferences/intelligencePriority]))
+  (s/keys :opt-un [:model-preferences/hints :model-preferences/costPriority
+                   :model-preferences/speedPriority
+                   :model-preferences/intelligencePriority]))
 
 ;;; Roots
 (s/def :list-roots/method #{"roots/list"})
@@ -504,9 +523,7 @@
 
 (s/def :root/uri string?)
 (s/def :root/name string?)
-(s/def ::root
-  (s/keys :req-un [:root/uri]
-          :opt-un [:root/name]))
+(s/def ::root (s/keys :req-un [:root/uri] :opt-un [:root/name]))
 
 (s/def :list-roots/roots (s/coll-of ::root))
 (s/def :result/list-roots
@@ -569,7 +586,9 @@
 
 (defn explain-audio-content [content] (s/explain-str ::audio-content content))
 
-(defn explain-embedded-resource [content] (s/explain-str ::embedded-resource content))
+(defn explain-embedded-resource
+  [content]
+  (s/explain-str ::embedded-resource content))
 
 ;; Helper functions for sampling validation
 (defn valid-sampling-message? [msg] (s/valid? ::sampling-message msg))
@@ -578,7 +597,9 @@
 
 (defn explain-sampling-message [msg] (s/explain-str ::sampling-message msg))
 
-(defn explain-model-preferences [prefs] (s/explain-str ::model-preferences prefs))
+(defn explain-model-preferences
+  [prefs]
+  (s/explain-str ::model-preferences prefs))
 
 ;; Helper functions for implementation validation
 (defn valid-implementation? [impl] (s/valid? ::implementation impl))
