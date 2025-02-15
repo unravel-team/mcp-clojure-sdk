@@ -737,8 +737,11 @@
         :call-tool :request/call-tool
         :list-tools :request/list-tools))
 
-;; // create ClientNotification spec by referring to ClientRequest and
-;; // :request/client ai!
+(s/def :notification/client
+  (s/or :cancelled :notification/cancelled
+        :progress :notification/progress
+        :initialized :notification/initialized
+        :roots-list-changed :notification/roots-list-changed))
 
 ;; Helper functions for resource validation
 (defn valid-resource? [resource] (s/valid? ::resource resource))
