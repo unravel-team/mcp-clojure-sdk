@@ -200,15 +200,17 @@
 ;; An out-of-band notification used to inform the receiver of a progress update
 ;; for a long-running request.
 (s/def :progress-notification/method #{"notifications/progress"})
+;; The progress thus far. This should increase every time progress is made,
+;; even if the total is unknown.
 (s/def ::progress number?)
+;; Total number of items to process (or total progress required), if known.
 (s/def ::total number?)
 (s/def :progress-notification/params
-  (s/keys :req-un [::progressToken ::progress]
-          :opt-un [::total]))
+  (s/keys :req-un [::progressToken ::progress] :opt-un [::total]))
 (s/def :notification/progress
-  (s/merge ::notification
-           (s/keys :req-un [:progress-notification/method
-                           :progress-notification/params])))
+  (s/merge ::notification (s/keys :req-un [:progress-notification/method
+                                           :progress-notification/params])))
+(s/def :request/paginated) ;; // implement ai!
 ;; Resource content
 (s/def ::uri string?)
 (s/def ::name string?)
