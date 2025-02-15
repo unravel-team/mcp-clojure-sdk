@@ -199,9 +199,16 @@
 ;;; Progress Notification
 ;; An out-of-band notification used to inform the receiver of a progress update
 ;; for a long-running request.
-;; // look at :notification/initialized and implement ProgressNotification in
-;; // the same way ai!
-(s/def :notification/progress)
+(s/def :progress-notification/method #{"notifications/progress"})
+(s/def ::progress number?)
+(s/def ::total number?)
+(s/def :progress-notification/params
+  (s/keys :req-un [::progressToken ::progress]
+          :opt-un [::total]))
+(s/def :notification/progress
+  (s/merge ::notification
+           (s/keys :req-un [:progress-notification/method
+                           :progress-notification/params])))
 ;; Resource content
 (s/def ::uri string?)
 (s/def ::name string?)
