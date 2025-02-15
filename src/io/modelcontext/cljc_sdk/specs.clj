@@ -147,39 +147,43 @@
 
 ;;; Capabilities
 ;; Experimental, non-standard capabilities that the server/client supports.
-(s/def ::experimental (s/map-of string? any?))
+(s/def :capabilities/experimental (s/map-of string? any?))
 ;; Whether the server/client supports notifications for changes to the
 ;; prompts/roots list.
-(s/def ::listChanged boolean?)
+(s/def :capabilities/listChanged boolean?)
 ;; Present if the client supports listing roots.
-(s/def ::roots (s/keys :opt-un [::listChanged]))
+(s/def :capabilities/roots (s/keys :opt-un [:capabilities/listChanged]))
 ;; Present if the client supports sampling from an LLM.
-(s/def ::sampling any?)
+(s/def :capabilities/sampling any?)
 
 ;; Client Capabilities
 ;;
 ;; Capabilities a client may support. Known capabilities are defined here, in
 ;; this schema, but this is not a closed set: any client can define its own,
 ;; additional capabilities.
-(s/def ::client-capabilities
-  (s/keys :opt-un [::experimental ::roots ::sampling]))
+(s/def :capabilities/client
+  (s/keys :opt-un [:capabilities/experimental :capabilities/roots
+                   :capabilities/sampling]))
 
 ;; Present if the server supports sending log messages to the client.
-(s/def ::logging any?)
-(s/def ::subscribe boolean?)
+(s/def :capabilities/logging any?)
+(s/def :capabilities/subscribe boolean?)
 ;; Present if the server offers any prompt templates.
-(s/def ::prompts (s/keys :opt-un [::listChanged]))
+(s/def :capabilities/prompts (s/keys :opt-un [:capabilities/listChanged]))
 ;; Present if the server offers any resources to read.
-(s/def ::resources (s/keys :opt-un [::subscribe ::listChanged]))
+(s/def :capabilities/resources
+  (s/keys :opt-un [:capabilities/subscribe :capabilities/listChanged]))
 ;; Present if the server offers any tools to call.
-(s/def ::tools (s/keys :opt-un [::listChanged]))
+(s/def :capabilities/tools (s/keys :opt-un [:capabilities/listChanged]))
 ;; Server Capabilities
 ;;
 ;; Capabilities that a server may support. Known capabilities are defined here,
 ;; in this schema, but this is not a closed set: any server can define its own,
 ;; additional capabilities.
-(s/def ::server-capabilities
-  (s/keys :opt-un [::experimental ::logging ::prompts ::resources ::tools]))
+(s/def :capabilities/server
+  (s/keys :opt-un [:capabilities/experimental :capabilities/logging
+                   :capabilities/prompts :capabilities/resources
+                   :capabilities/tools]))
 
 ;;; Implementation
 ;; Describes the name and version of an MCP implementation.
