@@ -210,7 +210,12 @@
 (s/def :notification/progress
   (s/merge ::notification (s/keys :req-un [:progress-notification/method
                                            :progress-notification/params])))
-(s/def :request/paginated) ;; // implement ai!
+
+;;; Pagination
+(s/def :paginated-request/params (s/keys :opt-un [::cursor]))
+(s/def :request/paginated
+  (s/merge ::request (s/keys :opt-un [:paginated-request/params])))
+
 ;; Resource content
 (s/def ::uri string?)
 (s/def ::name string?)
