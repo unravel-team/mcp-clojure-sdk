@@ -722,6 +722,21 @@
 (s/def :notification/roots-list-changed
   (s/merge ::notification (s/keys :req-un [:roots-list-changed/method])))
 
+;;; Client messages
+(s/def :request/client
+  (s/or :ping :request/ping
+        :initialize :request/initialize
+        :complete :request/complete
+        :set-level :request/set-level
+        :get-prompt :request/get-prompt
+        :list-prompts :request/list-prompts
+        :list-resources :request/list-resources
+        :read-resource :request/read-resource
+        :subscribe :request/subscribe
+        :unsubscribe :request/unsubscribe
+        :call-tool :request/call-tool
+        :list-tools :request/list-tools))
+
 ;; Helper functions for resource validation
 (defn valid-resource? [resource] (s/valid? ::resource resource))
 
