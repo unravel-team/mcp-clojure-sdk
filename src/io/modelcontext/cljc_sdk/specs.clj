@@ -657,7 +657,37 @@
 (s/def :model-hint/name string?)
 (s/def ::model-hint (s/keys :opt-un [:model-hint/name]))
 
-;; // write CompleteRequest and CompleteResult specs ai!
+;;; Completion
+;; A request from the client to the server, to ask for completion options.
+(s/def :complete/method #{"completion/complete"})
+(s/def :complete/ref
+  (s/or :prompt-ref :ref/prompt
+        :resource-ref :ref/resource))
+(s/def :complete/argument
+  (s/keys :req-un [:prompt-argument/name :argument/value]))
+(s/def :argument/value string?)
+(s/def :complete/params
+  (s/keys :req-un [:complete/ref :complete/argument]))
+(s/def :request/complete
+  (s/merge ::request (s/keys :req-un [:complete/method :complete/params])))
+
+;; The server's response to a completion/complete request
+(s/def :completion/values (s/coll-of string?))
+(s/def :completion/total number?)
+(s/def :completion/hasMore boolean?)
+(s/def :completion/completion
+  (s/keys :req-un [:completion/values]
+          :opt-un [:completion/total :completion/hasMore]))
+(s/def :result/complete
+  (s/merge ::result (s/keys :req-un [:completion/completion])))
+
+;;; Reference Types
+(s/def :ref/type #{"ref/prompt" "ref/resource"})
+(s/def :ref/prompt
+  (s/keys :req-un [:ref/type :prompt/name]))
+(s/def :ref/resource
+  (s/keys :req-un [:ref/type :resource/uri]))
+
 ;;; Roots
 (s/def :list-roots/method #{"roots/list"})
 (s/def :request/list-roots
