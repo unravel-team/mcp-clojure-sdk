@@ -548,3 +548,39 @@
 (defn explain-error [err] (s/explain-str ::error-response err))
 
 (defn explain-notification [notif] (s/explain-str ::notification notif))
+
+;; Helper functions for root validation
+(defn valid-root? [root] (s/valid? ::root root))
+
+(defn explain-root [root] (s/explain-str ::root root))
+
+;; Helper functions for message content validation
+(defn valid-text-content? [content] (s/valid? ::text-content content))
+
+(defn valid-image-content? [content] (s/valid? ::image-content content))
+
+(defn valid-audio-content? [content] (s/valid? ::audio-content content))
+
+(defn valid-embedded-resource? [content] (s/valid? ::embedded-resource content))
+
+(defn explain-text-content [content] (s/explain-str ::text-content content))
+
+(defn explain-image-content [content] (s/explain-str ::image-content content))
+
+(defn explain-audio-content [content] (s/explain-str ::audio-content content))
+
+(defn explain-embedded-resource [content] (s/explain-str ::embedded-resource content))
+
+;; Helper functions for sampling validation
+(defn valid-sampling-message? [msg] (s/valid? ::sampling-message msg))
+
+(defn valid-model-preferences? [prefs] (s/valid? ::model-preferences prefs))
+
+(defn explain-sampling-message [msg] (s/explain-str ::sampling-message msg))
+
+(defn explain-model-preferences [prefs] (s/explain-str ::model-preferences prefs))
+
+;; Helper functions for implementation validation
+(defn valid-implementation? [impl] (s/valid? ::implementation impl))
+
+(defn explain-implementation [impl] (s/explain-str ::implementation impl))
