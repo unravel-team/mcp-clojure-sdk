@@ -266,65 +266,16 @@
 (s/def :result/read-resource
   (s/merge ::result (s/keys :req-un [:read-resource/contents])))
 
-;; Resource content
-(s/def ::name string?)
-(s/def ::description string?)
-(s/def ::mimeType string?)
-
-;; Resources
-(def valid-uri-scheme? #{"file" "http" "https" "data" "resource"})
-(s/def ::uri
-  (s/and string?
-         #(try (let [uri (java.net.URI. %)]
-                 (valid-uri-scheme? (.getScheme uri)))
-               (catch Exception _ false))))
-(s/def ::name string?)
-(s/def ::description string?)
-(s/def ::mime-type string?)
-
-(s/def ::resource
-  (s/keys :req-un [::uri ::name] :opt-un [::description ::mime-type]))
 
 ;; Helper functions for resource validation
 (defn valid-resource? [resource] (s/valid? ::resource resource))
 
 (defn explain-resource [resource] (s/explain-str ::resource resource))
-;; Prompts
-(s/def ::role #{"user" "assistant"})
-(s/def :argument/required boolean?)
-(s/def ::argument
-  (s/keys :req-un [::name] :opt-un [::description :argument/required]))
-(s/def ::arguments (s/coll-of ::argument))
-(s/def ::content-type #{"text" "image" "resource"})
-(s/def ::text string?)
-(s/def ::content (s/keys :req-un [::content-type] :opt-un [::text]))
-(s/def ::message (s/keys :req-un [::role ::content]))
-(s/def ::messages (s/coll-of ::message))
-
-(s/def ::prompt (s/keys :req-un [::name] :opt-un [::description ::arguments]))
 
 ;; Helper functions for prompt validation
 (defn valid-prompt? [prompt] (s/valid? ::prompt prompt))
 
 (defn explain-prompt [prompt] (s/explain-str ::prompt prompt))
-
-(s/def ::resource-contents (s/keys :req-un [::uri] :opt-un [::mime-type]))
-
-(s/def ::text-contents (s/merge ::resource-contents (s/keys :req-un [::text])))
-
-(s/def ::blob-contents (s/merge ::resource-contents (s/keys :req-un [::blob])))
-
-;; Tools
-(s/def ::type #{"object"})
-(s/def :property/type #{"string" "number" "boolean" "array" "object"})
-(s/def ::property (s/keys :req-un [:property/type] :opt-un [::description]))
-(s/def ::properties (s/map-of string? ::property))
-(s/def :properties/required (s/coll-of string?))
-
-(s/def ::inputSchema
-  (s/keys :req-un [::type] :opt-un [::properties :properties/required]))
-
-(s/def ::tool (s/keys :req-un [::name ::inputSchema] :opt-un [::description]))
 
 ;; Helper functions for tool validation
 (defn valid-tool? [tool] (s/valid? ::tool tool))
