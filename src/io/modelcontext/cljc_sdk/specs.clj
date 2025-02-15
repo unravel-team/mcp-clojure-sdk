@@ -744,8 +744,30 @@
         :roots-list-changed :notification/roots-list-changed))
 
 ;;; Server messages
-;; // Create ServerRequest, ServerNotification and ServerResult specs by
-;; // referring to ClientRequest and :request/client specs ai!
+(s/def :request/server
+  (s/or :ping :request/ping
+        :create-message :request/create-message
+        :list-roots :request/list-roots))
+
+(s/def :notification/server
+  (s/or :cancelled :notification/cancelled
+        :progress :notification/progress
+        :logging-message :notification/logging-message
+        :resource-updated :notification/resource-updated
+        :resource-list-changed :notification/resource-list-changed
+        :tool-list-changed :notification/tool-list-changed
+        :prompt-list-changed :notification/prompt-list-changed))
+
+(s/def :result/server
+  (s/or :empty ::result
+        :initialize :result/initialize
+        :complete :result/complete
+        :get-prompt :result/get-prompt
+        :list-prompts :result/list-prompts
+        :list-resources :result/list-resources
+        :read-resource :result/read-resource
+        :call-tool :result/call-tool
+        :list-tools :result/list-tools))
 
 ;; Helper functions for resource validation
 (defn valid-resource? [resource] (s/valid? ::resource resource))
