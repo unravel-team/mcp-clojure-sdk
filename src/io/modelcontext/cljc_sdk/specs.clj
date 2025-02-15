@@ -425,14 +425,41 @@
   (s/merge ::notification (s/keys :req-un [:prompt-list-changed/method])))
 
 ;;; Tools
+;; Sent from the client to request a list of tools the server has.
 (s/def :list-tools/method #{"tools/list"})
 (s/def :request/list-tools
   (s/merge :request/paginated (s/keys :req-un [:list-tools/method])))
 
+;; The server's response to a tools/list request from the client.
 (s/def :list-tools/tools (s/coll-of ::tool))
 (s/def :result/list-tools
   (s/merge :result/paginated (s/keys :req-un [:list-tools/tools])))
 
+;; Tool Call
+;; The server's response to a tool call.
+;;
+;; Any errors that originate from the tool SHOULD be reported inside the result
+;; object, with `isError` set to true, _not_ as an MCP protocol-level error
+;; response. Otherwise, the LLM would not be able to see that an error occurred
+;; and self-correct.
+;;
+;; However, any errors in _finding_ the tool, an error indicating that the
+;; server does not support tool calls, or any other exceptional conditions,
+;; should be reported as an MCP error response.
+(s/def :call-tool/content ;; yes, this is a collection, and the name is not
+                          ;; `contents`. This looks like a mistake they
+                          ;; made and kept for backwards compatibility.
+  (s/coll-of (s/or :text :content/text
+                   :image :content/image
+                   :audio :content/audio
+                   :resource :resource/embedded)))
+;; If not set, this is assumed to be false (the call was successful).
+(s/def :call-tool/isError boolean?)
+(s/def :result/call-tool
+  (s/merge ::result (s/keys :req-un [:call-tool/content]
+                            :opt-un [:call-tool/isError])))
+
+;; Used by the client to invoke a tool provided by the server.
 (s/def :call-tool/method #{"tools/call"})
 (s/def :call-tool/arguments (s/map-of string? any?))
 (s/def :call-tool/params
@@ -440,15 +467,26 @@
 (s/def :request/call-tool
   (s/merge ::request (s/keys :req-un [:call-tool/method :call-tool/params])))
 
-(s/def :call-tool/content
-  (s/coll-of (s/or :text ::text-content
-                   :image ::image-content
-                   :audio ::audio-content
-                   :resource ::embedded-resource)))
-(s/def :call-tool/isError boolean?)
-(s/def :result/call-tool
-  (s/merge ::result (s/keys :req-un [:call-tool/content]
-                            :opt-un [:call-tool/isError])))
+;; An optional notification from the server to the client, informing it that
+;; the
+;; list of tools it offers has changed. This may be issued by servers without
+;; any previous subscription from the client.
+(s/def :tool-list-changed/method #{"notifications/tools/list_changed"})
+(s/def :notification/tool-list-changed
+  (s/merge ::notification (s/keys :req-un [:tool-list-changed/method])))
+
+;;; Tool
+;; Definition for a tool the client can call.
+(s/def :tool/name string?)
+(s/def :tool/description string?)
+(s/def :tool/properties (s/map-of string? any?))
+(s/def :tool/required (s/coll-of string?))
+(s/def :schema/type #{"object"})
+;; A JSON Schema object defining the expected parameters for the tool.
+(s/def :tool/inputSchema
+  (s/keys :req-un [:schema/type] :opt-un [:tool/properties :tool/required]))
+(s/def ::tool
+  (s/keys :req-un [:tool/name :tool/inputSchema] :opt-un [:tool/description]))
 
 ;;; Message Content Types
 (s/def :content/type #{"text" "image" "audio" "resource"})
@@ -467,19 +505,6 @@
 (s/def ::audio-content
   (s/merge ::annotated (s/keys :req-un [:content/type :content/data
                                         :content/mimeType])))
-
-(s/def :tool/name string?)
-(s/def :tool/description string?)
-(s/def :tool/properties (s/map-of string? any?))
-(s/def :tool/required (s/coll-of string?))
-(s/def :tool/inputSchema
-  (s/keys :req-un [:schema/type] :opt-un [:tool/properties :tool/required]))
-(s/def ::tool
-  (s/keys :req-un [:tool/name :tool/inputSchema] :opt-un [:tool/description]))
-
-(s/def :tool-list-changed/method #{"notifications/tools/list_changed"})
-(s/def :notification/tool-list-changed
-  (s/merge ::notification (s/keys :req-un [:tool-list-changed/method])))
 
 ;;; Logging
 (s/def :set-level/method #{"logging/setLevel"})
