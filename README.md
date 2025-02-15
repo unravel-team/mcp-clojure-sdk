@@ -1,6 +1,8 @@
 # io.modelcontext/cljc-sdk
 
-FIXME: my new library.
+An SDK that makes it really easy to write ModelContextProtocol servers in Clojure.
+
+[cljc because the goal is to make it run with Babashka. cljs compatibility TBD]
 
 ## Usage
 
