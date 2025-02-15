@@ -112,14 +112,13 @@
 ;; This request is sent from the client to the server when it first connects,
 ;; asking it to begin initialization
 (s/def ::protocolVersion string?)
-(s/def :initialize-request/method #{"initialize"})
-(s/def :initialize-request/params
+(s/def :initialize/method #{"initialize"})
+(s/def :initialize/params
   ;; The latest version of the Model Context Protocol that the client
   ;; supports. The client MAY decide to support older versions as well.
   (s/keys :req-un [::protocolVersion :client/capabilities ::clientInfo]))
 (s/def :request/initialize
-  (s/merge ::request (s/keys :req-un [:initialize-request/method
-                                      :initialize-request/params])))
+  (s/merge ::request (s/keys :req-un [:initialize/method :initialize/params])))
 
 ;; After receiving an initialize request from the client, the server sends this
 ;; response.
@@ -141,9 +140,9 @@
 
 ;; This notification is sent from the client to the server after initialization
 ;; has finished.
-(s/def :initialized-notification/method #{"notifications/initialized"})
+(s/def :initialized/method #{"notifications/initialized"})
 (s/def :notification/initialized
-  (s/merge ::notification (s/keys :req-un [:initialized-notification/method])))
+  (s/merge ::notification (s/keys :req-un [:initialized/method])))
 
 ;;; Capabilities
 ;; Experimental, non-standard capabilities that the server/client supports.
@@ -196,36 +195,65 @@
 ;; A ping, issued by either the server or the client, to check that the other
 ;; party is still alive. The receiver must promptly respond, or else may be
 ;; disconnected.
-(s/def :ping-request/method #{"ping"})
-(s/def :request/ping
-  (s/merge ::request (s/keys :req-un [:ping-request/method])))
+(s/def :ping/method #{"ping"})
+(s/def :request/ping (s/merge ::request (s/keys :req-un [:ping/method])))
 
 ;;; Progress Notification
 ;; An out-of-band notification used to inform the receiver of a progress update
 ;; for a long-running request.
-(s/def :progress-notification/method #{"notifications/progress"})
+(s/def :progress/method #{"notifications/progress"})
 ;; The progress thus far. This should increase every time progress is made,
 ;; even if the total is unknown.
 (s/def ::progress number?)
 ;; Total number of items to process (or total progress required), if known.
 (s/def ::total number?)
-(s/def :progress-notification/params
+(s/def :progress/params
   (s/keys :req-un [::progressToken ::progress] :opt-un [::total]))
 (s/def :notification/progress
-  (s/merge ::notification (s/keys :req-un [:progress-notification/method
-                                           :progress-notification/params])))
+  (s/merge ::notification (s/keys :req-un [:progress/method :progress/params])))
 
 ;;; Pagination
-(s/def :paginated-request/params (s/keys :opt-un [::cursor]))
+(s/def :paginated/params (s/keys :opt-un [::cursor]))
 (s/def :request/paginated
-  (s/merge ::request (s/keys :opt-un [:paginated-request/params])))
+  (s/merge ::request (s/keys :opt-un [:paginated/params])))
 
-(s/def :paginated-result/nextCursor ::cursor)
+(s/def :paginated/nextCursor ::cursor)
 (s/def :result/paginated
-  (s/merge ::result (s/keys :opt-un [:paginated-result/nextCursor])))
+  (s/merge ::result (s/keys :opt-un [:paginated/nextCursor])))
+
+;;; Resources
+;; Sent from the client to request a list of resources the server has.
+(s/def :list-resources/method #{"resources/list"})
+(s/def :request/list-resources
+  (s/merge :request/paginated (s/keys :req-un [:list-resources/method])))
+
+;; The server's response to a resources/list request from the client.
+(s/def :list-resources/resources (s/coll-of ::resource))
+(s/def :result/list-resources
+  (s/merge :result/paginated (s/keys :req-un [:list-resources/resources])))
+
+;; Sent from the client to request a list of resource templates the server has.
+(s/def :list-resource-templates/method #{"resources/templates/list"})
+(s/def :request/list-resource-templates
+  (s/merge :request/paginated (s/keys :req-un
+                                        [:list-resource-templates/method])))
+
+;; The server's response to a resources/templates/list request from the client.
+(s/def :list-resource-templates/resourceTemplates
+  (s/coll-of ::resource-template))
+(s/def :result/list-resource-templates
+  (s/merge :result/paginated
+             (s/keys :req-un [:list-resource-templates/resourceTemplates])))
+
+;; Sent from the client to the server, to read a specific resource URI.
+(s/def :read-resource-request/method #{"resources/read"})
+(s/def :read-resource-request/params (s/keys :req-un [:resource/uri]))
+(s/def :request/read-resource
+  (s/merge ::request (s/keys :req-un [:read-resource-request/method
+                                      :read-resource-request/params])))
 
 ;; Resource content
-(s/def ::uri string?)
+(s/def :resource/uri string?)
 (s/def ::name string?)
 (s/def ::description string?)
 (s/def ::mimeType string?)
