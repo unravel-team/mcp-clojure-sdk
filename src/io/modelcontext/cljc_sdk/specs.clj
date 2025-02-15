@@ -28,13 +28,13 @@
 ;; receiver is not obligated to provide these notifications.
 (s/def :request/_meta (s/keys :opt-un [::progressToken]))
 ;; Parameters
-(s/def ::unknown-params (s/nilable (s/map-of keyword? any?)))
+(s/def ::unknown-params (s/nilable (s/map-of string? any?)))
 (s/def :request/params
   (s/merge (s/keys :opt-un [:request/_meta]) ::unknown-params))
 (s/def ::request (s/keys :req-un [::method] :opt-un [:request/params]))
 
 ;;; Base interface: Notification
-(s/def ::additional-metadata (s/map-of keyword? any?))
+(s/def ::additional-metadata (s/map-of string? any?))
 ;; _meta: This parameter name is reserved by MCP to allow clients and servers
 ;; to
 ;; attach additional metadata to their notifications.
@@ -145,26 +145,63 @@
 (s/def :notification/initialized
   (s/merge ::notification (s/keys :req-un [:initialized-notification/method])))
 
-
-
-;; Implementation info
-(s/def ::clientInfo (s/keys :req-un [::name ::version]))
-(s/def ::serverInfo (s/keys :req-un [::name ::version]))
-
-;; Capabilities
+;;; Capabilities
+;; Experimental, non-standard capabilities that the server/client supports.
+(s/def ::experimental (s/map-of string? any?))
+;; Whether the server/client supports notifications for changes to the
+;; prompts/roots list.
+(s/def ::listChanged boolean?)
+;; Present if the client supports listing roots.
 (s/def ::roots (s/keys :opt-un [::listChanged]))
+;; Present if the client supports sampling from an LLM.
+(s/def ::sampling any?)
 
+;; Client Capabilities
+;;
+;; Capabilities a client may support. Known capabilities are defined here, in
+;; this schema, but this is not a closed set: any client can define its own,
+;; additional capabilities.
+(s/def ::client-capabilities
+  (s/keys :opt-un [::experimental ::roots ::sampling]))
+
+;; Present if the server supports sending log messages to the client.
+(s/def ::logging any?)
+(s/def ::subscribe boolean?)
+;; Present if the server offers any prompt templates.
 (s/def ::prompts (s/keys :opt-un [::listChanged]))
-
+;; Present if the server offers any resources to read.
 (s/def ::resources (s/keys :opt-un [::subscribe ::listChanged]))
-
+;; Present if the server offers any tools to call.
 (s/def ::tools (s/keys :opt-un [::listChanged]))
-
-(s/def ::capabilities (s/keys :opt-un [::experimental ::roots ::sampling]))
-
-(s/def ::capabilities
+;; Server Capabilities
+;;
+;; Capabilities that a server may support. Known capabilities are defined here,
+;; in this schema, but this is not a closed set: any server can define its own,
+;; additional capabilities.
+(s/def ::server-capabilities
   (s/keys :opt-un [::experimental ::logging ::prompts ::resources ::tools]))
 
+;;; Implementation
+;; Describes the name and version of an MCP implementation.
+(s/def :implementation/name string?)
+(s/def :implementation/version string?)
+(s/def ::implementation
+  (s/keys :req-un [:implementation/name :implementation/version]))
+
+;;; Ping Request
+;; A ping, issued by either the server or the client, to check that the other
+;; party is still alive. The receiver must promptly respond, or else may be
+;; disconnected.
+(s/def :ping-request/method #{"ping"})
+(s/def :request/ping
+  (s/merge ::request (s/keys :req-un [:ping-request/method])))
+
+;;; Progress Notification
+;; An out-of-band notification used to inform the receiver of a progress update
+;; for a long-running request.
+;; // look at :notification/initialized and implement ProgressNotification in
+;; // the same way ai!
+(s/def :notification/progress)
 ;; Resource content
 (s/def ::uri string?)
 (s/def ::name string?)
