@@ -253,13 +253,9 @@
                                       :read-resource/params])))
 
 ;; The server's response to a resources/read request from the client.
-(s/def :read-resouces/text-resource-contents
-  (s/coll-of :resource/text-resource))
-(s/def :read-resouces/blob-resource-contents
-  (s/coll-of :resource/blob-resource))
 (s/def :read-resource/contents
-  (s/or :text-resources :read-resouces/text-resource-contents
-        :blob-resources :read-resource/blob-resource-contents))
+  (s/or :text-resources :contents/text-resource
+        :blob-resources :contents/blob-resource))
 (s/def :result/read-resource
   (s/merge ::result (s/keys :req-un [:read-resource/contents])))
 
@@ -331,17 +327,18 @@
 
 ;;; Resource Contents
 ;; The contents of a specific resource or sub-resource.
-(s/def ::resource-contents
+(s/def :contents/resource
   (s/keys :req-un [:resource/uri] :opt-un [:resource/mimeType]))
-(s/def :resource/text string?)
+;; The text of the item. This must only be set if the item can actually be
+;; represented as text (not binary data).
+(s/def :contents/text string?)
 ;; A base64-encoded string representing the binary data of the item.
-(s/def :resource/blob string?)
+(s/def :contents/blob string?)
 
-(s/def :resource/text-resource
-  (s/merge ::resource-contents (s/keys :req-un [:resource/text])))
-
-(s/def :resource/blob-resource
-  (s/merge ::resource-contents (s/keys :req-un [:resource/blob])))
+(s/def :contents/text-resource
+  (s/merge :contents/resource (s/keys :req-un [:contents/text])))
+(s/def :contents/blob-resource
+  (s/merge :contents/resource (s/keys :req-un [:contents/blob])))
 
 ;;; Prompts
 ;; Sent from the client to request a list of prompts and prompt templates the
@@ -392,6 +389,20 @@
 ;; The sender or recipient of messages and data in a conversation.
 (s/def ::role #{"user" "assistant"})
 
+;;; Prompt Message
+;; Describes a message returned as part of a prompt. This is similar
+;; to `SamplingMessage`, but also supports the embedding of resources
+;; from the MCP server.
+(s/def :prompt-message/content
+  (s/or :text-content :content/text
+        :image-content :content/image
+        :audio-content :content/audio
+        :embedded-resource :content/embedded-resource))
+(s/def ::prompt-message (s/keys :req-un [::role :prompt-message/content]))
+
+(s/def ::embedded-resource
+  (s/merge ::annotated (s/keys :req-un [:content/type :content/resource])))
+
 ;;; Message Content Types
 (s/def :content/type #{"text" "image" "audio" "resource"})
 (s/def :content/text string?)
@@ -410,17 +421,10 @@
   (s/merge ::annotated (s/keys :req-un [:content/type :content/data
                                         :content/mimeType])))
 
-(s/def ::embedded-resource
-  (s/merge ::annotated (s/keys :req-un [:content/type :content/resource])))
-
 ;;; Prompt List Changed Notification
 (s/def :prompt-list-changed/method #{"notifications/prompts/list_changed"})
 (s/def :notification/prompt-list-changed
   (s/merge ::notification (s/keys :req-un [:prompt-list-changed/method])))
-
-(s/def ::prompt-message
-  (s/keys :req-un [::role]
-          :req [(or :content/text :content/data :content/resource)]))
 
 ;;; Tools
 (s/def :list-tools/method #{"tools/list"})
