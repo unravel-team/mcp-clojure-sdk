@@ -488,6 +488,35 @@
 (s/def ::tool
   (s/keys :req-un [:tool/name :tool/inputSchema] :opt-un [:tool/description]))
 
+;;; Logging
+;; A request from the client to the server, to enable or adjust logging.
+(s/def :set-level/method #{"logging/setLevel"})
+;; The level of logging that the client wants to receive from the server. The
+;; server should send all logs at this level and higher (i.e., more severe) to
+;; the client as notifications/logging/message.
+(s/def :set-level/params (s/keys :req-un [:logging/level]))
+(s/def :request/set-level
+  (s/merge ::request (s/keys :req-un [:set-level/method :set-level/params])))
+
+;; Notification of a log message passed from server to client. If no
+;; logging/setLevel request has been sent from the client, the server MAY
+;; decide
+;; which messages to send automatically.
+(s/def :logging-message/method #{"notifications/message"})
+(s/def :logging-message/logger string?)
+(s/def :logging-message/data any?)
+(s/def :logging-message/params
+  (s/keys :req-un [:logging/level :logging-message/data]
+          :opt-un [:logging-message/logger]))
+(s/def :notification/logging-message
+  (s/merge ::notification (s/keys :req-un [:logging-message/method
+                                           :logging-message/params])))
+;; The severity of a log message. These map to syslog message severities, as
+;; specified in RFC-5424:
+;; https://datatracker.ietf.org/doc/html/rfc5424#section-6.2.1
+(s/def :logging/level
+  #{"debug" "info" "notice" "warning" "error" "critical" "alert" "emergency"})
+
 ;;; Message Content Types
 (s/def :content/type #{"text" "image" "audio" "resource"})
 (s/def :content/text string?)
@@ -506,23 +535,6 @@
   (s/merge ::annotated (s/keys :req-un [:content/type :content/data
                                         :content/mimeType])))
 
-;;; Logging
-(s/def :set-level/method #{"logging/setLevel"})
-(s/def ::level
-  #{"debug" "info" "notice" "warning" "error" "critical" "alert" "emergency"})
-(s/def :set-level/params (s/keys :req-un [::level]))
-(s/def :request/set-level
-  (s/merge ::request (s/keys :req-un [:set-level/method :set-level/params])))
-
-(s/def :logging-message/method #{"notifications/message"})
-(s/def :logging-message/logger string?)
-(s/def :logging-message/data any?)
-(s/def :logging-message/params
-  (s/keys :req-un [::level :logging-message/data]
-          :opt-un [:logging-message/logger]))
-(s/def :notification/logging-message
-  (s/merge ::notification (s/keys :req-un [:logging-message/method
-                                           :logging-message/params])))
 
 ;;; Sampling
 (s/def :create-message/method #{"sampling/createMessage"})
