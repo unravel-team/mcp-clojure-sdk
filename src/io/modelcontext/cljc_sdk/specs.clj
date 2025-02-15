@@ -517,6 +517,75 @@
 (s/def :logging/level
   #{"debug" "info" "notice" "warning" "error" "critical" "alert" "emergency"})
 
+;;; Sampling
+;; A request from the server to sample an LLM via the client. The client has
+;; full discretion over which model to select. The client should also inform
+;; the
+;; user before beginning sampling, to allow them to inspect the request (human
+;; in the loop) and decide whether to approve it.
+(s/def :create-message/method #{"sampling/createMessage"})
+(s/def :create-message/messages (s/coll-of ::sampling-message))
+;; The server's preferences for which model to select. The client MAY ignore
+;; these preferences.
+(s/def :create-message/modelPreferences ::model-preferences)
+;; An optional system prompt the server wants to use for sampling. The client
+;; MAY modify or omit this prompt.
+(s/def :create-message/systemPrompt string?)
+;; A request to include context from one or more MCP servers (including the
+;; caller), to be attached to the prompt. The client MAY ignore this request.
+(s/def :create-message/includeContext #{"none" "thisServer" "allServers"})
+(s/def :create-message/temperature number?)
+;; The maximum number of tokens to sample, as requested by the server. The
+;; client MAY choose to sample fewer tokens than requested.
+(s/def :create-message/maxTokens number?)
+(s/def :create-message/stopSequences (s/coll-of string?))
+;; Optional metadata to pass through to the LLM provider. The format of this
+;; metadata is provider-specific.
+(s/def :create-message/metadata any?)
+(s/def :create-message/params
+  (s/keys :req-un [:create-message/messages :create-message/maxTokens]
+          :opt-un [:create-message/modelPreferences :create-message/systemPrompt
+                   :create-message/includeContext :create-message/temperature
+                   :create-message/stopSequences :create-message/metadata]))
+(s/def :request/create-message
+  (s/merge ::request (s/keys :req-un [:create-message/method
+                                      :create-message/params])))
+
+;; The client's response to a sampling/create_message request from the server.
+;; The client should inform the user before returning the sampled message, to
+;; allow them to inspect the response (human in the loop) and decide whether to
+;; allow the server to see it.
+
+;; The name of the model that generated the message.
+(s/def :sampling-message/model string?)
+;; The reason why sampling stopped, if known.
+(s/def :sampling-message/stopReason
+  (s/or :known-reasons #{"endTurn" "stopSequence" "maxTokens"}
+        :unknown-reasons string?))
+(s/def :result/create-message
+  (s/merge ::result
+           ::sampling-message (s/keys :req-un [:sampling-message/model]
+                                      :opt-un [:sampling-message/stopReason])))
+
+;; Describes a message issued to or received from an LLM API.
+(s/def :sampling-message/content
+  (s/or :text :content/text
+        :image :content/image
+        :audio :content/audio))
+(s/def ::sampling-message (s/keys :req-un [::role :sampling-message/content]))
+
+(s/def :model-hint/name string?)
+(s/def ::model-hint (s/keys :opt-un [:model-hint/name]))
+
+(s/def :model-preferences/hints (s/coll-of ::model-hint))
+(s/def :model-preferences/costPriority number?)
+(s/def :model-preferences/speedPriority number?)
+(s/def :model-preferences/intelligencePriority number?)
+(s/def ::model-preferences
+  (s/keys :opt-un [:model-preferences/hints :model-preferences/costPriority
+                   :model-preferences/speedPriority
+                   :model-preferences/intelligencePriority]))
+
 ;;; Message Content Types
 (s/def :content/type #{"text" "image" "audio" "resource"})
 (s/def :content/text string?)
@@ -534,44 +603,6 @@
 (s/def ::audio-content
   (s/merge ::annotated (s/keys :req-un [:content/type :content/data
                                         :content/mimeType])))
-
-
-;;; Sampling
-(s/def :create-message/method #{"sampling/createMessage"})
-(s/def :create-message/messages (s/coll-of ::sampling-message))
-(s/def :create-message/modelPreferences ::model-preferences)
-(s/def :create-message/systemPrompt string?)
-(s/def :create-message/includeContext #{"none" "thisServer" "allServers"})
-(s/def :create-message/temperature number?)
-(s/def :create-message/maxTokens number?)
-(s/def :create-message/stopSequences (s/coll-of string?))
-(s/def :create-message/metadata any?)
-(s/def :create-message/params
-  (s/keys :req-un [:create-message/messages :create-message/maxTokens]
-          :opt-un [:create-message/modelPreferences :create-message/systemPrompt
-                   :create-message/includeContext :create-message/temperature
-                   :create-message/stopSequences :create-message/metadata]))
-(s/def :request/create-message
-  (s/merge ::request (s/keys :req-un [:create-message/method
-                                      :create-message/params])))
-
-(s/def :sampling-message/model string?)
-(s/def :sampling-message/stopReason string?)
-(s/def ::sampling-message
-  (s/keys :req-un [::role]
-          :opt-un [:sampling-message/model :sampling-message/stopReason]))
-
-(s/def :model-hint/name string?)
-(s/def ::model-hint (s/keys :opt-un [:model-hint/name]))
-
-(s/def :model-preferences/hints (s/coll-of ::model-hint))
-(s/def :model-preferences/costPriority number?)
-(s/def :model-preferences/speedPriority number?)
-(s/def :model-preferences/intelligencePriority number?)
-(s/def ::model-preferences
-  (s/keys :opt-un [:model-preferences/hints :model-preferences/costPriority
-                   :model-preferences/speedPriority
-                   :model-preferences/intelligencePriority]))
 
 ;;; Roots
 (s/def :list-roots/method #{"roots/list"})
