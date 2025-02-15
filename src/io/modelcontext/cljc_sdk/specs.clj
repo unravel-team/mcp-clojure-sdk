@@ -266,6 +266,133 @@
 (s/def :result/read-resource
   (s/merge ::result (s/keys :req-un [:read-resource/contents])))
 
+;;; Resource List Changed Notification
+(s/def :resource-list-changed/method #{"notifications/resources/list_changed"})
+(s/def :notification/resource-list-changed
+  (s/merge ::notification (s/keys :req-un [:resource-list-changed/method])))
+
+;;; Resource Subscribe/Unsubscribe
+(s/def :subscribe/method #{"resources/subscribe"})
+(s/def :subscribe/params (s/keys :req-un [:resource/uri]))
+(s/def :request/subscribe
+  (s/merge ::request (s/keys :req-un [:subscribe/method :subscribe/params])))
+
+(s/def :unsubscribe/method #{"resources/unsubscribe"})
+(s/def :unsubscribe/params (s/keys :req-un [:resource/uri]))
+(s/def :request/unsubscribe
+  (s/merge ::request (s/keys :req-un [:unsubscribe/method :unsubscribe/params])))
+
+;;; Resource Updated Notification
+(s/def :resource-updated/method #{"notifications/resources/updated"})
+(s/def :resource-updated/params (s/keys :req-un [:resource/uri]))
+(s/def :notification/resource-updated
+  (s/merge ::notification (s/keys :req-un [:resource-updated/method
+                                          :resource-updated/params])))
+
+;;; Resource
+(s/def :resource/name string?)
+(s/def :resource/description string?)
+(s/def :resource/mimeType string?)
+(s/def ::resource
+  (s/merge ::annotated (s/keys :req-un [:resource/uri :resource/name]
+                              :opt-un [:resource/description 
+                                     :resource/mimeType])))
+
+;;; Resource Template
+(s/def :resource-template/uriTemplate string?)
+(s/def ::resource-template
+  (s/merge ::annotated 
+           (s/keys :req-un [:resource-template/uriTemplate :resource/name]
+                   :opt-un [:resource/description :resource/mimeType])))
+
+;;; Resource Contents
+(s/def :resource/text string?)
+(s/def :resource/blob string?)
+
+(s/def :resource/text-resource
+  (s/merge ::resource-contents (s/keys :req-un [:resource/text])))
+
+(s/def :resource/blob-resource
+  (s/merge ::resource-contents (s/keys :req-un [:resource/blob])))
+
+(s/def ::resource-contents
+  (s/keys :req-un [:resource/uri]
+          :opt-un [:resource/mimeType]))
+
+;;; Prompts
+(s/def :list-prompts/method #{"prompts/list"})
+(s/def :request/list-prompts
+  (s/merge :request/paginated (s/keys :req-un [:list-prompts/method])))
+
+(s/def :list-prompts/prompts (s/coll-of ::prompt))
+(s/def :result/list-prompts
+  (s/merge :result/paginated (s/keys :req-un [:list-prompts/prompts])))
+
+(s/def :get-prompt/method #{"prompts/get"})
+(s/def :prompt/arguments (s/map-of string? string?))
+(s/def :get-prompt/params 
+  (s/keys :req-un [:prompt/name]
+          :opt-un [:prompt/arguments]))
+(s/def :request/get-prompt
+  (s/merge ::request (s/keys :req-un [:get-prompt/method
+                                     :get-prompt/params])))
+
+(s/def :get-prompt/messages (s/coll-of ::prompt-message))
+(s/def :result/get-prompt
+  (s/merge ::result (s/keys :req-un [:get-prompt/messages]
+                           :opt-un [:prompt/description])))
+
+;;; Prompt
+(s/def :prompt/name string?)
+(s/def :prompt/arguments (s/coll-of ::prompt-argument))
+(s/def ::prompt
+  (s/keys :req-un [:prompt/name]
+          :opt-un [:prompt/description :prompt/arguments]))
+
+;;; Prompt Argument
+(s/def :prompt-argument/name string?)
+(s/def :prompt-argument/description string?)
+(s/def :prompt-argument/required boolean?)
+(s/def ::prompt-argument
+  (s/keys :req-un [:prompt-argument/name]
+          :opt-un [:prompt-argument/description
+                  :prompt-argument/required]))
+
+;;; Prompt List Changed Notification
+(s/def :prompt-list-changed/method #{"notifications/prompts/list_changed"})
+(s/def :notification/prompt-list-changed
+  (s/merge ::notification (s/keys :req-un [:prompt-list-changed/method])))
+
+;;; Role
+(s/def ::role #{"user" "assistant"})
+
+;;; Message Content Types
+(s/def :content/type #{"text" "image" "audio" "resource"})
+(s/def :content/text string?)
+(s/def :content/data string?)
+(s/def :content/mimeType string?)
+(s/def :content/resource ::resource-contents)
+
+(s/def ::text-content
+  (s/merge ::annotated 
+           (s/keys :req-un [:content/type :content/text])))
+
+(s/def ::image-content
+  (s/merge ::annotated 
+           (s/keys :req-un [:content/type :content/data :content/mimeType])))
+
+(s/def ::audio-content
+  (s/merge ::annotated 
+           (s/keys :req-un [:content/type :content/data :content/mimeType])))
+
+(s/def ::embedded-resource
+  (s/merge ::annotated 
+           (s/keys :req-un [:content/type :content/resource])))
+
+(s/def ::prompt-message
+  (s/keys :req-un [::role]
+          :req [(or :content/text :content/data :content/resource)]))
+
 
 ;; Helper functions for resource validation
 (defn valid-resource? [resource] (s/valid? ::resource resource))
