@@ -574,6 +574,48 @@
         :audio :content/audio))
 (s/def ::sampling-message (s/keys :req-un [::role :sampling-message/content]))
 
+;;; Annotated
+;; Base for objects that include optional annotations for the client. The
+;; client
+;; can use annotations to inform how objects are used or displayed
+(s/def ::annotated (s/keys :opt-un [:annotated/annotations]))
+(s/def :annotated/annotations
+  (s/keys :opt-un [:annotated/audience :annotated/priority]))
+;; Describes who the intended customer of this object or data is.
+(s/def :annotated/audience (s/coll-of ::role))
+;; Describes how important this data is for operating the server. A value of 1
+;; means "most important," and indicates that the data is effectively required,
+;; while 0 means "least important," and indicates thatthe data is entirely
+;; optional.
+(defn between-zero-and-one? [x] (<= 0 x 1))
+(s/def :annotated/priority (s/and number? between-zero-and-one?))
+
+;; Text provided to or from an LLM.
+(s/def :content/text
+  (s/merge ::annotated (s/keys :req-un [:text-content/type
+                                        :text-content/text])))
+(s/def :text-content/type #{"text"})
+(s/def :text-content/text string?)
+
+;; An image provided to or from an LLM.
+(s/def :content/image
+  (s/merge ::annotated (s/keys :req-un [:image-content/type :image-content/data
+                                        :image-content/mimeType])))
+(s/def :image-content/type #{"image"})
+;; The base64-encoded image data.
+(s/def :image-content/data string?)
+(s/def :image-content/mimeType string?)
+
+;; Audio provided to or from an LLM.
+(s/def :content/audio
+  (s/merge ::annotated (s/keys :req-un [:audio-content/type :audio-content/data
+                                        :audio-content/mimeType])))
+
+(s/def :audio-content/type #{"audio"})
+;; The base64-encoded audio data.
+(s/def :audio-content/data string?)
+(s/def :audio-content/mimeType string?)
+
 (s/def :model-hint/name string?)
 (s/def ::model-hint (s/keys :opt-un [:model-hint/name]))
 
@@ -586,23 +628,7 @@
                    :model-preferences/speedPriority
                    :model-preferences/intelligencePriority]))
 
-;;; Message Content Types
-(s/def :content/type #{"text" "image" "audio" "resource"})
-(s/def :content/text string?)
-(s/def :content/data string?)
-(s/def :content/mimeType string?)
-(s/def :content/resource ::resource-contents)
 
-(s/def ::text-content
-  (s/merge ::annotated (s/keys :req-un [:content/type :content/text])))
-
-(s/def ::image-content
-  (s/merge ::annotated (s/keys :req-un [:content/type :content/data
-                                        :content/mimeType])))
-
-(s/def ::audio-content
-  (s/merge ::annotated (s/keys :req-un [:content/type :content/data
-                                        :content/mimeType])))
 
 ;;; Roots
 (s/def :list-roots/method #{"roots/list"})
