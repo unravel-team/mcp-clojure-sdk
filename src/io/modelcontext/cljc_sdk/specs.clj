@@ -253,9 +253,10 @@
                                       :read-resource/params])))
 
 ;; The server's response to a resources/read request from the client.
-(s/def :read-resource/contents
-  (s/or :text-resources :contents/text-resource
-        :blob-resources :contents/blob-resource))
+(s/def :read-resource/content
+  (s/or :text-resource :contents/text-resource
+        :blob-resource :contents/blob-resource))
+(s/def :read-resource/contents (s/coll-of :read-resource/content))
 (s/def :result/read-resource
   (s/merge ::result (s/keys :req-un [:read-resource/contents])))
 
@@ -397,31 +398,28 @@
   (s/or :text-content :content/text
         :image-content :content/image
         :audio-content :content/audio
-        :embedded-resource :content/embedded-resource))
+        :embedded-resource :resource/embedded))
 (s/def ::prompt-message (s/keys :req-un [::role :prompt-message/content]))
 
-(s/def ::embedded-resource
-  (s/merge ::annotated (s/keys :req-un [:content/type :content/resource])))
-
-;;; Message Content Types
-(s/def :content/type #{"text" "image" "audio" "resource"})
-(s/def :content/text string?)
-(s/def :content/data string?)
-(s/def :content/mimeType string?)
-(s/def :content/resource ::resource-contents)
-
-(s/def ::text-content
-  (s/merge ::annotated (s/keys :req-un [:content/type :content/text])))
-
-(s/def ::image-content
-  (s/merge ::annotated (s/keys :req-un [:content/type :content/data
-                                        :content/mimeType])))
-
-(s/def ::audio-content
-  (s/merge ::annotated (s/keys :req-un [:content/type :content/data
-                                        :content/mimeType])))
+;;; Embedded Resource
+;; The contents of a resource, embedded into a prompt or tool call result. It
+;; is
+;; up to the client how best to render embedded resources for the benefit of
+;; the
+;; LLM and/or the user.
+(s/def :embedded-resource/type #{"resource"})
+(s/def :embedded-resource/resource
+  (s/or :text-resource :contents/text-resource
+        :blob-resource :contents/blob-resource))
+(s/def :resource/embedded
+  (s/merge ::annotated (s/keys :req-un [:embedded-resource/type
+                                        :embedded-resource/resource])))
 
 ;;; Prompt List Changed Notification
+;; An optional notification from the server to the client, informing it that
+;; the
+;; list of prompts it offers has changed. This may be issued by servers without
+;; any previous subscription from the client.
 (s/def :prompt-list-changed/method #{"notifications/prompts/list_changed"})
 (s/def :notification/prompt-list-changed
   (s/merge ::notification (s/keys :req-un [:prompt-list-changed/method])))
@@ -451,6 +449,24 @@
 (s/def :result/call-tool
   (s/merge ::result (s/keys :req-un [:call-tool/content]
                             :opt-un [:call-tool/isError])))
+
+;;; Message Content Types
+(s/def :content/type #{"text" "image" "audio" "resource"})
+(s/def :content/text string?)
+(s/def :content/data string?)
+(s/def :content/mimeType string?)
+(s/def :content/resource ::resource-contents)
+
+(s/def ::text-content
+  (s/merge ::annotated (s/keys :req-un [:content/type :content/text])))
+
+(s/def ::image-content
+  (s/merge ::annotated (s/keys :req-un [:content/type :content/data
+                                        :content/mimeType])))
+
+(s/def ::audio-content
+  (s/merge ::annotated (s/keys :req-un [:content/type :content/data
+                                        :content/mimeType])))
 
 (s/def :tool/name string?)
 (s/def :tool/description string?)
