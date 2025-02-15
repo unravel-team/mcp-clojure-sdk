@@ -66,3 +66,5 @@
         (is (not (specs/valid-prompt? invalid-args))))
       (let [invalid-arg-type {:name "test", :arguments "not-a-list"}]
         (is (not (specs/valid-prompt? invalid-arg-type)))))))
+
+;; // what other tests should I add here ai?
