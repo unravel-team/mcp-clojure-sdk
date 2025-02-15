@@ -743,6 +743,10 @@
         :initialized :notification/initialized
         :roots-list-changed :notification/roots-list-changed))
 
+;;; Server messages
+;; // Create ServerRequest, ServerNotification and ServerResult specs by
+;; // referring to ClientRequest and :request/client specs ai!
+
 ;; Helper functions for resource validation
 (defn valid-resource? [resource] (s/valid? ::resource resource))
 
