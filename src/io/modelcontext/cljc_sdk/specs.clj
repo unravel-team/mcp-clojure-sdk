@@ -246,14 +246,27 @@
              (s/keys :req-un [:list-resource-templates/resourceTemplates])))
 
 ;; Sent from the client to the server, to read a specific resource URI.
-(s/def :read-resource-request/method #{"resources/read"})
-(s/def :read-resource-request/params (s/keys :req-un [:resource/uri]))
+(s/def :read-resource/method #{"resources/read"})
+;; The URI of the resource to read. The URI can use any protocol; it is up to
+;; the server how to interpret it.
+(s/def :resource/uri string?)
+(s/def :read-resource/params (s/keys :req-un [:resource/uri]))
 (s/def :request/read-resource
-  (s/merge ::request (s/keys :req-un [:read-resource-request/method
-                                      :read-resource-request/params])))
+  (s/merge ::request (s/keys :req-un [:read-resource/method
+                                      :read-resource/params])))
+
+;; The server's response to a resources/read request from the client.
+(s/def :read-resouces/text-resource-contents
+  (s/coll-of :resource/text-resource))
+(s/def :read-resouces/blob-resource-contents
+  (s/coll-of :resource/blob-resource))
+(s/def :read-resource/contents
+  (s/or :text-resources :read-resouces/text-resource-contents
+        :blob-resources :read-resource/blob-resource-contents))
+(s/def :result/read-resource
+  (s/merge ::result (s/keys :req-un [:read-resource/contents])))
 
 ;; Resource content
-(s/def :resource/uri string?)
 (s/def ::name string?)
 (s/def ::description string?)
 (s/def ::mimeType string?)
