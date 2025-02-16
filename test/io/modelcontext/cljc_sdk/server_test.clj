@@ -203,3 +203,104 @@
                   :name
                   (= "test-server")))))
       (server/stop! server))))
+
+(deftest stdio-transport-encoding
+  (testing "Stdio transport with different encodings"
+    (testing "Default UTF-8 encoding"
+      (let [transport (stdio/create-stdio-transport)]
+        (is (= "UTF-8" (:encoding transport)))
+        (is (some? (:in transport)))
+        (is (some? (:out transport)))))
+    (testing "Custom encoding creation"
+      (let [transport (stdio/create-stdio-transport :encoding "UTF-16")]
+        (is (= "UTF-16" (:encoding transport)))
+        (is (some? (:in transport)))
+        (is (some? (:out transport)))))
+    (testing "ASCII encoding"
+      (let [transport (stdio/create-stdio-transport :encoding "ASCII")]
+        (is (= "ASCII" (:encoding transport)))
+        (is (some? (:in transport)))
+        (is (some? (:out transport)))))
+    (testing "Invalid encoding handling"
+      (is (thrown? IllegalArgumentException
+                   (stdio/create-stdio-transport :encoding
+                                                 "INVALID-ENCODING"))))
+    ;; (testing "Special characters with different encodings"
+    ;;   (let [test-messages {"UTF-8" "Hello, 世界! 🌍",
+    ;;                        "UTF-16" "Hello, 世界! 🌍",
+    ;;                        "ASCII" "Hello, World!"}]
+    ;;     (doseq [[encoding message] test-messages]
+    ;;       (testing (str "Testing " encoding " encoding")
+    ;;         (let [transport (stdio/create-stdio-transport :encoding
+    ;;         encoding)
+    ;;               received-ch (a/chan 1)]
+    ;;           (core/start! transport)
+    ;;           (a/go (let [received (core/receive! transport)]
+    ;;                   (a/>! received-ch received)))
+    ;;           (core/send! transport message)
+    ;;           (let [timeout (a/timeout 500)
+    ;;                 [received _] (a/alts!! [received-ch timeout])]
+    ;;             (is (some? received) "Message should be received")
+    ;;             (is (= message received)
+    ;;                 "Received message should match sent message"))
+    ;;           (core/stop! transport))))))
+    ;; (testing "Process transport with custom encoding"
+    ;;   (let [transport (stdio/create-process-transport {:command "echo",
+    ;;                                                    :args ["Hello"],
+    ;;                                                    :encoding
+    ;;                                                    "UTF-16",
+    ;;                                                    :buffer-size
+    ;;                                                    4096})]
+    ;;     (is (= "UTF-16" (:encoding transport)))
+    ;;     (is (some? (:process transport)))
+    ;;     (core/start! transport)
+    ;;     (core/stop! transport)))
+    ;; (testing "Large messages with different buffer sizes"
+    ;;   (doseq [buffer-size [1024 4096 16384]]
+    ;;     (testing (str "Buffer size: " buffer-size)
+    ;;       (let [transport (stdio/create-stdio-transport :buffer-size
+    ;;                                                     buffer-size)
+    ;;             large-message (apply str (repeat 10000 "x"))]
+    ;;         (core/start! transport)
+    ;;         (core/send! transport large-message)
+    ;;         (core/stop! transport)))))
+    ;; (testing "Multiple encodings in process transport"
+    ;;   (doseq [encoding ["UTF-8" "UTF-16" "ASCII"]]
+    ;;     (testing (str "Process transport with " encoding)
+    ;;       (let [transport (stdio/create-process-transport {:command
+    ;;       "cat",
+    ;;                                                        :encoding
+    ;;                                                        encoding})
+    ;;             test-message "Hello, World!"]
+    ;;         (core/start! transport)
+    ;;         (let [received-ch (a/chan 1)]
+    ;;           (a/go (let [received (core/receive! transport)]
+    ;;                   (a/>! received-ch received)))
+    ;;           (core/send! transport test-message)
+    ;;           (let [timeout (a/timeout 500)
+    ;;                 [received _] (a/alts!! [received-ch timeout])]
+    ;;             (is (some? received) "Message should be received")
+    ;;             (is (= test-message received)
+    ;;                 "Received message should match sent message")))
+    ;;         (core/stop! transport)))))
+    ;; (testing "Encoding validation"
+    ;;   (testing "Valid encodings"
+    ;;     (doseq [encoding ["UTF-8" "UTF-16" "UTF-16BE" "UTF-16LE" "ASCII"
+    ;;                       "ISO-8859-1"]]
+    ;;       (is (stdio/validate-encoding! encoding)
+    ;;           (str encoding " should be valid"))))
+    ;;   (testing "Invalid encodings"
+    ;;     (doseq [encoding ["INVALID" "UTF-99" "ASCII-2"]]
+    ;;       (is (thrown? IllegalArgumentException
+    ;;                    (stdio/validate-encoding! encoding))
+    ;;           (str encoding " should be invalid")))))
+    ;; (testing "Buffer size validation"
+    ;;   (testing "Valid buffer sizes"
+    ;;     (doseq [size [1024 4096 8192 16384]]
+    ;;       (let [transport (stdio/create-stdio-transport :buffer-size
+    ;;       size)]
+    ;;         (is (some? transport)))))
+    ;;   (testing "Default buffer size"
+    ;;     (let [transport (stdio/create-stdio-transport)]
+    ;;       (is (some? transport)))))
+  ))
