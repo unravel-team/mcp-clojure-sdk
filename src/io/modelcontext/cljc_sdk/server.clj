@@ -88,15 +88,13 @@
      (let [tool
              {:name tool-name, :description description, :inputSchema schema}]
        (when-not (specs/valid-tool? tool)
-         (throw (ex-info "Invalid tool definition"
-                         {:explain (specs/explain-tool tool)})))
+         (throw (ex-info "Invalid tool definition" (specs/explain-tool tool))))
        (swap! (:tools this) assoc tool-name {:tool tool, :handler handler}))
      this),
    :register-resource! (fn [this resource handler]
                          (when-not (specs/valid-resource? resource)
                            (throw (ex-info "Invalid resource"
-                                           {:explain (specs/explain-resource
-                                                       resource)})))
+                                           (specs/explain-resource resource))))
                          (swap! (:resources this) assoc
                            (:uri resource)
                            {:resource resource, :handler handler})
@@ -104,8 +102,7 @@
    :register-prompt! (fn [this prompt handler]
                        (when-not (specs/valid-prompt? prompt)
                          (throw (ex-info "Invalid prompt"
-                                         {:explain (specs/explain-prompt
-                                                     prompt)})))
+                                         (specs/explain-prompt prompt))))
                        (swap! (:prompts this) assoc
                          (:name prompt)
                          {:prompt prompt, :handler handler})

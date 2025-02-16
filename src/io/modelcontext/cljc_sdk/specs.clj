@@ -5,7 +5,7 @@
 (s/def :jsonrpc/message
   (s/or :jsonrpc-request :jsonrpc/request
         :jsonrpc-notification :jsonrpc/notification
-        :jsonrpc-response :jsonprc/response
+        :jsonrpc-response :jsonrpc/response
         :jsonrpc-error :jsonrpc/error))
 
 ;; Protocol constants
@@ -775,17 +775,17 @@
 ;; Helper functions for resource validation
 (defn valid-resource? [resource] (s/valid? ::resource resource))
 
-(defn explain-resource [resource] (s/explain-str ::resource resource))
+(defn explain-resource [resource] (s/explain-data ::resource resource))
 
 ;; Helper functions for prompt validation
 (defn valid-prompt? [prompt] (s/valid? ::prompt prompt))
 
-(defn explain-prompt [prompt] (s/explain-str ::prompt prompt))
+(defn explain-prompt [prompt] (s/explain-data ::prompt prompt))
 
 ;; Helper functions for tool validation
 (defn valid-tool? [tool] (s/valid? ::tool tool))
 
-(defn explain-tool [tool] (s/explain-str ::tool tool))
+(defn explain-tool [tool] (s/explain-data ::tool tool))
 
 ;; Helper functions
 (defn valid-request? [req] (s/valid? ::request req))
@@ -796,18 +796,18 @@
 
 (defn valid-notification? [notif] (s/valid? ::notification notif))
 
-(defn explain-request [req] (s/explain-str ::request req))
+(defn explain-request [req] (s/explain-data ::request req))
 
-(defn explain-response [res] (s/explain-str ::response res))
+(defn explain-response [res] (s/explain-data ::response res))
 
-(defn explain-error [err] (s/explain-str ::error-response err))
+(defn explain-error [err] (s/explain-data ::error-response err))
 
-(defn explain-notification [notif] (s/explain-str ::notification notif))
+(defn explain-notification [notif] (s/explain-data ::notification notif))
 
 ;; Helper functions for root validation
 (defn valid-root? [root] (s/valid? ::root root))
 
-(defn explain-root [root] (s/explain-str ::root root))
+(defn explain-root [root] (s/explain-data ::root root))
 
 ;; Helper functions for message content validation
 (defn valid-text-content? [content] (s/valid? :content/text content))
@@ -818,28 +818,33 @@
 
 (defn valid-embedded-resource? [content] (s/valid? :resource/embedded content))
 
-(defn explain-text-content [content] (s/explain-str :content/text content))
+(defn explain-text-content [content] (s/explain-data :content/text content))
 
-(defn explain-image-content [content] (s/explain-str :content/image content))
+(defn explain-image-content [content] (s/explain-data :content/image content))
 
-(defn explain-audio-content [content] (s/explain-str :content/audio content))
+(defn explain-audio-content [content] (s/explain-data :content/audio content))
 
 (defn explain-embedded-resource
   [content]
-  (s/explain-str :resource/embedded content))
+  (s/explain-data :resource/embedded content))
 
 ;; Helper functions for sampling validation
 (defn valid-sampling-message? [msg] (s/valid? ::sampling-message msg))
 
 (defn valid-model-preferences? [prefs] (s/valid? ::model-preferences prefs))
 
-(defn explain-sampling-message [msg] (s/explain-str ::sampling-message msg))
+(defn explain-sampling-message [msg] (s/explain-data ::sampling-message msg))
 
 (defn explain-model-preferences
   [prefs]
-  (s/explain-str ::model-preferences prefs))
+  (s/explain-data ::model-preferences prefs))
 
 ;; Helper functions for implementation validation
 (defn valid-implementation? [impl] (s/valid? ::implementation impl))
 
-(defn explain-implementation [impl] (s/explain-str ::implementation impl))
+(defn explain-implementation [impl] (s/explain-data ::implementation impl))
+
+;; Helper functions for JSONRPC messages
+(defn valid-jsonrpc-message? [msg] (s/valid? :jsonrpc/message msg))
+
+(defn explain-jsonrpc-message [msg] (s/explain-data :jsonrpc/message msg))

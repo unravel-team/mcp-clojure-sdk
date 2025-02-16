@@ -58,8 +58,7 @@
       (let [req (create-request method params)
             response-ch (a/promise-chan)]
         (when-not (specs/valid-request? req)
-          (throw (ex-info "Invalid request"
-                          {:explain (specs/explain-request req)})))
+          (throw (ex-info "Invalid request" (specs/explain-request req))))
         (swap! pending-requests assoc (:id req) response-ch)
         (send! transport (encode-message req))
         (a/<!! response-ch)))
@@ -67,7 +66,7 @@
       (let [notif (create-notification method params)]
         (when-not (specs/valid-notification? notif)
           (throw (ex-info "Invalid notification"
-                          {:explain (specs/explain-notification notif)})))
+                          (specs/explain-notification notif))))
         (send! transport (encode-message notif))))
     (handle-request! [_this method handler]
       (swap! request-handlers assoc method handler))
