@@ -14,18 +14,20 @@
   (receive! [this]
     "Receive a message"))
 
-(defprotocol Protocol
+(defprotocol Protocol ;; Request, Notification, Result
   (request! [this method params]
-    "Send a request and await response")
+    "Send a request and await result. Handle incoming result")
   (notify! [this method params]
-    "Send a notification")
+    "Send a one-way notification. Return nil")
   (handle-request! [this method handler]
-    "Register a request handler")
+    "Register a request handler to handle incoming requests. Handler should return a result.")
   (handle-notification! [this method handler]
-    "Register a notification handler"))
+    "Register a notification handler to handle incoming notifications. Handler should return nil."))
 
 (defn- generate-request-id [] (str (random-uuid)))
 
+;; // add a test for `create-request` which ensures that fn returns a valid
+;; // request. ai!
 (defn create-request
   [method params]
   {:jsonrpc specs/jsonrpc-version,
