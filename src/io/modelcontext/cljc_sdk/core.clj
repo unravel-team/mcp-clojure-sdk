@@ -26,8 +26,6 @@
 
 (defn- generate-request-id [] (str (random-uuid)))
 
-;; // add a test for `create-request` which ensures that fn returns a valid
-;; // request. ai!
 (defn create-request
   [method params]
   {:jsonrpc specs/jsonrpc-version,
