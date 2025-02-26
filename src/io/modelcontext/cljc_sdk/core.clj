@@ -26,12 +26,22 @@
 
 (defn- generate-request-id [] (str (random-uuid)))
 
+(defn- stringify-keys
+  "Recursively transforms all map keys from keywords to strings."
+  [m]
+  (let [f (fn [[k v]]
+            [(if (keyword? k) (name k) (str k))
+             (if (map? v) (stringify-keys v) v)])]
+    (if (map? m)
+      (into {} (map f m))
+      m)))
+
 (defn create-request
   [method params]
   {:jsonrpc specs/jsonrpc-version,
    :id (generate-request-id),
    :method method,
-   :params (stringify-keys params)}) ; // implement stringify-keys ai!
+   :params (stringify-keys params)})
 
 (defn create-notification
   [method params]

@@ -3,6 +3,17 @@
             [io.modelcontext.cljc-sdk.specs :as specs]
             [clojure.test :refer [deftest testing is]]))
 
+(deftest test-stringify-keys
+  (testing "stringify-keys converts keyword keys to strings"
+    (let [input {:a 1 :b {:c 2}}
+          expected {"a" 1 "b" {"c" 2}}
+          result (#'io.modelcontext.cljc-sdk.core/stringify-keys input)]
+      (is (= expected result))))
+  (testing "stringify-keys handles non-map input"
+    (let [input "not-a-map"
+          result (#'io.modelcontext.cljc-sdk.core/stringify-keys input)]
+      (is (= input result)))))
+
 (deftest test-create-request
   (testing "create-request generates valid requests"
     (let [method "test/method"
