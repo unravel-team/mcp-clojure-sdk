@@ -31,7 +31,7 @@
   {:jsonrpc specs/jsonrpc-version,
    :id (generate-request-id),
    :method method,
-   :params params})
+   :params (stringify-keys params)}) ; // implement stringify-keys ai!
 
 (defn create-notification
   [method params]

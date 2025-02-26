@@ -6,10 +6,14 @@
 (deftest test-create-request
   (testing "create-request generates valid requests"
     (let [method "test/method"
-          params {:foo "bar"}
-          request (core/create-request method params)]
-      (is (= specs/jsonrpc-version (:jsonrpc request)))
-      (is (string? (:id request)))
-      (is (= method (:method request)))
-      (is (= params (:params request)))
-      (is (specs/valid-request? request)))))
+          params1 {"foo" "bar"}
+          params2 {:foo "bar"}
+          request1 (core/create-request method params1)
+          request2 (core/create-request method params2)]
+      (is (= specs/jsonrpc-version (:jsonrpc request1)))
+      (is (string? (:id request1)))
+      (is (= method (:method request1)))
+      (is (= params1 (:params request1)))
+      (is (specs/valid-request? request1))
+      (is (= params1 (:params request2)))
+      (is (specs/valid-request? request2)))))
