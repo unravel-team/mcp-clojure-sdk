@@ -214,11 +214,13 @@
             :version "1.0.0",
             :tools [],
             :prompts
+            ;; // add a second arg code to this prompt ai
             [{:name "analyze-code",
               :description "Analyze code for potential improvements",
               :arguments [{:name "language",
                            :description "Programming language",
                            :required true}]}
+             ;; // add a second arg code to this prompt ai
              {:name "poem-about-code",
               :description "Write a poem describing what this code does",
               :arguments
@@ -226,6 +228,8 @@
                 :description
                 "The style in which to write the poetry: sonnet, limerick, haiku",
                 :required true}]}]})
+       ;; // implement a single handler function which returns messages for
+       ;; // our given prompts ai!
        _ (server/start! server transport)]
       (testing "Prompts list request"
         (a/>!! (:received-ch transport)
