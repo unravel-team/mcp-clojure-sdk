@@ -82,25 +82,36 @@
                         "prompts/get"
                         #(handle-get-prompt prompts (:name %) (:arguments %))))
 
+(defn- check-object-and-handler
+  [object-type object handler]
+  (when-not (ifn? handler)
+    (throw (ex-info (str "Invalid handler for " object-type)
+                    {:handler handler, object-type object})))
+  (case object-type
+    :tool (when-not (specs/valid-tool? object)
+            (throw (ex-info "Invalid tool definition"
+                            (specs/explain-tool object))))
+    :resource (when-not (specs/valid-resource? object)
+                (throw (ex-info "Invalid resource definition"
+                                (specs/explain-resource object))))
+    :prompt (when-not (specs/valid-prompt? object)
+              (throw (ex-info "Invalid prompt definition"
+                              (specs/explain-prompt object))))))
+
 (def server-functions
   {:register-tool!
    (fn [this tool handler]
-     (when-not (specs/valid-tool? tool)
-       (throw (ex-info "Invalid tool definition" (specs/explain-tool tool))))
+     (check-object-and-handler :tool tool handler)
      (swap! (:tools this) assoc (:name tool) {:tool tool, :handler handler})
      this),
    :register-resource! (fn [this resource handler]
-                         (when-not (specs/valid-resource? resource)
-                           (throw (ex-info "Invalid resource"
-                                           (specs/explain-resource resource))))
+                         (check-object-and-handler :resource resource handler)
                          (swap! (:resources this) assoc
                            (:uri resource)
                            {:resource resource, :handler handler})
                          this),
    :register-prompt! (fn [this prompt handler]
-                       (when-not (specs/valid-prompt? prompt)
-                         (throw (ex-info "Invalid prompt"
-                                         (specs/explain-prompt prompt))))
+                       (check-object-and-handler :prompt prompt handler)
                        (swap! (:prompts this) assoc
                          (:name prompt)
                          {:prompt prompt, :handler handler})
