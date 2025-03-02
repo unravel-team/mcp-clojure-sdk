@@ -282,6 +282,7 @@
                     :required true}]
                   (:arguments poem)))))))
       (server/stop! server))))
+;; // add a test for prompt-getting, similar to the prompt-listing ai!
 
 (deftest stdio-transport-encoding
   (testing "Stdio transport with different encodings"
