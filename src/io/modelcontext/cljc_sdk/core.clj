@@ -29,12 +29,9 @@
 (defn- stringify-keys
   "Recursively transforms all map keys from keywords to strings."
   [m]
-  (let [f (fn [[k v]]
-            [(if (keyword? k) (name k) (str k))
-             (if (map? v) (stringify-keys v) v)])]
-    (if (map? m)
-      (into {} (map f m))
-      m)))
+  (let [f (fn [[k v]] [(if (keyword? k) (name k) (str k))
+                       (if (map? v) (stringify-keys v) v)])]
+    (if (map? m) (into {} (map f m)) m)))
 
 (defn create-request
   [method params]
@@ -45,11 +42,13 @@
 
 (defn create-notification
   [method params]
-  {:jsonrpc specs/jsonrpc-version, :method method, :params params})
+  {:jsonrpc specs/jsonrpc-version,
+   :method method,
+   :params (stringify-keys params)})
 
-(defn create-response
+(defn create-result
   [id result]
-  {:jsonrpc specs/jsonrpc-version, :id id, :result result})
+  {:jsonrpc specs/jsonrpc-version, :id id, :result (stringify-keys result)})
 
 (defn create-error
   [id code message & [data]]
@@ -86,7 +85,7 @@
 (defn- handle-request
   [protocol decoded handler]
   (try (let [result (handler (:params decoded))
-             response (create-response (:id decoded) result)]
+             response (create-result (:id decoded) result)]
          (send! (:transport protocol) (encode-message response)))
        (catch clojure.lang.ExceptionInfo e
          (let [data (ex-data e)
