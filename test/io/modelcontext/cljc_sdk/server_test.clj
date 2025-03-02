@@ -341,8 +341,46 @@
             (is (= "Prompt not found" (:message error))))))
       (server/stop! server))))
 
-;; // write a test for resource-listing similar to the test for prompt-listing
-;; // ai!
+(deftest resource-listing
+  (testing "Listing available resources"
+    (let [transport (create-mock-transport)
+          server (server/make-server {:name "test-server",
+                                      :version "1.0.0",
+                                      :tools [],
+                                      :prompts [],
+                                      :resources
+                                      [{:uri "file:///test.txt",
+                                        :name "Test File",
+                                        :description "A test file",
+                                        :mimeType "text/plain"}
+                                       {:uri "file:///data.json",
+                                        :name "Test Data",
+                                        :description "Test JSON data",
+                                        :mimeType "application/json"}]})
+          _ (server/start! server transport)]
+      (testing "Resources list request"
+        (a/>!!
+          (:received-ch transport)
+          "{\"jsonrpc\":\"2.0\",\"id\":\"1\",\"method\":\"resources/list\"}")
+        (let [timeout (a/timeout 500)
+              [response _] (a/alts!! [(:sent-ch transport) timeout])]
+          (is (some? response) "Response received before timeout")
+          (let [result (-> response
+                           json/read-str
+                           :result)]
+            (is (= 2 (count (:resources result))))
+            (let [file-resource (first (:resources result))
+                  json-resource (second (:resources result))]
+              (is (= "file:///test.txt" (:uri file-resource)))
+              (is (= "Test File" (:name file-resource)))
+              (is (= "A test file" (:description file-resource)))
+              (is (= "text/plain" (:mimeType file-resource)))
+              (is (= "file:///data.json" (:uri json-resource)))
+              (is (= "Test Data" (:name json-resource)))
+              (is (= "Test JSON data" (:description json-resource)))
+              (is (= "application/json" (:mimeType json-resource))))))
+        (server/stop! server)))))
+
 (deftest stdio-transport-encoding
   (testing "Stdio transport with different encodings"
     (testing "Default UTF-8 encoding"
