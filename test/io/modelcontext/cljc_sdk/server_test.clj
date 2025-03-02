@@ -218,8 +218,11 @@
             [{:name "analyze-code",
               :description "Analyze code for potential improvements",
               :arguments [{:name "language",
-                           :description "Programming language",
-                           :required true}]}
+                          :description "Programming language",
+                          :required true},
+                         {:name "code",
+                          :description "The code to analyze",
+                          :required true}]}
              ;; // add a second arg code to this prompt ai
              {:name "poem-about-code",
               :description "Write a poem describing what this code does",
@@ -227,9 +230,27 @@
               [{:name "poetry_type",
                 :description
                 "The style in which to write the poetry: sonnet, limerick, haiku",
-                :required true}]}]})
-       ;; // implement a single handler function which returns messages for
-       ;; // our given prompts ai!
+                :required true},
+               {:name "code",
+                :description "The code to write poetry about",
+                :required true}]}]
+            :handlers {"analyze-code"
+                      (fn [args]
+                        {:messages
+                         [{:role "assistant"
+                           :content
+                           {:type "text"
+                            :text (str "Analysis of " (:language args) " code:\n"
+                                     "Here are potential improvements for:\n"
+                                     (:code args))}}]})
+                      "poem-about-code"
+                      (fn [args]
+                        {:messages
+                         [{:role "assistant"
+                           :content
+                           {:type "text"
+                            :text (str "A " (:poetry_type args) " about:\n"
+                                     (:code args))}}]})}}),
        _ (server/start! server transport)]
       (testing "Prompts list request"
         (a/>!! (:received-ch transport)
