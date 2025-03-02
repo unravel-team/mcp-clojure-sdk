@@ -1,10 +1,15 @@
+## Mark aider commits specifically
 attribute-commit-message-author: true
+
+## Watch is my preferred way to use Aider
 watch-files: true
+
 ## Specify a read-only file (can be used multiple times)
 read:
   - CONVENTIONS.md
   - doc/specification-schema.ts
   - src/io/modelcontext/cljc_sdk/specs.clj
+
 ## Specify a custom prompt for generating commit messages
 commit-prompt: |
   You are an expert software engineer that generates clear Git commit messages based on the provided diffs.
@@ -29,3 +34,8 @@ commit-prompt: |
   Ensure that you write a meaningful <body> for bigger changes.
 
   Reply only with the commit message, without any additional text or explanations.
+
+## Main model (Architect) and editor model (Editor)
+model: deepseek
+architect: true
+editor-model: sonnet
