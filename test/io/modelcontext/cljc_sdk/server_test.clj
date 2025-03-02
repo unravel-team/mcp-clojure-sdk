@@ -60,6 +60,19 @@
                                                                    args))}}]})})
 
 ;;; Resources
+(def resource-test-json
+  {:description "Test JSON data",
+   :mimeType "application/json",
+   :name "Test Data",
+   :uri "file:///data.json",
+   :handler identity})
+
+(def resource-test-file
+  {:description "A test file",
+   :mimeType "text/plain",
+   :name "Test File",
+   :uri "file:///test.txt",
+   :handler identity})
 
 ;;; Tests
 
@@ -348,15 +361,8 @@
                                       :version "1.0.0",
                                       :tools [],
                                       :prompts [],
-                                      :resources
-                                      [{:uri "file:///test.txt",
-                                        :name "Test File",
-                                        :description "A test file",
-                                        :mimeType "text/plain"}
-                                       {:uri "file:///data.json",
-                                        :name "Test Data",
-                                        :description "Test JSON data",
-                                        :mimeType "application/json"}]})
+                                      :resources [resource-test-file
+                                                  resource-test-json]})
           _ (server/start! server transport)]
       (testing "Resources list request"
         (a/>!!
