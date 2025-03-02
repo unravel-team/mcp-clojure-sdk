@@ -7,21 +7,69 @@
             [io.modelcontext.cljc-sdk.specs :as specs]
             [io.modelcontext.cljc-sdk.transport.stdio :as stdio]))
 
+;;; Tools
+
+(def tool-greet
+  {:name "greet",
+   :description "Greet someone",
+   :inputSchema {:type "object", :properties {"name" {:type "string"}}},
+   :handler (fn [{:keys [name]}]
+              {:type "text", :text (str "Hello, " name "!")})})
+
+(def tool-echo
+  {:name "echo",
+   :description "Echo input",
+   :inputSchema {:type "object",
+                 :properties {"message" {:type "string"}},
+                 :required ["message"]},
+   :handler (fn [{:keys [message]}] {:type "text", :text message})})
+
+;;; Prompts
+(def prompt-analyze-code
+  {:name "analyze-code",
+   :description "Analyze code for potential improvements",
+   :arguments
+   [{:name "language", :description "Programming language", :required true}
+    {:name "code", :description "The code to analyze", :required true}],
+   :handler (fn analyze-code [args]
+              {:messages [{:role "assistant",
+                           :content
+                           {:type "text",
+                            :text (str "Analysis of "
+                                       (:language args)
+                                       " code:\n"
+                                       "Here are potential improvements for:\n"
+                                       (:code args))}}]})})
+
+(def prompt-poem-about-code
+  {:name "poem-about-code",
+   :description "Write a poem describing what this code does",
+   :arguments
+   [{:name "poetry_type",
+     :description
+     "The style in which to write the poetry: sonnet, limerick, haiku",
+     :required true}
+    {:name "code",
+     :description "The code to write poetry about",
+     :required true}],
+   :handler (fn [args]
+              {:messages [{:role "assistant",
+                           :content {:type "text",
+                                     :text (str "Write a " (:poetry_type args)
+                                                " Poem about:\n" (:code
+                                                                   args))}}]})})
+
+;;; Resources
+
+;;; Tests
+
 (deftest server-basic-functionality
   (testing "Server creation and tool registration"
-    (let [server (server/make-server
-                   {:name "test-server",
-                    :version "1.0.0",
-                    :tools [{:name "greet",
-                             :description "Greet someone",
-                             :inputSchema {:type "object",
-                                           :properties {"name" {:type
-                                                                "string"}}},
-                             :handler (fn [{:keys [name]}]
-                                        {:type "text",
-                                         :text (str "Hello, " name "!")})}],
-                    :prompts [],
-                    :resources []})]
+    (let [server (server/make-server {:name "test-server",
+                                      :version "1.0.0",
+                                      :tools [tool-greet],
+                                      :prompts [],
+                                      :resources []})]
       (is (some? server))
       (testing "Tool listing"
         (let [tools (-> @(:tools server)
@@ -40,25 +88,18 @@
 (deftest server-start-stop
   (testing "Starting and stopping the server successfully"
     (let [transport (stdio/create-stdio-transport)
-          server (server/make-server
-                   {:name "test-server",
-                    :version "1.0.0",
-                    :tools [{:name "greet",
-                             :description "Greet someone",
-                             :inputSchema {:type "object",
-                                           :properties {"name" {:type
-                                                                "string"}}},
-                             :handler (fn [{:keys [name]}]
-                                        {:type "text",
-                                         :text (str "Hello, " name "!")})}],
-                    :prompts [],
-                    :resources []})]
+          server (server/make-server {:name "test-server",
+                                      :version "1.0.0",
+                                      :tools [tool-greet],
+                                      :prompts [],
+                                      :resources []})]
       (try (server/start! server transport)
            ;; Here we'd typically simulate client requests through the
            ;; transport but we'll keep this simple for now
            (finally (server/stop! server))))))
 
-;; Mock transport for testing
+;;; Mock transport for testing
+
 (defrecord MockTransport [sent-messages sent-ch received-ch running?]
   core/Transport
     (start! [this] (reset! running? true) this)
@@ -112,16 +153,7 @@
   (testing "Tool execution through protocol"
     (let [transport (create-mock-transport)
           server (server/make-server
-                   {:name "test-server",
-                    :version "1.0.0",
-                    :tools [{:name "echo",
-                             :description "Echo input",
-                             :inputSchema {:type "object",
-                                           :properties {"message" {:type
-                                                                   "string"}},
-                                           :required ["message"]},
-                             :handler (fn [{:keys [message]}]
-                                        {:type "text", :text message})}]})
+                   {:name "test-server", :version "1.0.0", :tools [tool-echo]})
           _ (server/start! server transport)]
       (testing "Tool list request"
         (a/>!! (:received-ch transport)
@@ -203,40 +235,6 @@
                   :name
                   (= "test-server")))))
       (server/stop! server))))
-
-(def prompt-analyze-code
-  {:name "analyze-code",
-   :description "Analyze code for potential improvements",
-   :arguments
-   [{:name "language", :description "Programming language", :required true}
-    {:name "code", :description "The code to analyze", :required true}],
-   :handler (fn analyze-code [args]
-              {:messages [{:role "assistant",
-                           :content
-                           {:type "text",
-                            :text (str "Analysis of "
-                                       (:language args)
-                                       " code:\n"
-                                       "Here are potential improvements for:\n"
-                                       (:code args))}}]})})
-
-(def prompt-poem-about-code
-  {:name "poem-about-code",
-   :description "Write a poem describing what this code does",
-   :arguments
-   [{:name "poetry_type",
-     :description
-     "The style in which to write the poetry: sonnet, limerick, haiku",
-     :required true}
-    {:name "code",
-     :description "The code to write poetry about",
-     :required true}],
-   :handler (fn [args]
-              {:messages [{:role "assistant",
-                           :content {:type "text",
-                                     :text (str "Write a " (:poetry_type args)
-                                                " Poem about:\n" (:code
-                                                                   args))}}]})})
 
 (deftest prompt-listing
   (testing "Listing available prompts"
