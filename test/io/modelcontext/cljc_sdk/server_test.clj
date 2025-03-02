@@ -387,34 +387,60 @@
               (is (= "application/json" (:mimeType json-resource))))))
         (server/stop! server)))))
 
-;; ## Reading resources
-;; To read a resource, clients make a `resources/read` request with the resource
-;; URI.
-;;
-;; The server responds with a list of resource contents:
-;;
-;; ```typescript
-;; {
-;;   contents: [
-;;     {
-;;       uri: string;        // The URI of the resource
-;;       mimeType?: string;  // Optional MIME type
-;;
-;;       // One of:
-;;       text?: string;      // For text resources
-;;       blob?: string;      // For binary resources (base64 encoded)
-;;     }
-;;   ]
-;; }
-;; ```
-;;
-;; <Tip>
-;;   Servers may return multiple resources in response to one `resources/read`
-;;   request. This could be used, for example, to return a list of files inside
-;;   a directory when the directory is read.
-;; </Tip>
-;;
-;; // add a test to read resources, similar to test for getting prompts ai!
+(deftest resource-reading
+  (testing "Reading resources"
+    (let [transport (create-mock-transport)
+          server (server/make-server {:name "test-server",
+                                      :version "1.0.0",
+                                      :tools [],
+                                      :prompts [],
+                                      :resources [resource-test-file
+                                                  resource-test-json]})
+          _ (server/start! server transport)]
+      (testing "Read text file resource"
+        (a/>!!
+          (:received-ch transport)
+          "{\"jsonrpc\":\"2.0\",\"id\":\"1\",\"method\":\"resources/read\",\"params\":{\"uri\":\"file:///test.txt\"}}")
+        (let [timeout (a/timeout 500)
+              [response _] (a/alts!! [(:sent-ch transport) timeout])]
+          (is (some? response) "Response received before timeout")
+          (let [result (-> response
+                           json/read-str
+                           :result)]
+            (is (= 1 (count (:contents result))))
+            (let [content (first (:contents result))]
+              (is (= "file:///test.txt" (:uri content)))
+              (is (= "text/plain" (:mimeType content)))
+              (is (contains? content :text))))))
+      (testing "Read JSON resource"
+        (a/>!!
+          (:received-ch transport)
+          "{\"jsonrpc\":\"2.0\",\"id\":\"2\",\"method\":\"resources/read\",\"params\":{\"uri\":\"file:///data.json\"}}")
+        (let [timeout (a/timeout 500)
+              [response _] (a/alts!! [(:sent-ch transport) timeout])]
+          (is (some? response) "Response received before timeout")
+          (let [result (-> response
+                           json/read-str
+                           :result)]
+            (is (= 1 (count (:contents result))))
+            (let [content (first (:contents result))]
+              (is (= "file:///data.json" (:uri content)))
+              (is (= "application/json" (:mimeType content)))
+              (is (contains? content :text))))))
+      (testing "Invalid resource request"
+        (a/>!!
+          (:received-ch transport)
+          "{\"jsonrpc\":\"2.0\",\"id\":\"3\",\"method\":\"resources/read\",\"params\":{\"uri\":\"file:///invalid.txt\"}}")
+        (let [timeout (a/timeout 500)
+              [response _] (a/alts!! [(:sent-ch transport) timeout])]
+          (is (some? response) "Response received before timeout")
+          (let [error (-> response
+                          json/read-str
+                          :error)]
+            (is (= specs/method-not-found (:code error)))
+            (is (= "Resource not found" (:message error))))))
+      (server/stop! server))))
+
 (deftest stdio-transport-encoding
   (testing "Stdio transport with different encodings"
     (testing "Default UTF-8 encoding"
