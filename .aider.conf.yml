@@ -39,3 +39,9 @@ commit-prompt: |
 model: deepseek
 architect: true
 editor-model: sonnet
+
+## Testing and Linting of my code
+lint-cmd: make format
+auto-lint: true
+test-cmd: make test
+auto-test: true
