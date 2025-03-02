@@ -204,40 +204,59 @@
                   (= "test-server")))))
       (server/stop! server))))
 
-;; // write the following test: ai!
-;;
-;; 1. Create a server with the following prompts:
-;;
-;;    {
-;;       name: "analyze-code",
-;;       description: "Analyze code for potential improvements",
-;;       arguments: [
-;;         {
-;;           name: "language",
-;;           description: "Programming language",
-;;           required: true
-;;         }
-;;       ]
-;;     }
-;;
-;;     and
-;;
-;;     {
-;;       name: "poem-about-code",
-;;       description: "Write a poem describing what this code does",
-;;       arguments: [
-;;         {
-;;           name: "poetry_type",
-;;           description: "The style in which to write the poetry: sonnet,
-;;           limerick, haiku",
-;;           required: true
-;;         }
-;;       ]
-;;     }
-;;
-;; 2. Make a "prompts/list" request to the server
-;;
-;; 3. Test that the response is correct
+(deftest prompt-listing
+  (testing "Listing available prompts"
+    (let
+      [transport (create-mock-transport)
+       server
+         (server/make-server
+           {:name "test-server",
+            :version "1.0.0",
+            :tools [],
+            :prompts
+            [{:name "analyze-code",
+              :description "Analyze code for potential improvements",
+              :arguments [{:name "language",
+                           :description "Programming language",
+                           :required true}]}
+             {:name "poem-about-code",
+              :description "Write a poem describing what this code does",
+              :arguments
+              [{:name "poetry_type",
+                :description
+                "The style in which to write the poetry: sonnet, limerick, haiku",
+                :required true}]}]})
+       _ (server/start! server transport)]
+      (testing "Prompts list request"
+        (a/>!! (:received-ch transport)
+               "{\"jsonrpc\":\"2.0\",\"id\":\"1\",\"method\":\"prompts/list\"}")
+        (let [timeout (a/timeout 500)
+              [response _] (a/alts!! [(:sent-ch transport) timeout])]
+          (is (some? response) "Response received before timeout")
+          (let [result (-> response
+                           json/read-str
+                           :result)]
+            (is (= 2 (count (:prompts result))))
+            (let [analyze (first (:prompts result))
+                  poem (second (:prompts result))]
+              (is (= "analyze-code" (:name analyze)))
+              (is (= "Analyze code for potential improvements"
+                     (:description analyze)))
+              (is (= [{:name "language",
+                       :description "Programming language",
+                       :required true}]
+                     (:arguments analyze)))
+              (is (= "poem-about-code" (:name poem)))
+              (is (= "Write a poem describing what this code does"
+                     (:description poem)))
+              (is
+                (=
+                  [{:name "poetry_type",
+                    :description
+                    "The style in which to write the poetry: sonnet, limerick, haiku",
+                    :required true}]
+                  (:arguments poem)))))))
+      (server/stop! server))))
 
 (deftest stdio-transport-encoding
   (testing "Stdio transport with different encodings"
