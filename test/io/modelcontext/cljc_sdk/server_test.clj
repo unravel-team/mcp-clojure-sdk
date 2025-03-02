@@ -204,6 +204,41 @@
                   (= "test-server")))))
       (server/stop! server))))
 
+;; // write the following test: ai!
+;;
+;; 1. Create a server with the following prompts:
+;;
+;;    {
+;;       name: "analyze-code",
+;;       description: "Analyze code for potential improvements",
+;;       arguments: [
+;;         {
+;;           name: "language",
+;;           description: "Programming language",
+;;           required: true
+;;         }
+;;       ]
+;;     }
+;;
+;;     and
+;;
+;;     {
+;;       name: "poem-about-code",
+;;       description: "Write a poem describing what this code does",
+;;       arguments: [
+;;         {
+;;           name: "poetry_type",
+;;           description: "The style in which to write the poetry: sonnet,
+;;           limerick, haiku",
+;;           required: true
+;;         }
+;;       ]
+;;     }
+;;
+;; 2. Make a "prompts/list" request to the server
+;;
+;; 3. Test that the response is correct
+
 (deftest stdio-transport-encoding
   (testing "Stdio transport with different encodings"
     (testing "Default UTF-8 encoding"
