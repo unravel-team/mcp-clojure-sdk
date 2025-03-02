@@ -65,14 +65,18 @@
    :mimeType "application/json",
    :name "Test Data",
    :uri "file:///data.json",
-   :handler identity})
+   :handler
+   (fn read-resource [uri]
+     {:uri uri, :mimeType "application/json", :blob "Hello from Test Data"})})
 
 (def resource-test-file
   {:description "A test file",
    :mimeType "text/plain",
    :name "Test File",
    :uri "file:///test.txt",
-   :handler identity})
+   :handler
+   (fn read-resource [uri]
+     {:uri uri, :mimeType "text/plain", :text "Hello from Test File"})})
 
 ;;; Tests
 
@@ -426,7 +430,7 @@
             (let [content (first (:contents result))]
               (is (= "file:///data.json" (:uri content)))
               (is (= "application/json" (:mimeType content)))
-              (is (contains? content :text))))))
+              (is (contains? content :blob))))))
       (testing "Invalid resource request"
         (a/>!!
           (:received-ch transport)
