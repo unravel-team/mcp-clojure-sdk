@@ -387,6 +387,34 @@
               (is (= "application/json" (:mimeType json-resource))))))
         (server/stop! server)))))
 
+;; ## Reading resources
+;; To read a resource, clients make a `resources/read` request with the resource
+;; URI.
+;;
+;; The server responds with a list of resource contents:
+;;
+;; ```typescript
+;; {
+;;   contents: [
+;;     {
+;;       uri: string;        // The URI of the resource
+;;       mimeType?: string;  // Optional MIME type
+;;
+;;       // One of:
+;;       text?: string;      // For text resources
+;;       blob?: string;      // For binary resources (base64 encoded)
+;;     }
+;;   ]
+;; }
+;; ```
+;;
+;; <Tip>
+;;   Servers may return multiple resources in response to one `resources/read`
+;;   request. This could be used, for example, to return a list of files inside
+;;   a directory when the directory is read.
+;; </Tip>
+;;
+;; // add a test to read resources, similar to test for getting prompts ai!
 (deftest stdio-transport-encoding
   (testing "Stdio transport with different encodings"
     (testing "Default UTF-8 encoding"
