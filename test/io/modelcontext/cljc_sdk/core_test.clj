@@ -5,8 +5,8 @@
 
 (deftest test-stringify-keys
   (testing "stringify-keys converts keyword keys to strings"
-    (let [input {:a 1 :b {:c 2}}
-          expected {"a" 1 "b" {"c" 2}}
+    (let [input {:a 1, :b {:c 2}}
+          expected {"a" 1, "b" {"c" 2}}
           result (#'io.modelcontext.cljc-sdk.core/stringify-keys input)]
       (is (= expected result))))
   (testing "stringify-keys handles non-map input"
@@ -28,3 +28,6 @@
       (is (specs/valid-request? request1))
       (is (= params1 (:params request2)))
       (is (specs/valid-request? request2)))))
+
+;; // look at test-create-request and create similar functions for
+;; // create-notification and create-result ai!
