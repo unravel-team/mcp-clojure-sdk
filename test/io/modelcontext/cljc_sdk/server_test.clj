@@ -341,6 +341,8 @@
             (is (= "Prompt not found" (:message error))))))
       (server/stop! server))))
 
+;; // write a test for resource-listing similar to the test for prompt-listing
+;; // ai!
 (deftest stdio-transport-encoding
   (testing "Stdio transport with different encodings"
     (testing "Default UTF-8 encoding"
