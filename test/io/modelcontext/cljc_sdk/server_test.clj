@@ -204,55 +204,48 @@
                   (= "test-server")))))
       (server/stop! server))))
 
+(def prompt-analyze-code
+  {:name "analyze-code",
+   :description "Analyze code for potential improvements",
+   :arguments
+   [{:name "language", :description "Programming language", :required true}
+    {:name "code", :description "The code to analyze", :required true}],
+   :handler (fn analyze-code [args]
+              {:messages [{:role "assistant",
+                           :content
+                           {:type "text",
+                            :text (str "Analysis of "
+                                       (:language args)
+                                       " code:\n"
+                                       "Here are potential improvements for:\n"
+                                       (:code args))}}]})})
+
+(def prompt-poem-about-code
+  {:name "poem-about-code",
+   :description "Write a poem describing what this code does",
+   :arguments
+   [{:name "poetry_type",
+     :description
+     "The style in which to write the poetry: sonnet, limerick, haiku",
+     :required true}
+    {:name "code",
+     :description "The code to write poetry about",
+     :required true}],
+   :handler (fn [args]
+              {:messages [{:role "assistant",
+                           :content {:type "text",
+                                     :text (str "Write a " (:poetry_type args)
+                                                " Poem about:\n" (:code
+                                                                   args))}}]})})
 (deftest prompt-listing
   (testing "Listing available prompts"
-    (let
-      [transport (create-mock-transport)
-       server
-         (server/make-server
-           {:name "test-server",
-            :version "1.0.0",
-            :tools [],
-            :prompts
-            [{:name "analyze-code",
-              :description "Analyze code for potential improvements",
-              :arguments [{:name "language",
-                           :description "Programming language",
-                           :required true}
-                          {:name "code",
-                           :description "The code to analyze",
-                           :required true}]}
-             {:name "poem-about-code",
-              :description "Write a poem describing what this code does",
-              :arguments
-              [{:name "poetry_type",
-                :description
-                "The style in which to write the poetry: sonnet, limerick, haiku",
-                :required true}
-               {:name "code",
-                :description "The code to write poetry about",
-                :required true}]}],
-            :handlers ;; // this is wrong. Create a single function which
-                      ;; // takes the name of the prompt and returns the
-                      ;; // correct messages. ai!
-            {"analyze-code"
-             (fn [args]
-               {:messages [{:role "assistant",
-                            :content
-                            {:type "text",
-                             :text (str "Analysis of "
-                                        (:language args)
-                                        " code:\n"
-                                        "Here are potential improvements for:\n"
-                                        (:code args))}}]}),
-             "poem-about-code"
-             (fn [args]
-               {:messages [{:role "assistant",
-                            :content {:type "text",
-                                      :text (str "A " (:poetry_type args)
-                                                 " about:\n" (:code
-                                                               args))}}]})}})
-       _ (server/start! server transport)]
+    (let [transport (create-mock-transport)
+          server (server/make-server {:name "test-server",
+                                      :version "1.0.0",
+                                      :tools [],
+                                      :prompts [prompt-analyze-code
+                                                prompt-poem-about-code]})
+          _ (server/start! server transport)]
       (testing "Prompts list request"
         (a/>!! (:received-ch transport)
                "{\"jsonrpc\":\"2.0\",\"id\":\"1\",\"method\":\"prompts/list\"}")
@@ -270,6 +263,9 @@
                      (:description analyze)))
               (is (= [{:name "language",
                        :description "Programming language",
+                       :required true}
+                      {:name "code",
+                       :description "The code to analyze",
                        :required true}]
                      (:arguments analyze)))
               (is (= "poem-about-code" (:name poem)))
@@ -280,6 +276,9 @@
                   [{:name "poetry_type",
                     :description
                     "The style in which to write the poetry: sonnet, limerick, haiku",
+                    :required true}
+                   {:name "code",
+                    :description "The code to write poetry about",
                     :required true}]
                   (:arguments poem)))))))
       (server/stop! server))))
