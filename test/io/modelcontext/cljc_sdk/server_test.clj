@@ -14,8 +14,9 @@
                     :version "1.0.0",
                     :tools [{:name "greet",
                              :description "Greet someone",
-                             :schema {:type "object",
-                                      :properties {"name" {:type "string"}}},
+                             :inputSchema {:type "object",
+                                           :properties {"name" {:type
+                                                                "string"}}},
                              :handler (fn [{:keys [name]}]
                                         {:type "text",
                                          :text (str "Hello, " name "!")})}],
@@ -44,8 +45,9 @@
                     :version "1.0.0",
                     :tools [{:name "greet",
                              :description "Greet someone",
-                             :schema {:type "object",
-                                      :properties {"name" {:type "string"}}},
+                             :inputSchema {:type "object",
+                                           :properties {"name" {:type
+                                                                "string"}}},
                              :handler (fn [{:keys [name]}]
                                         {:type "text",
                                          :text (str "Hello, " name "!")})}],
@@ -89,24 +91,21 @@
 
 (deftest tool-registration
   (testing "Tool registration and validation"
-    (let [server (server/create-server "test-server" "1.0.0")
-          valid-tool {:name "test-tool",
-                      :description "A test tool",
-                      :schema {:type "object",
-                               :properties {"arg" {:type "string"}}}}]
-      (server/register-tool! server
-                             (:name valid-tool)
-                             (:description valid-tool)
-                             (:schema valid-tool)
-                             (fn [_] {:type "text", :text "success"}))
+    (let [server (server/create-server "test-server" "1.0.0")]
+      (server/register-tool!
+        server
+        {:name "test-tool",
+         :description "A test tool",
+         :inputSchema {:type "object", :properties {"arg" {:type "string"}}}}
+        (fn [_] {:type "text", :text "success"}))
       (is (= 1 (count @(:tools server))))
       (is (get @(:tools server) "test-tool"))
       (testing "Tool validation"
         (is (thrown? Exception
                      (server/register-tool! server
-                                            "invalid"
-                                            "desc"
-                                            {:invalid "schema"}
+                                            {:name "invalid",
+                                             :description "desc",
+                                             :inputSchema {:invalid "schema"}}
                                             identity)))))))
 
 (deftest tool-execution
@@ -117,9 +116,10 @@
                     :version "1.0.0",
                     :tools [{:name "echo",
                              :description "Echo input",
-                             :schema {:type "object",
-                                      :properties {"message" {:type "string"}},
-                                      :required ["message"]},
+                             :inputSchema {:type "object",
+                                           :properties {"message" {:type
+                                                                   "string"}},
+                                           :required ["message"]},
                              :handler (fn [{:keys [message]}]
                                         {:type "text", :text message})}]})
           _ (server/start! server transport)]

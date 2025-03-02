@@ -4,7 +4,7 @@
             [me.vedang.logger.interface :as log]))
 
 (defprotocol MCPServer
-  (register-tool! [this tool-name description schema handler])
+  (register-tool! [this tool handler])
   (register-resource! [this resource handler])
   (register-prompt! [this prompt handler])
   (start! [this transport])
@@ -84,12 +84,10 @@
 
 (def server-functions
   {:register-tool!
-   (fn [this tool-name description schema handler]
-     (let [tool
-             {:name tool-name, :description description, :inputSchema schema}]
-       (when-not (specs/valid-tool? tool)
-         (throw (ex-info "Invalid tool definition" (specs/explain-tool tool))))
-       (swap! (:tools this) assoc tool-name {:tool tool, :handler handler}))
+   (fn [this tool handler]
+     (when-not (specs/valid-tool? tool)
+       (throw (ex-info "Invalid tool definition" (specs/explain-tool tool))))
+     (swap! (:tools this) assoc (:name tool) {:tool tool, :handler handler})
      this),
    :register-resource! (fn [this resource handler]
                          (when-not (specs/valid-resource? resource)
@@ -158,9 +156,12 @@
                  :handler (fn [uri] ...)}]}"
   [{:keys [name version tools prompts resources]}]
   (let [server (create-server name version)]
-    (doseq [{:keys [name description schema handler]} tools]
-      (register-tool! server name description schema handler))
+    (doseq [tool tools]
+      (register-tool! server (dissoc tool :handler) (:handler tool)))
     (doseq [resource resources]
-      (register-resource! server resource (:handler resource)))
-    (doseq [prompt prompts] (register-prompt! server prompt (:handler prompt)))
+      (register-resource! server
+                          (dissoc resource :handler)
+                          (:handler resource)))
+    (doseq [prompt prompts]
+      (register-prompt! server (dissoc prompt :handler) (:handler prompt)))
     server))
