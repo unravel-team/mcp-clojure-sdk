@@ -237,6 +237,7 @@
                                      :text (str "Write a " (:poetry_type args)
                                                 " Poem about:\n" (:code
                                                                    args))}}]})})
+
 (deftest prompt-listing
   (testing "Listing available prompts"
     (let [transport (create-mock-transport)
@@ -282,7 +283,65 @@
                     :required true}]
                   (:arguments poem)))))))
       (server/stop! server))))
-;; // add a test for prompt-getting, similar to the prompt-listing ai!
+
+(deftest prompt-getting
+  (testing "Getting specific prompts"
+    (let [transport (create-mock-transport)
+          server (server/make-server {:name "test-server",
+                                      :version "1.0.0",
+                                      :tools [],
+                                      :prompts [prompt-analyze-code
+                                                prompt-poem-about-code]})
+          _ (server/start! server transport)]
+      (testing "Get analyze-code prompt"
+        (a/>!!
+          (:received-ch transport)
+          "{\"jsonrpc\":\"2.0\",\"id\":\"1\",\"method\":\"prompts/get\",\"params\":{\"name\":\"analyze-code\",\"arguments\":{\"language\":\"Clojure\",\"code\":\"(defn foo [])\"}}}")
+        (let [timeout (a/timeout 500)
+              [response _] (a/alts!! [(:sent-ch transport) timeout])]
+          (is (some? response) "Response received before timeout")
+          (let [result (-> response
+                           json/read-str
+                           :result)]
+            (is (= 1 (count (:messages result))))
+            (is
+              (=
+                "Analysis of Clojure code:\nHere are potential improvements for:\n(defn foo [])"
+                (-> result
+                    :messages
+                    first
+                    :content
+                    :text))))))
+      (testing "Get poem-about-code prompt"
+        (a/>!!
+          (:received-ch transport)
+          "{\"jsonrpc\":\"2.0\",\"id\":\"2\",\"method\":\"prompts/get\",\"params\":{\"name\":\"poem-about-code\",\"arguments\":{\"poetry_type\":\"haiku\",\"code\":\"(defn foo [])\"}}}")
+        (let [timeout (a/timeout 500)
+              [response _] (a/alts!! [(:sent-ch transport) timeout])]
+          (is (some? response) "Response received before timeout")
+          (let [result (-> response
+                           json/read-str
+                           :result)]
+            (is (= 1 (count (:messages result))))
+            (is (= "Write a haiku Poem about:\n(defn foo [])"
+                   (-> result
+                       :messages
+                       first
+                       :content
+                       :text))))))
+      (testing "Invalid prompt request"
+        (a/>!!
+          (:received-ch transport)
+          "{\"jsonrpc\":\"2.0\",\"id\":\"3\",\"method\":\"prompts/get\",\"params\":{\"name\":\"invalid-prompt\"}}")
+        (let [timeout (a/timeout 500)
+              [response _] (a/alts!! [(:sent-ch transport) timeout])]
+          (is (some? response) "Response received before timeout")
+          (let [error (-> response
+                          json/read-str
+                          :error)]
+            (is (= specs/method-not-found (:code error)))
+            (is (= "Prompt not found" (:message error))))))
+      (server/stop! server))))
 
 (deftest stdio-transport-encoding
   (testing "Stdio transport with different encodings"
