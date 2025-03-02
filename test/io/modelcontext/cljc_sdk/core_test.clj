@@ -29,5 +29,31 @@
       (is (= params1 (:params request2)))
       (is (specs/valid-request? request2)))))
 
-;; // look at test-create-request and create similar functions for
-;; // create-notification and create-result ai!
+(deftest test-create-notification
+  (testing "create-notification generates valid notifications"
+    (let [method "test/method"
+          params1 {"foo" "bar"}
+          params2 {:foo "bar"}
+          notif1 (core/create-notification method params1)
+          notif2 (core/create-notification method params2)]
+      (is (= specs/jsonrpc-version (:jsonrpc notif1)))
+      (is (nil? (:id notif1)))
+      (is (= method (:method notif1)))
+      (is (= params1 (:params notif1)))
+      (is (specs/valid-notification? notif1))
+      (is (= params1 (:params notif2)))
+      (is (specs/valid-notification? notif2)))))
+
+(deftest test-create-result
+  (testing "create-result generates valid results"
+    (let [id "test-id"
+          result1 {"foo" "bar"}
+          result2 {:foo "bar"}
+          response1 (core/create-result id result1)
+          response2 (core/create-result id result2)]
+      (is (= specs/jsonrpc-version (:jsonrpc response1)))
+      (is (= id (:id response1)))
+      (is (= result1 (:result response1)))
+      (is (specs/valid-response? response1))
+      (is (= result1 (:result response2)))
+      (is (specs/valid-response? response2)))))
