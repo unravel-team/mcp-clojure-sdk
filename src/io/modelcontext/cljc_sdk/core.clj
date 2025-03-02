@@ -46,7 +46,7 @@
    :method method,
    :params (stringify-keys params)})
 
-(defn create-result
+(defn create-response
   [id result]
   {:jsonrpc specs/jsonrpc-version, :id id, :result (stringify-keys result)})
 
@@ -85,7 +85,10 @@
 (defn- handle-request
   [protocol decoded handler]
   (try (let [result (handler (:params decoded))
-             response (create-result (:id decoded) result)]
+             response (create-response (:id decoded) result)]
+         (when-not (specs/valid-response? response)
+           (throw (ex-info "Invalid response"
+                           (specs/explain-response response))))
          (send! (:transport protocol) (encode-message response)))
        (catch clojure.lang.ExceptionInfo e
          (let [data (ex-data e)

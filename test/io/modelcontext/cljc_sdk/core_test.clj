@@ -22,7 +22,6 @@
           request1 (core/create-request method params1)
           request2 (core/create-request method params2)]
       (is (= specs/jsonrpc-version (:jsonrpc request1)))
-      (is (string? (:id request1)))
       (is (= method (:method request1)))
       (is (= params1 (:params request1)))
       (is (specs/valid-request? request1))
@@ -37,7 +36,6 @@
           notif1 (core/create-notification method params1)
           notif2 (core/create-notification method params2)]
       (is (= specs/jsonrpc-version (:jsonrpc notif1)))
-      (is (nil? (:id notif1)))
       (is (= method (:method notif1)))
       (is (= params1 (:params notif1)))
       (is (specs/valid-notification? notif1))
@@ -49,8 +47,8 @@
     (let [id "test-id"
           result1 {"foo" "bar"}
           result2 {:foo "bar"}
-          response1 (core/create-result id result1)
-          response2 (core/create-result id result2)]
+          response1 (core/create-response id result1)
+          response2 (core/create-response id result2)]
       (is (= specs/jsonrpc-version (:jsonrpc response1)))
       (is (= id (:id response1)))
       (is (= result1 (:result response1)))

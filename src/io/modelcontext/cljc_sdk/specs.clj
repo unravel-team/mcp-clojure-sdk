@@ -788,21 +788,21 @@
 (defn explain-tool [tool] (s/explain-data ::tool tool))
 
 ;; Helper functions
-(defn valid-request? [req] (s/valid? ::request req))
+(defn valid-request? [req] (s/valid? :jsonrpc/request req))
 
-(defn valid-response? [res] (s/valid? ::response res))
+(defn valid-response? [res] (s/valid? :jsonrpc/response res))
 
-(defn valid-error? [err] (s/valid? ::error-response err))
+(defn valid-error? [err] (s/valid? :jsonrpc/error err))
 
-(defn valid-notification? [notif] (s/valid? ::notification notif))
+(defn valid-notification? [notif] (s/valid? :jsonrpc/notification notif))
 
-(defn explain-request [req] (s/explain-data ::request req))
+(defn explain-request [req] (s/explain-data :jsonrpc/request req))
 
-(defn explain-response [res] (s/explain-data ::response res))
+(defn explain-response [res] (s/explain-data :jsonrpc/response res))
 
-(defn explain-error [err] (s/explain-data ::error-response err))
+(defn explain-error [err] (s/explain-data :jsonrpc/error err))
 
-(defn explain-notification [notif] (s/explain-data ::notification notif))
+(defn explain-notification [notif] (s/explain-data :jsonrpc/notification notif))
 
 ;; Helper functions for root validation
 (defn valid-root? [root] (s/valid? ::root root))
