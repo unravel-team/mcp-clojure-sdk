@@ -5,7 +5,8 @@
             [io.modelcontext.cljc-sdk.core :as core]
             [io.modelcontext.cljc-sdk.server :as server]
             [io.modelcontext.cljc-sdk.specs :as specs]
-            [io.modelcontext.cljc-sdk.transport.stdio :as stdio]))
+            [io.modelcontext.cljc-sdk.transport.stdio :as stdio]
+            [me.vedang.logger.interface :as log]))
 
 ;;; Tools
 
@@ -117,22 +118,31 @@
 
 ;;; Mock transport for testing
 
-(defrecord MockTransport [sent-messages sent-ch received-ch running?]
+(defrecord MockTransport [in-ch out-ch msg-ch running? sent-messages]
   core/Transport
-    (start! [this] (reset! running? true) this)
+    (start! [this]
+      (reset! running? true)
+      (a/go-loop []
+        (when @running?
+          (try (when-let [msg (a/<! in-ch)] (a/>! msg-ch msg))
+               (catch Exception e
+                 (log/error :msg "Error reading from Mocked stdin" :error e)))
+          (recur)))
+      this)
     (stop! [_this]
       (reset! running? false)
-      (a/close! received-ch)
-      (a/close! sent-ch))
+      (a/close! msg-ch)
+      (a/close! in-ch)
+      (a/close! out-ch))
     (send! [_this message]
       (when @running?
         (swap! sent-messages conj message)
-        (a/put! sent-ch message)))
-    (receive! [_this] (a/<!! received-ch)))
+        (a/>!! out-ch message)))
+    (receive! [_this] (a/<!! msg-ch)))
 
 (defn create-mock-transport
   []
-  (->MockTransport (atom []) (a/chan) (a/chan 1024) (atom false)))
+  (->MockTransport (a/chan) (a/chan) (a/chan 1024) (atom false) (atom [])))
 
 (deftest server-initialization
   (testing "Server creation with basic configuration"
@@ -173,10 +183,10 @@
                    {:name "test-server", :version "1.0.0", :tools [tool-echo]})
           _ (server/start! server transport)]
       (testing "Tool list request"
-        (a/>!! (:received-ch transport)
+        (a/>!! (:in-ch transport)
                "{\"jsonrpc\":\"2.0\",\"id\":\"1\",\"method\":\"tools/list\"}")
         (let [timeout (a/timeout 500)
-              [response _] (a/alts!! [(:sent-ch transport) timeout])]
+              [response _] (a/alts!! [(:out-ch transport) timeout])]
           (is (some? response) "Response received before timeout")
           (is (string? response))
           (is (-> response
@@ -188,10 +198,10 @@
                   (= "echo")))))
       (testing "Tool execution request"
         (a/>!!
-          (:received-ch transport)
+          (:in-ch transport)
           "{\"jsonrpc\":\"2.0\",\"id\":\"2\",\"method\":\"tools/call\",\"params\":{\"name\":\"echo\",\"arguments\":{\"message\":\"test\"}}}")
         (let [timeout (a/timeout 500)
-              [response _] (a/alts!! [(:sent-ch transport) timeout])]
+              [response _] (a/alts!! [(:out-ch transport) timeout])]
           (is (some? response) "Response received before timeout")
           (is (string? response))
           (is (-> response
@@ -203,10 +213,10 @@
                   (= "test")))))
       (testing "Invalid tool request"
         (a/>!!
-          (:received-ch transport)
+          (:in-ch transport)
           "{\"jsonrpc\":\"2.0\",\"id\":\"3\",\"method\":\"tools/call\",\"params\":{\"name\":\"invalid\"}}")
         (let [timeout (a/timeout 500)
-              [response _] (a/alts!! [(:sent-ch transport) timeout])]
+              [response _] (a/alts!! [(:out-ch transport) timeout])]
           (is (some? response) "Response received before timeout")
           (is (string? response))
           (is (-> response
@@ -235,10 +245,10 @@
                    {:name "test-server", :version "1.0.0", :tools []})
           _ (server/start! server transport)]
       (a/>!!
-        (:received-ch transport)
+        (:in-ch transport)
         "{\"jsonrpc\":\"2.0\",\"id\":\"1\",\"method\":\"initialize\",\"params\":{\"protocolVersion\":\"DRAFT-2025-v1\",\"capabilities\":{},\"clientInfo\":{\"name\":\"test-client\",\"version\":\"1.0.0\"}}}")
       (let [timeout (a/timeout 500)
-            [response _] (a/alts!! [(:sent-ch transport) timeout])]
+            [response _] (a/alts!! [(:out-ch transport) timeout])]
         (is (some? response) "Response received before timeout")
         (is (string? response))
         (let [resp (json/read-str response)]
@@ -263,10 +273,10 @@
                                                 prompt-poem-about-code]})
           _ (server/start! server transport)]
       (testing "Prompts list request"
-        (a/>!! (:received-ch transport)
+        (a/>!! (:in-ch transport)
                "{\"jsonrpc\":\"2.0\",\"id\":\"1\",\"method\":\"prompts/list\"}")
         (let [timeout (a/timeout 500)
-              [response _] (a/alts!! [(:sent-ch transport) timeout])]
+              [response _] (a/alts!! [(:out-ch transport) timeout])]
           (is (some? response) "Response received before timeout")
           (let [result (-> response
                            json/read-str
@@ -310,10 +320,10 @@
           _ (server/start! server transport)]
       (testing "Get analyze-code prompt"
         (a/>!!
-          (:received-ch transport)
+          (:in-ch transport)
           "{\"jsonrpc\":\"2.0\",\"id\":\"1\",\"method\":\"prompts/get\",\"params\":{\"name\":\"analyze-code\",\"arguments\":{\"language\":\"Clojure\",\"code\":\"(defn foo [])\"}}}")
         (let [timeout (a/timeout 500)
-              [response _] (a/alts!! [(:sent-ch transport) timeout])]
+              [response _] (a/alts!! [(:out-ch transport) timeout])]
           (is (some? response) "Response received before timeout")
           (let [result (-> response
                            json/read-str
@@ -329,10 +339,10 @@
                     :text))))))
       (testing "Get poem-about-code prompt"
         (a/>!!
-          (:received-ch transport)
+          (:in-ch transport)
           "{\"jsonrpc\":\"2.0\",\"id\":\"2\",\"method\":\"prompts/get\",\"params\":{\"name\":\"poem-about-code\",\"arguments\":{\"poetry_type\":\"haiku\",\"code\":\"(defn foo [])\"}}}")
         (let [timeout (a/timeout 500)
-              [response _] (a/alts!! [(:sent-ch transport) timeout])]
+              [response _] (a/alts!! [(:out-ch transport) timeout])]
           (is (some? response) "Response received before timeout")
           (let [result (-> response
                            json/read-str
@@ -346,10 +356,10 @@
                        :text))))))
       (testing "Invalid prompt request"
         (a/>!!
-          (:received-ch transport)
+          (:in-ch transport)
           "{\"jsonrpc\":\"2.0\",\"id\":\"3\",\"method\":\"prompts/get\",\"params\":{\"name\":\"invalid-prompt\"}}")
         (let [timeout (a/timeout 500)
-              [response _] (a/alts!! [(:sent-ch transport) timeout])]
+              [response _] (a/alts!! [(:out-ch transport) timeout])]
           (is (some? response) "Response received before timeout")
           (let [error (-> response
                           json/read-str
@@ -370,10 +380,10 @@
           _ (server/start! server transport)]
       (testing "Resources list request"
         (a/>!!
-          (:received-ch transport)
+          (:in-ch transport)
           "{\"jsonrpc\":\"2.0\",\"id\":\"1\",\"method\":\"resources/list\"}")
         (let [timeout (a/timeout 500)
-              [response _] (a/alts!! [(:sent-ch transport) timeout])]
+              [response _] (a/alts!! [(:out-ch transport) timeout])]
           (is (some? response) "Response received before timeout")
           (let [result (-> response
                            json/read-str
@@ -403,10 +413,10 @@
           _ (server/start! server transport)]
       (testing "Read text file resource"
         (a/>!!
-          (:received-ch transport)
+          (:in-ch transport)
           "{\"jsonrpc\":\"2.0\",\"id\":\"1\",\"method\":\"resources/read\",\"params\":{\"uri\":\"file:///test.txt\"}}")
         (let [timeout (a/timeout 500)
-              [response _] (a/alts!! [(:sent-ch transport) timeout])]
+              [response _] (a/alts!! [(:out-ch transport) timeout])]
           (is (some? response) "Response received before timeout")
           (let [result (-> response
                            json/read-str
@@ -418,10 +428,10 @@
               (is (contains? content :text))))))
       (testing "Read JSON resource"
         (a/>!!
-          (:received-ch transport)
+          (:in-ch transport)
           "{\"jsonrpc\":\"2.0\",\"id\":\"2\",\"method\":\"resources/read\",\"params\":{\"uri\":\"file:///data.json\"}}")
         (let [timeout (a/timeout 500)
-              [response _] (a/alts!! [(:sent-ch transport) timeout])]
+              [response _] (a/alts!! [(:out-ch transport) timeout])]
           (is (some? response) "Response received before timeout")
           (let [result (-> response
                            json/read-str
@@ -433,10 +443,10 @@
               (is (contains? content :blob))))))
       (testing "Invalid resource request"
         (a/>!!
-          (:received-ch transport)
+          (:in-ch transport)
           "{\"jsonrpc\":\"2.0\",\"id\":\"3\",\"method\":\"resources/read\",\"params\":{\"uri\":\"file:///invalid.txt\"}}")
         (let [timeout (a/timeout 500)
-              [response _] (a/alts!! [(:sent-ch transport) timeout])]
+              [response _] (a/alts!! [(:out-ch transport) timeout])]
           (is (some? response) "Response received before timeout")
           (let [error (-> response
                           json/read-str
