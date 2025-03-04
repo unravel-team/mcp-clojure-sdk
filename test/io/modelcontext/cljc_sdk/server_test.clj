@@ -1,6 +1,7 @@
 (ns io.modelcontext.cljc-sdk.server-test
   (:require [babashka.json :as json]
             [clojure.core.async :as a]
+            [clojure.java.io :as io]
             [clojure.test :refer [deftest is testing]]
             [io.modelcontext.cljc-sdk.core :as core]
             [io.modelcontext.cljc-sdk.server :as server]
@@ -476,85 +477,99 @@
       (is (thrown? IllegalArgumentException
                    (stdio/create-stdio-transport :encoding
                                                  "INVALID-ENCODING"))))
-    ;; (testing "Special characters with different encodings"
-    ;;   (let [test-messages {"UTF-8" "Hello, 世界! 🌍",
-    ;;                        "UTF-16" "Hello, 世界! 🌍",
-    ;;                        "ASCII" "Hello, World!"}]
-    ;;     (doseq [[encoding message] test-messages]
-    ;;       (testing (str "Testing " encoding " encoding")
-    ;;         (let [transport (stdio/create-stdio-transport :encoding
-    ;;         encoding)
-    ;;               received-ch (a/chan 1)]
-    ;;           (core/start! transport)
-    ;;           (a/go (let [received (core/receive! transport)]
-    ;;                   (a/>! received-ch received)))
-    ;;           (core/send! transport message)
-    ;;           (let [timeout (a/timeout 500)
-    ;;                 [received _] (a/alts!! [received-ch timeout])]
-    ;;             (is (some? received) "Message should be received")
-    ;;             (is (= message received)
-    ;;                 "Received message should match sent message"))
-    ;;           (core/stop! transport))))))
-    ;; (testing "Process transport with custom encoding"
-    ;;   (let [transport (stdio/create-process-transport {:command "echo",
-    ;;                                                    :args ["Hello"],
-    ;;                                                    :encoding
-    ;;                                                    "UTF-16",
-    ;;                                                    :buffer-size
-    ;;                                                    4096})]
-    ;;     (is (= "UTF-16" (:encoding transport)))
-    ;;     (is (some? (:process transport)))
-    ;;     (core/start! transport)
-    ;;     (core/stop! transport)))
-    ;; (testing "Large messages with different buffer sizes"
-    ;;   (doseq [buffer-size [1024 4096 16384]]
-    ;;     (testing (str "Buffer size: " buffer-size)
-    ;;       (let [transport (stdio/create-stdio-transport :buffer-size
-    ;;                                                     buffer-size)
-    ;;             large-message (apply str (repeat 10000 "x"))]
-    ;;         (core/start! transport)
-    ;;         (core/send! transport large-message)
-    ;;         (core/stop! transport)))))
-    ;; (testing "Multiple encodings in process transport"
-    ;;   (doseq [encoding ["UTF-8" "UTF-16" "ASCII"]]
-    ;;     (testing (str "Process transport with " encoding)
-    ;;       (let [transport (stdio/create-process-transport {:command
-    ;;       "cat",
-    ;;                                                        :encoding
-    ;;                                                        encoding})
-    ;;             test-message "Hello, World!"]
-    ;;         (core/start! transport)
-    ;;         (let [received-ch (a/chan 1)]
-    ;;           (a/go (let [received (core/receive! transport)]
-    ;;                   (a/>! received-ch received)))
-    ;;           (core/send! transport test-message)
-    ;;           (let [timeout (a/timeout 500)
-    ;;                 [received _] (a/alts!! [received-ch timeout])]
-    ;;             (is (some? received) "Message should be received")
-    ;;             (is (= test-message received)
-    ;;                 "Received message should match sent message")))
-    ;;         (core/stop! transport)))))
-    ;; (testing "Encoding validation"
-    ;;   (testing "Valid encodings"
-    ;;     (doseq [encoding ["UTF-8" "UTF-16" "UTF-16BE" "UTF-16LE" "ASCII"
-    ;;                       "ISO-8859-1"]]
-    ;;       (is (stdio/validate-encoding! encoding)
-    ;;           (str encoding " should be valid"))))
-    ;;   (testing "Invalid encodings"
-    ;;     (doseq [encoding ["INVALID" "UTF-99" "ASCII-2"]]
-    ;;       (is (thrown? IllegalArgumentException
-    ;;                    (stdio/validate-encoding! encoding))
-    ;;           (str encoding " should be invalid")))))
-    ;; (testing "Buffer size validation"
-    ;;   (testing "Valid buffer sizes"
-    ;;     (doseq [size [1024 4096 8192 16384]]
-    ;;       (let [transport (stdio/create-stdio-transport :buffer-size
-    ;;       size)]
-    ;;         (is (some? transport)))))
-    ;;   (testing "Default buffer size"
-    ;;     (let [transport (stdio/create-stdio-transport)]
-    ;;       (is (some? transport)))))
-  ))
+    (testing "Special characters with different encodings"
+      (let [test-messages {"UTF-8" "Hello 1, 世界! 🌍",
+                           "UTF-16" "Hello 2, 世界! 🌍",
+                           "ASCII" "Hello 3, World!"}]
+        (doseq [[encoding message] test-messages]
+          (testing (str "Testing " encoding " encoding")
+            ;; Create piped streams for controlled input
+            (let [input-stream (java.io.PipedInputStream.)
+                  output-stream (java.io.PipedOutputStream.)
+                  original-in System/in]
+              ;; Connect the pipes
+              (.connect input-stream output-stream)
+              ;; Replace System.in temporarily
+              (System/setIn input-stream)
+              (try
+                ;; Create and start the transport with our controlled stdin
+                (let [transport (stdio/create-stdio-transport :encoding
+                                                              encoding)]
+                  (core/start! transport)
+                  ;; Write to our controlled output stream with proper
+                  ;; encoding
+                  (with-open [writer
+                                (io/writer output-stream :encoding encoding)]
+                    (.write writer (str message "\n"))
+                    (.flush writer)
+                    ;; Allow some time for processing
+                    (Thread/sleep 100)
+                    (let [received (core/receive! transport)]
+                      (is (some? received) "Message should be received")
+                      (is (= message received)
+                          "Received message should match sent message"))
+                    (core/stop! transport)))
+                (finally
+                  ;; Restore original stdin
+                  (System/setIn original-in))))))))
+    (testing "Process transport with custom encoding"
+      (let [transport (stdio/create-process-transport {:command "echo",
+                                                       :args ["Hello"],
+                                                       :encoding "UTF-16",
+                                                       :buffer-size 4096})]
+        (is (= "UTF-16" (:encoding transport)))
+        (is (some? (:process transport)))
+        (core/start! transport)
+        (core/stop! transport)))
+    (testing "Large messages with different buffer sizes"
+      (doseq [buffer-size [1024 4096 16384]]
+        (testing (str "Buffer size: " buffer-size)
+          (let [transport (stdio/create-stdio-transport :buffer-size
+                                                        buffer-size)
+                large-message (apply str (repeat 10000 "x"))]
+            (core/start! transport)
+            (core/send! transport large-message)
+            (core/stop! transport)))))
+    (testing "Multiple encodings in process transport"
+      (doseq [encoding ["UTF-8" "UTF-16" "ASCII"]]
+        (testing (str "Process transport with " encoding)
+          (let [test-message "Hello, World!"
+                transport (stdio/create-process-transport {:command "cat",
+                                                           :encoding encoding})]
+            (core/start! transport)
+            ;; Get the process output stream (which is the input to the
+            ;; process)
+            (let [proc (:process transport)
+                  proc-input (.getOutputStream proc)]
+              (with-open [writer (io/writer proc-input :encoding encoding)]
+                (.write writer (str test-message "\n"))
+                (.flush writer)
+                ;; Allow some time for processing
+                (Thread/sleep 100)
+                (let [received (core/receive! transport)]
+                  (is (some? received) "Message should be received")
+                  (is (= test-message received)
+                      "Received message should match sent message"))
+                (core/stop! transport)))))))
+    (testing "Encoding validation"
+      (testing "Valid encodings"
+        (doseq [encoding ["UTF-8" "UTF-16" "UTF-16BE" "UTF-16LE" "ASCII"
+                          "ISO-8859-1"]]
+          (is (stdio/validate-encoding! encoding)
+              (str encoding " should be valid"))))
+      (testing "Invalid encodings"
+        (doseq [encoding ["INVALID" "UTF-99" "ASCII-2"]]
+          (is (thrown? IllegalArgumentException
+                       (stdio/validate-encoding! encoding))
+              (str encoding " should be invalid")))))
+    (testing "Buffer size validation"
+      (testing "Valid buffer sizes"
+        (doseq [size [1024 4096 8192 16384]]
+          (let [transport (stdio/create-stdio-transport :buffer-size size)]
+            (is (some? transport)))))
+      (testing "Default buffer size"
+        (let [transport (stdio/create-stdio-transport)]
+          (is (some? transport)))))))
 
 ;;; calculator mcp server
 

@@ -1,11 +1,10 @@
 (ns io.modelcontext.cljc-sdk.transport.stdio
   (:require [clojure.core.async :as a]
             [clojure.java.io :as io]
-            [clojure.string :as str]
             [io.modelcontext.cljc-sdk.core :as core]
             [me.vedang.logger.interface :as log])
   (:import [java.io BufferedReader BufferedWriter InputStream OutputStream]
-           [java.nio.charset Charset StandardCharsets]))
+           [java.nio.charset Charset]))
 
 (def default-buffer-size 8192)
 
@@ -54,7 +53,9 @@
       (reset! running? true)
       (a/go-loop []
         (when @running?
-          (try (when-let [line (.readLine in)] (a/>! msg-chan line))
+          (try (when-let [line (.readLine in)]
+                 ;; (spit "./logs/dev.log" line :append true)
+                 (a/>! msg-chan line))
                (catch Exception e
                  (log/error :msg "Error reading from stdin" :error e)))
           (recur)))
