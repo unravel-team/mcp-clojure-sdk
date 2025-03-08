@@ -3,7 +3,7 @@
             [io.modelcontext.cljc-sdk.specs :as specs]
             [me.vedang.logger.interface :as log]))
 
-(defprotocol MCPServer
+(defprotocol Server
   (register-tool! [this tool handler])
   (register-resource! [this resource handler])
   (register-prompt! [this prompt handler])
@@ -104,52 +104,47 @@
               (throw (ex-info "Invalid prompt definition"
                               (specs/explain-prompt object))))))
 
-(def server-functions
-  {:register-tool!
-   (fn [this tool handler]
-     (check-object-and-handler :tool tool handler)
-     (swap! (:tools this) assoc (:name tool) {:tool tool, :handler handler})
-     this),
-   :register-resource! (fn [this resource handler]
-                         (check-object-and-handler :resource resource handler)
-                         (swap! (:resources this) assoc
-                           (:uri resource)
-                           {:resource resource, :handler handler})
-                         this),
-   :register-prompt! (fn [this prompt handler]
-                       (check-object-and-handler :prompt prompt handler)
-                       (swap! (:prompts this) assoc
-                         (:name prompt)
-                         {:prompt prompt, :handler handler})
-                       this),
-   :start! (fn [this transport]
-             (let [protocol (core/create-protocol transport)]
-               ;; Initialize handlers and update our protocol
-               (init-handlers! this protocol)
-               (reset! (:protocol this) protocol)
-               (.start! transport))
-             this),
-   :stop! (fn [this]
-            (when-let [protocol @(:protocol this)]
-              (core/stop! (:transport protocol)))
-            this)})
-
-(defrecord Server [name version tools resources prompts protocol capabilities])
-
-(extend Server
-  MCPServer
-    server-functions)
+(defrecord FastServer [name version tools resources prompts protocol
+                       capabilities]
+  Server
+    (register-tool! [this tool handler]
+      (check-object-and-handler :tool tool handler)
+      (swap! (:tools this) assoc (:name tool) {:tool tool, :handler handler})
+      this)
+    (register-resource! [this resource handler]
+      (check-object-and-handler :resource resource handler)
+      (swap! (:resources this) assoc
+        (:uri resource)
+        {:resource resource, :handler handler})
+      this)
+    (register-prompt! [this prompt handler]
+      (check-object-and-handler :prompt prompt handler)
+      (swap! (:prompts this) assoc
+        (:name prompt)
+        {:prompt prompt, :handler handler})
+      this)
+    (start! [this transport]
+      (let [protocol (core/create-protocol transport)]
+        ;; Initialize handlers and update our protocol
+        (init-handlers! this protocol)
+        (reset! (:protocol this) protocol)
+        (.start! transport))
+      this)
+    (stop! [this]
+      (when-let [protocol @(:protocol this)] (core/stop! (:transport protocol)))
+      this))
 
 (defn create-server
   "Create a new MCP server with the given name and version"
   [name version]
-  (map->Server {:name name,
-                :version version,
-                :tools (atom {}),
-                :resources (atom {}),
-                :prompts (atom {}),
-                :protocol (atom nil),
-                :capabilities (atom {:tools {}, :resources {}, :prompts {}})}))
+  (map->FastServer {:name name,
+                    :version version,
+                    :tools (atom {}),
+                    :resources (atom {}),
+                    :prompts (atom {}),
+                    :protocol (atom nil),
+                    :capabilities (atom
+                                    {:tools {}, :resources {}, :prompts {}})}))
 
 (defn make-server
   "Create and configure an MCP server from a configuration map.
