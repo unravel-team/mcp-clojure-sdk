@@ -7,7 +7,6 @@ watch-files: true
 ## Specify a read-only file (can be used multiple times)
 read:
   - CONVENTIONS.md
-  - doc/specification-schema.ts
   - src/io/modelcontext/cljc_sdk/specs.clj
 
 ## Specify a custom prompt for generating commit messages
