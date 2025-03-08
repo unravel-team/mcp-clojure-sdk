@@ -702,21 +702,20 @@
                                         :description
                                         "Number to calculate factorial of"}},
                  :required ["number"]},
-   :handler
-   (fn [{:keys [number]}]
-     (let [number (parse-long number)]
-       (if (or (neg? number) (not (integer? number)))
-         {:type "text",
-          :text "Error: Factorial requires a non-negative integer",
-          :is-error true}
-         (try
-           ;; Simulate longer computation for large numbers
-           (when (> number 10) (Thread/sleep 1000))
-           {:type "text", :text (str (reduce * (range 1 (inc number))))}
-           (catch Exception e
-             {:type "text",
-              :text (str "Error calculating factorial: " (.getMessage e)),
-              :is-error true})))))})
+   :handler (fn [{:keys [number]}]
+              (if (or (neg? number) (not (integer? number)))
+                {:type "text",
+                 :text "Error: Factorial requires a non-negative integer",
+                 :is-error true}
+                (try
+                  ;; Simulate longer computation for large numbers
+                  (when (> number 10) (Thread/sleep 1000))
+                  {:type "text", :text (str (reduce * (range 1 (inc number))))}
+                  (catch Exception e
+                    {:type "text",
+                     :text (str "Error calculating factorial: "
+                                (.getMessage e)),
+                     :is-error true}))))})
 
 (def calculator-server-spec
   {:name "calculator",

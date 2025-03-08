@@ -11,17 +11,17 @@
   (stop! [this]))
 
 (defn- handle-initialize
-  [server-name server-version capabilities client-info]
+  [client-info _client-capabilities server-info server-capabilities]
   (log/info :msg "Client connected" :client client-info)
   {:protocolVersion specs/latest-protocol-version,
-   :capabilities capabilities,
-   :serverInfo {:name server-name, :version server-version}})
+   :capabilities server-capabilities,
+   :serverInfo server-info})
 
-(defn- handle-list-tools [tools] {:tools (mapv :tool (vals @tools))})
+(defn- handle-list-tools [tools] {:tools (mapv :tool (vals tools))})
 
 (defn- handle-call-tool
   [tools tool-name arguments]
-  (if-let [{:keys [handler]} (get @tools tool-name)]
+  (if-let [{:keys [handler]} (get tools tool-name)]
     (try {:content [(handler arguments)]}
          (catch Exception e
            {:content [{:type "text", :text (str "Error: " (.getMessage e))}],
@@ -33,22 +33,22 @@
 
 (defn- handle-list-resources
   [resources]
-  {:resources (mapv :resource (vals @resources))})
+  {:resources (mapv :resource (vals resources))})
 
 (defn- handle-read-resource
   [resources uri]
-  (if-let [{:keys [handler]} (get @resources uri)]
+  (if-let [{:keys [handler]} (get resources uri)]
     {:contents [(handler uri)]}
     (throw (ex-info "Resource not found"
                     {:code specs/method-not-found,
                      :message "The requested resource was not found",
                      :data {:uri uri}}))))
 
-(defn- handle-list-prompts [prompts] {:prompts (mapv :prompt (vals @prompts))})
+(defn- handle-list-prompts [prompts] {:prompts (mapv :prompt (vals prompts))})
 
 (defn- handle-get-prompt
   [prompts name arguments]
-  (if-let [{:keys [handler]} (get @prompts name)]
+  (if-let [{:keys [handler]} (get prompts name)]
     (handler arguments)
     (throw (ex-info "Prompt not found"
                     {:code specs/method-not-found,
@@ -56,31 +56,37 @@
                      :data {:prompt-name name}}))))
 
 (defn- init-handlers!
-  [server-name server-version protocol tools resources prompts]
+  [server protocol]
   (core/handle-request! protocol
                         "initialize"
-                        #(handle-initialize server-name
-                                            server-version
-                                            (:capabilities %)
-                                            (:clientInfo %)))
+                        (fn [req]
+                          (handle-initialize (:clientInfo req)
+                                             (:capabilities req)
+                                             (select-keys server
+                                                          [:name :version])
+                                             @(:capabilities server))))
   (core/handle-request! protocol
                         "tools/list"
-                        (fn [_] (handle-list-tools tools)))
-  (core/handle-request! protocol
-                        "tools/call"
-                        #(handle-call-tool tools (:name %) (:arguments %)))
+                        (fn [_] (handle-list-tools @(:tools server))))
+  (core/handle-request!
+    protocol
+    "tools/call"
+    (fn [req] (handle-call-tool @(:tools server) (:name req) (:arguments req))))
   (core/handle-request! protocol
                         "resources/list"
-                        (fn [_] (handle-list-resources resources)))
-  (core/handle-request! protocol
-                        "resources/read"
-                        #(handle-read-resource resources (:uri %)))
+                        (fn [_] (handle-list-resources @(:resources server))))
+  (core/handle-request!
+    protocol
+    "resources/read"
+    (fn [req] (handle-read-resource @(:resources server) (:uri req))))
   (core/handle-request! protocol
                         "prompts/list"
-                        (fn [_] (handle-list-prompts prompts)))
-  (core/handle-request! protocol
-                        "prompts/get"
-                        #(handle-get-prompt prompts (:name %) (:arguments %))))
+                        (fn [_] (handle-list-prompts @(:prompts server))))
+  (core/handle-request!
+    protocol
+    "prompts/get"
+    (fn [req]
+      (handle-get-prompt @(:prompts server) (:name req) (:arguments req)))))
 
 (defn- check-object-and-handler
   [object-type object handler]
@@ -119,12 +125,7 @@
    :start! (fn [this transport]
              (let [protocol (core/create-protocol transport)]
                ;; Initialize handlers and update our protocol
-               (init-handlers! (:name this)
-                               (:version this)
-                               protocol
-                               (:tools this)
-                               (:resources this)
-                               (:prompts this))
+               (init-handlers! this protocol)
                (reset! (:protocol this) protocol)
                (.start! transport))
              this),
@@ -148,7 +149,7 @@
                 :resources (atom {}),
                 :prompts (atom {}),
                 :protocol (atom nil),
-                :capabilities (atom {:tools {}})}))
+                :capabilities (atom {:tools {}, :resources {}, :prompts {}})}))
 
 (defn make-server
   "Create and configure an MCP server from a configuration map.
