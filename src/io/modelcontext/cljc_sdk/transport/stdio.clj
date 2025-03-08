@@ -54,7 +54,7 @@
       (a/go-loop []
         (when @running?
           (try (when-let [line (.readLine in)]
-                 ;; (spit "./logs/dev.log" line :append true)
+                 (log/debug :action :line :msg line)
                  (a/>! msg-chan line))
                (catch Exception e
                  (log/error :msg "Error reading from stdin" :error e)))
@@ -71,12 +71,16 @@
            (catch Exception e
              (log/error :msg "Error flushing output" :error e))))
     (send! [_this message]
+      (log/debug :action :sending :msg message)
       (try (locking out (.write out message) (.newLine out) (.flush out))
            (catch Exception e
              (log/error :msg "Error writing to stdout"
                         :error e
                         :message message))))
-    (receive! [_this] (a/<!! msg-chan)))
+    (receive! [_this]
+      (let [msg (a/<!! msg-chan)]
+        (log/debug :action :receiving :msg msg)
+        msg)))
 
 (defn validate-encoding!
   "Validates that the specified encoding is supported."

@@ -1,4 +1,12 @@
 ;;; Run with clj -M calculator_server.bb
-{:deps {io.modelcontext/cljc-sdk {:local/root ".."},
+{:aliases
+ {:logs
+  {:jvm-opts
+   ["-Dclojure.tools.logging.factory=clojure.tools.logging.impl/log4j2-factory"
+    "-Dorg.eclipse.jetty.util.log.class=org.eclipse.jetty.util.log.Slf4jLog"
+    "-Dlog4j2.contextSelector=org.apache.logging.log4j.core.async.AsyncLoggerContextSelector"
+    "-Dlog4j2.configurationFile=logger/log4j2-mcp.xml"
+    "-Dbabashka.json.provider=metosin/jsonista" "-Dlogging.level=DEBUG"]}},
+ :deps {io.modelcontext/cljc-sdk {:local/root ".."},
         me.vedang/logger {:local/root "../utils/logger"}},
  :paths ["."]}

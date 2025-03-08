@@ -12,7 +12,7 @@
 
 (defn- handle-initialize
   [client-info _client-capabilities server-info server-capabilities]
-  (log/info :msg "Client connected" :client client-info)
+  (log/debug :msg "Client connected" :client client-info)
   {:protocolVersion specs/latest-protocol-version,
    :capabilities server-capabilities,
    :serverInfo server-info})
