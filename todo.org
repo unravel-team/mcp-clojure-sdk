@@ -1,0 +1,16 @@
+* WORKING Create a Stdio-transport based server implementation
+* TODO Checks and Balances in the mcp-cljc-sdk code
+** TODO Make sure that handle-* functions are implement proper checks
+Read through the python decorator code to double-check if we are doing the right thing here.
+** TODO Implement best practices for prompts
+** TODO Implement best practices for tools
+** TODO Implement best practices for resources
+** TODO Ensure that error handling is correctly done for transports
+** TODO Implement best practices for transports
+* TODO Implement the entire roots section of the protocol
+* TODO Implement the entire sampling section of the protocol
+* TODO Implement a Stdio-transport based Client
+* TODO Implement the SSE Transport
+** TODO Implement the SSE-transport based server
+** TODO Implement the SSE-transport based client
+* TODO Create a CLI tool for how tools, prompts, resources should be defined
