@@ -1,12 +1,47 @@
-{:paths ["src" "resources"]
- :deps {org.clojure/clojure {:mvn/version "1.12.0"}}
- :aliases
- {:test
-  {:extra-paths ["test"]
-   :extra-deps {org.clojure/test.check {:mvn/version "1.1.1"}
-                io.github.cognitect-labs/test-runner
-                {:git/tag "v0.5.1" :git/sha "dfb30dd"}}}
-  :build {:deps {io.github.clojure/tools.build
-                 {:mvn/version "0.10.5"}
-                 slipset/deps-deploy {:mvn/version "0.2.2"}}
-          :ns-default build}}}
+{:aliases
+ {:build {:deps {io.github.clojure/tools.build {:mvn/version "0.10.6"},
+                 slipset/deps-deploy {:mvn/version "0.2.2"}},
+          :ns-default build},
+  :cider
+  {:extra-deps {cider/cider-nrepl {:mvn/version "0.52.0"},
+                djblue/portal {:mvn/version "0.58.5"},
+                mx.cider/tools.deps.enrich-classpath {:mvn/version "1.19.3"},
+                nrepl/nrepl {:mvn/version "1.3.1"},
+                refactor-nrepl/refactor-nrepl {:mvn/version "3.10.0"}},
+   :main-opts
+   ["-m" "nrepl.cmdline" "--interactive" "--color" "--middleware"
+    "[cider.nrepl/cider-middleware,refactor-nrepl.middleware/wrap-refactor,portal.nrepl/wrap-portal]"]},
+  :cider-storm
+  {:classpath-overrides {org.clojure/clojure nil},
+   :extra-deps {cider/cider-nrepl {:mvn/version "0.52.0"},
+                com.github.flow-storm/clojure {:mvn/version "1.12.0-3"},
+                com.github.flow-storm/flow-storm-dbg {:mvn/version "4.1.1"},
+                djblue/portal {:mvn/version "0.58.5"},
+                mx.cider/tools.deps.enrich-classpath {:mvn/version "1.19.3"},
+                nrepl/nrepl {:mvn/version "1.3.1"},
+                refactor-nrepl/refactor-nrepl {:mvn/version "3.10.0"}},
+   :jvm-opts
+   ["-Dflowstorm.startRecording=false" "-Dclojure.storm.instrumentEnable=true"
+    "-Dflowstorm.jarEditorCommand=emacsclient --eval '(let ((b (cider-find-file \"jar:file:<<JAR>>!/<<FILE>>\"))) (with-current-buffer b (switch-to-buffer b) (goto-char (point-min)) (forward-line (1- <<LINE>>))))'"
+    "-Dflowstorm.fileEditorCommand=emacsclient -n +<<LINE>>:0 <<FILE>>"
+    "-Dclojure.storm.instrumentOnlyPrefixes=me.vedang., io.modelcontext.cljc-sdk."],
+   :main-opts
+   ["-m" "nrepl.cmdline" "--interactive" "--color" "--middleware"
+    "[cider.nrepl/cider-middleware,refactor-nrepl.middleware/wrap-refactor,portal.nrepl/wrap-portal]"]},
+  :logs-dev
+  {:jvm-opts
+   ["-Dclojure.tools.logging.factory=clojure.tools.logging.impl/log4j2-factory"
+    "-Dorg.eclipse.jetty.util.log.class=org.eclipse.jetty.util.log.Slf4jLog"
+    "-Dlog4j2.contextSelector=org.apache.logging.log4j.core.async.AsyncLoggerContextSelector"
+    "-Dlog4j2.configurationFile=logger/log4j2-mcp.xml"
+    "-Dbabashka.json.provider=metosin/jsonista" "-Dlogging.level=DEBUG"]},
+  :test {:extra-deps {io.github.cognitect-labs/test-runner {:git/sha "dfb30dd",
+                                                            :git/tag "v0.5.1"},
+                      org.clojure/test.check {:mvn/version "1.1.1"}},
+         :extra-paths ["test"]}},
+ :deps {me.vedang/logger {:local/root "utils/logger"},
+        metosin/jsonista {:mvn/version "0.3.13"},
+        org.babashka/json {:mvn/version "0.1.6"},
+        org.clojure/clojure {:mvn/version "1.12.0"},
+        org.clojure/core.async {:mvn/version "1.7.701"}},
+ :paths ["src" "resources"]}
