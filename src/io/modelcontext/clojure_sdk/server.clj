@@ -1,8 +1,9 @@
 (ns io.modelcontext.clojure-sdk.server
-  (:require [io.modelcontext.clojure-sdk.specs :as specs]
+  (:require [clojure.core.async :as async]
+            [io.modelcontext.clojure-sdk.specs :as specs]
             [lsp4clj.coercer :as coercer]
-            [me.vedang.logger.interface :as log]
-            [lsp4clj.server :as lsp.server]))
+            [lsp4clj.server :as lsp.server]
+            [me.vedang.logger.interface :as log]))
 
 (defmacro conform-or-log
   "Provides log function for conformation, while preserving line numbers."
@@ -201,3 +202,14 @@
     (doseq [prompt prompts]
       (register-prompt! context (dissoc prompt :handler) (:handler prompt)))
     context))
+
+(defn start-server!
+  [server context]
+  (log/info :msg "[SERVER] Starting server...")
+  (lsp.server/start server context))
+
+(defn chan-server
+  []
+  (let [input-ch (async/chan 3)
+        output-ch (async/chan 3)]
+    (lsp.server/chan-server {:output-ch output-ch, :input-ch input-ch})))

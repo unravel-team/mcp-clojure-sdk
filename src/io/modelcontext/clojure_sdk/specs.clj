@@ -29,9 +29,7 @@
 ;; receiver is not obligated to provide these notifications.
 (s/def :request/_meta (s/keys :opt-un [::progressToken]))
 ;; Parameters
-(s/def ::unknown-params (s/nilable (s/map-of string? any?)))
-(s/def :request/params
-  (s/merge (s/keys :opt-un [:request/_meta]) ::unknown-params))
+(s/def :request/params (s/keys :opt-un [:request/_meta]))
 (s/def ::request (s/keys :req-un [::method] :opt-un [:request/params]))
 
 ;;; Base interface: Notification
@@ -40,8 +38,7 @@
 ;; to
 ;; attach additional metadata to their notifications.
 (s/def :notification/_meta ::additional-metadata)
-(s/def :notification/params
-  (s/merge (s/keys :opt-un [:notification/_meta]) ::unknown-params))
+(s/def :notification/params (s/keys :opt-un [:notification/_meta]))
 (s/def ::notification
   (s/keys :req-un [::method] :opt-un [:notification/params]))
 
@@ -49,7 +46,7 @@
 ;; _meta: This result property is reserved by the protocol to allow clients and
 ;; servers to attach additional metadata to their responses.
 (s/def :result/_meta ::additional-metadata)
-(s/def ::result (s/merge (s/keys :opt-un [:result/_meta]) ::unknown-params))
+(s/def ::result (s/keys :opt-un [:result/_meta]))
 
 
 ;;; JSON-RPC
