@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration status="info" strict="true" name="me.vedang.Logging">
+  <Properties>
+    <Property name="filename">logs/dev.log</Property>
+  </Properties>
+  <Filter type="ThresholdFilter" level="${sys:logging.level}"/>
+
+  <Appenders>
+    <File name="File" fileName="${filename}" bufferedIO="true">
+      <PatternLayout pattern="%d{yyyy-MM-dd HH:mm:ss.SSS} [%t] %-5level %logger{36} - %X%msg%n" />
+    </File>
+
+    <Async name="AsyncFileAppender" includeLocation="false">
+      <AppenderRef ref="File" />
+    </Async>
+  </Appenders>
+
+  <Loggers>
+    <Root level="${sys:logging.level}">
+      <AppenderRef ref="AsyncFileAppender"/>
+    </Root>
+
+    <!-- Configure logging level for external libraries  -->
+    <Logger name="com.zaxxer.hikari" level="ERROR" additivity="false">
+      <AppenderRef ref="AsyncFileAppender"/>
+    </Logger>
+    <Logger name="io.netty.util" level="WARN" additivity="false">
+      <AppenderRef ref="AsyncFileAppender"/>
+    </Logger>
+    <Logger name="org.eclipse.jetty" level="WARN" additivity="false">
+      <AppenderRef ref="AsyncFileAppender"/>
+    </Logger>
+    <Logger name="io.pedestal" level="INFO" additivity="false">
+      <AppenderRef ref="AsyncFileAppender"/>
+    </Logger>
+    <Logger name="org.apache.http" level="WARN" additivity="false">
+      <AppenderRef ref="AsyncFileAppender"/>
+    </Logger>
+  </Loggers>
+</Configuration>
