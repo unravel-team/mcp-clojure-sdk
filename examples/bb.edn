@@ -1,0 +1,7 @@
+;;; Run with `bb run-calculator`
+{:deps {io.modelcontext/clojure-sdk {:local/root ".."},
+        me.vedang/logger {:local/root "../utils/logger"}},
+ :paths ["."],
+ :tasks {run-calculator {:doc "Run the calculator server example",
+                         :requires ([calculator-server :as calc]),
+                         :task (apply calc/-main *command-line-args*)}}}

@@ -3,7 +3,8 @@
             [io.modelcontext.clojure-sdk.server :as server]
             [lsp4clj.io-server :as lsp.io-server]
             [lsp4clj.server :as lsp.server]
-            [me.vedang.logger.interface :as log]))
+            [me.vedang.logger.interface :as log])
+  (:refer-clojure :exclude [run!]))
 
 (defn- monitor-server-logs
   [log-ch]
@@ -14,7 +15,7 @@
   ;; any logs.
   (async/go-loop []
     (when-let [log-args (async/<! log-ch)]
-      (log/info :level (first log-args) :args (rest log-args))
+      (log/debug :level (first log-args) :args (rest log-args))
       (recur))))
 
 (defn start!
@@ -24,6 +25,7 @@
     (monitor-server-logs (:log-ch server))
     (lsp.server/start server context)))
 
+#_{:clj-kondo/ignore [:redefined-var]}
 (defn run!
   [spec]
   (lsp.server/discarding-stdout
