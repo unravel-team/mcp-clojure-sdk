@@ -1,7 +1,8 @@
 ;;; Run with `bb run-calculator`
-{:deps {io.modelcontext/clojure-sdk {:local/root ".."},
-        me.vedang/logger {:local/root "../utils/logger"}},
- :paths ["."],
+{:deps {io.modelcontextprotocol/mcp-clojure-sdk
+        {:git/sha "52279524b90d09e6962f13d9e975cb4cbd910dbd",
+         :git/url "git@github.com:unravel-team/mcp-clojure-sdk.git"}},
+ :paths ["." "resources"],
  :tasks {run-calculator {:doc "Run the calculator server example",
                          :requires ([calculator-server :as calc]),
                          :task (apply calc/-main *command-line-args*)}}}

@@ -157,10 +157,7 @@
            ;; Test long-running operation
            tool-factorial]})
 
-(defn -main [& _args] (io-server/run! calculator-server-spec))
-
-(-main)
-
+(defn -main [& _args] @(io-server/run! calculator-server-spec))
 
 (comment
   ;; Test error handling

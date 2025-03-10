@@ -1,12 +1,19 @@
-;;; Run with clj -M calculator_server.bb
 {:aliases
- {:logs
+ {:build {:deps {io.github.clojure/tools.build {:mvn/version "0.10.6"},
+                 slipset/deps-deploy {:mvn/version "0.2.2"}},
+          :ns-default build},
+  :logs
   {:jvm-opts
    ["-Dclojure.tools.logging.factory=clojure.tools.logging.impl/log4j2-factory"
     "-Dorg.eclipse.jetty.util.log.class=org.eclipse.jetty.util.log.Slf4jLog"
     "-Dlog4j2.contextSelector=org.apache.logging.log4j.core.async.AsyncLoggerContextSelector"
     "-Dlog4j2.configurationFile=examples-mcp.xml"
-    "-Dbabashka.json.provider=metosin/jsonista" "-Dlogging.level=WARN"]}},
- :deps {io.github.unravel-team/mcp-clojure-sdk
-        {:git/sha "52279524b90d09e6962f13d9e975cb4cbd910dbd"}},
+    "-Dbabashka.json.provider=metosin/jsonista" "-Dlogging.level=WARN"]},
+  :test {:extra-deps {io.github.cognitect-labs/test-runner {:git/sha "dfb30dd",
+                                                            :git/tag "v0.5.1"},
+                      org.clojure/test.check {:mvn/version "1.1.1"}},
+         :extra-paths ["test"]}},
+ :deps {io.modelcontextprotocol/mcp-clojure-sdk
+        {:git/sha "52279524b90d09e6962f13d9e975cb4cbd910dbd",
+         :git/url "git@github.com:unravel-team/mcp-clojure-sdk.git"}},
  :paths ["." "resources"]}
