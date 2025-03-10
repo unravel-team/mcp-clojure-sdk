@@ -1,6 +1,5 @@
 (ns calculator-server
-  (:require [io.modelcontext.clojure-sdk.stdio-server :as io-server]
-            [lsp4clj.server :as lsp.server]))
+  (:require [io.modelcontext.clojure-sdk.stdio-server :as io-server]))
 
 (defn validate-array
   "Helper function to validate array inputs"
