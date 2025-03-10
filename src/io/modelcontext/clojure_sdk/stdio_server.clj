@@ -17,9 +17,9 @@
       (log/info :level (first log-args) :args (rest log-args))
       (recur))))
 
-(defn start-server!
+(defn start!
   [server spec]
-  (let [context (assoc (server/create-server-context! spec) :server server)]
+  (let [context (assoc (server/create-context! spec) :server server)]
     (log/info :msg "[SERVER] Starting server...")
     (monitor-server-logs (:log-ch server))
     (lsp.server/start server context)))
@@ -30,4 +30,4 @@
     (let [log-ch (async/chan (async/sliding-buffer 20))
           server (lsp.io-server/stdio-server
                    {:log-ch log-ch, :trace-ch log-ch, :trace-level :trace})]
-      (start-server! server spec))))
+      (start! server spec))))

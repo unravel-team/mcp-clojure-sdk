@@ -4,7 +4,8 @@
             [io.modelcontext.clojure-sdk.server :as server]
             [io.modelcontext.clojure-sdk.test-helper :as h]
             [lsp4clj.lsp.requests :as lsp.requests]
-            [lsp4clj.server :as lsp.server]))
+            [lsp4clj.server :as lsp.server]
+            [io.modelcontext.clojure-sdk.specs :as specs]))
 
 ;;; Tools
 (def tool-greet
@@ -80,11 +81,11 @@
 
 (deftest server-basic-functionality
   (testing "Server creation and tool registration"
-    (let [context (server/create-server-context! {:name "test-server",
-                                                  :version "1.0.0",
-                                                  :tools [tool-greet],
-                                                  :prompts [],
-                                                  :resources []})]
+    (let [context (server/create-context! {:name "test-server",
+                                           :version "1.0.0",
+                                           :tools [tool-greet],
+                                           :prompts [],
+                                           :resources []})]
       (testing "Tool listing"
         (let [tools (-> @(:tools context)
                         vals
@@ -99,11 +100,11 @@
               result (handler {:name "World"})]
           (is (= {:type "text", :text "Hello, World!"} result))))))
   (testing "Server creation with basic configuration"
-    (let [context (server/create-server-context! {:name "test-server",
-                                                  :version "1.0.0",
-                                                  :tools [],
-                                                  :prompts [],
-                                                  :resources []})]
+    (let [context (server/create-context! {:name "test-server",
+                                           :version "1.0.0",
+                                           :tools [],
+                                           :prompts [],
+                                           :resources []})]
       (is (= "test-server" (get-in context [:server-info :name])))
       (is (= "1.0.0" (get-in context [:server-info :version])))
       (is (= {} @(:tools context)))
@@ -112,7 +113,7 @@
 
 (deftest tool-registration
   (testing "Tool registration and validation"
-    (let [context (server/create-server-context!
+    (let [context (server/create-context!
                     {:name "test-server", :version "1.0.0", :tools []})]
       (server/register-tool!
         context
@@ -132,15 +133,15 @@
 
 (deftest initialization
   (testing "Connection initialization through initialize"
-    (let [context (server/create-server-context!
+    (let [context (server/create-context!
                     {:name "test-server", :version "1.0.0", :tools [tool-echo]})
           server (server/chan-server)
-          _join (server/start-server! server context)]
+          _join (server/start! server context)]
       (testing "Client initialization"
         (async/put! (:input-ch server) (lsp.requests/request 1 "initialize" {}))
-        (is (= {:jsonrpc "2.0",
+        (is (= {:jsonrpc specs/jsonrpc-version,
                 :id 1,
-                :result {:protocolVersion "2024-11-05",
+                :result {:protocolVersion specs/stable-protocol-version,
                          :capabilities {:tools {}, :resources {}, :prompts {}},
                          :serverInfo {:name "test-server", :version "1.0.0"}}}
                (h/take-or-timeout (:output-ch server) 200))))

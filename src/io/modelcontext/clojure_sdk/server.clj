@@ -167,7 +167,7 @@
     {:prompt prompt, :handler handler})
   context)
 
-(defn- create-empty-server-context
+(defn- create-empty-context
   [name version]
   {:server-info {:name name, :version version},
    :tools (atom {}),
@@ -176,7 +176,7 @@
    :protocol (atom nil),
    :capabilities (atom {:tools {}, :resources {}, :prompts {}})})
 
-(defn create-server-context!
+(defn create-context!
   "Create and configure an MCP server from a configuration map.
    Config map should have the shape:
    {:name \"server-name\"
@@ -192,7 +192,7 @@
                  :type \"text\"
                  :handler (fn [uri] ...)}]}"
   [{:keys [name version tools prompts resources]}]
-  (let [context (create-empty-server-context name version)]
+  (let [context (create-empty-context name version)]
     (doseq [tool tools]
       (register-tool! context (dissoc tool :handler) (:handler tool)))
     (doseq [resource resources]
@@ -203,7 +203,7 @@
       (register-prompt! context (dissoc prompt :handler) (:handler prompt)))
     context))
 
-(defn start-server!
+(defn start!
   [server context]
   (log/info :msg "[SERVER] Starting server...")
   (lsp.server/start server context))
