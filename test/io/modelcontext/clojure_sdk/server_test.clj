@@ -178,7 +178,7 @@
                                            :arguments {:message "test"}}))
         (is (= {:jsonrpc specs/jsonrpc-version,
                 :id 2,
-                :result {:content [[:text {:type "text", :text "test"}]]}}
+                :result {:content [{:type "text", :text "test"}]}}
                (h/assert-take (:output-ch server)))))
       (testing "Invalid tool request"
         (async/put! (:input-ch server)
@@ -189,4 +189,98 @@
                         :message "Tool Not Found!",
                         :data {:tool-name "invalid"}}}
                (h/assert-take (:output-ch server)))))
+      (lsp.server/shutdown server))))
+
+(deftest prompt-listing
+  (testing "Listing available prompts"
+    (let [context (server/create-context! {:name "test-server",
+                                           :version "1.0.0",
+                                           :tools [],
+                                           :prompts [prompt-analyze-code
+                                                     prompt-poem-about-code]})
+          server (server/chan-server)
+          _join (server/start! server context)]
+      (testing "Prompts list request"
+        (async/put! (:input-ch server)
+                    (lsp.requests/request 1 "prompts/list" {}))
+        (let [response (h/assert-take (:output-ch server))]
+          (is (= 2 (count (:prompts (:result response)))))
+          (let [analyze (first (:prompts (:result response)))
+                poem (second (:prompts (:result response)))]
+            (is (= "analyze-code" (:name analyze)))
+            (is (= "Analyze code for potential improvements"
+                   (:description analyze)))
+            (is (= [{:name "language",
+                     :description "Programming language",
+                     :required true}
+                    {:name "code",
+                     :description "The code to analyze",
+                     :required true}]
+                   (:arguments analyze)))
+            (is (= "poem-about-code" (:name poem)))
+            (is (= "Write a poem describing what this code does"
+                   (:description poem)))
+            (is
+              (=
+                [{:name "poetry_type",
+                  :description
+                  "The style in which to write the poetry: sonnet, limerick, haiku",
+                  :required true}
+                 {:name "code",
+                  :description "The code to write poetry about",
+                  :required true}]
+                (:arguments poem))))))
+      (lsp.server/shutdown server))))
+
+(deftest prompt-getting
+  (testing "Getting specific prompts"
+    (let [server (server/chan-server)
+          context (server/create-context! {:name "test-server",
+                                           :version "1.0.0",
+                                           :tools [],
+                                           :prompts [prompt-analyze-code
+                                                     prompt-poem-about-code]})
+          _join (server/start! server context)]
+      (testing "Get analyze-code prompt"
+        (async/put! (:input-ch server)
+                    (lsp.requests/request 1
+                                          "prompts/get"
+                                          {:name "analyze-code",
+                                           :arguments {:language "Clojure",
+                                                       :code "(defn foo [])"}}))
+        (let [response (h/assert-take (:output-ch server))
+              result (:result response)]
+          (is (= 1 (count (:messages result))))
+          (is
+            (=
+              "Analysis of Clojure code:\nHere are potential improvements for:\n(defn foo [])"
+              (-> result
+                  :messages
+                  first
+                  :content
+                  :text)))))
+      (testing "Get poem-about-code prompt"
+        (async/put! (:input-ch server)
+                    (lsp.requests/request 2
+                                          "prompts/get"
+                                          {:name "poem-about-code",
+                                           :arguments {:poetry_type "haiku",
+                                                       :code "(defn foo [])"}}))
+        (let [response (h/assert-take (:output-ch server))
+              result (:result response)]
+          (is (= 1 (count (:messages result))))
+          (is (= "Write a haiku Poem about:\n(defn foo [])"
+                 (-> result
+                     :messages
+                     first
+                     :content
+                     :text)))))
+      (testing "Invalid prompt request"
+        (async/put!
+          (:input-ch server)
+          (lsp.requests/request 3 "prompts/get" {:name "invalid-prompt"}))
+        (let [response (h/assert-take (:output-ch server))
+              error (:error response)]
+          (is (= specs/method-not-found (:code error)))
+          (is (= "Prompt Not Found!" (:message error)))))
       (lsp.server/shutdown server))))

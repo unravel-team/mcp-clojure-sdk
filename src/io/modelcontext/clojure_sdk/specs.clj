@@ -261,8 +261,9 @@
 
 ;; The server's response to a resources/read request from the client.
 (s/def :read-resource/content
-  (s/or :text-resource :contents/text-resource
-        :blob-resource :contents/blob-resource))
+  (s/and (s/or :text-resource :contents/text-resource
+               :blob-resource :contents/blob-resource)
+         (s/conformer second)))
 (s/def :read-resource/contents (s/coll-of :read-resource/content))
 (s/def :result/read-resource
   (s/merge ::result (s/keys :req-un [:read-resource/contents])))
@@ -413,10 +414,11 @@
 ;; to `SamplingMessage`, but also supports the embedding of resources
 ;; from the MCP server.
 (s/def :prompt-message/content
-  (s/or :text-content :content/text
-        :image-content :content/image
-        :audio-content :content/audio
-        :embedded-resource :resource/embedded))
+  (s/and (s/or :text-content :content/text
+               :image-content :content/image
+               :audio-content :content/audio
+               :embedded-resource :resource/embedded)
+         (s/conformer second)))
 (s/def ::prompt-message (s/keys :req-un [::role :prompt-message/content]))
 
 ;;; Embedded Resource
@@ -427,8 +429,9 @@
 ;; LLM and/or the user.
 (s/def :embedded-resource/type #{"resource"})
 (s/def :embedded-resource/resource
-  (s/or :text-resource :contents/text-resource
-        :blob-resource :contents/blob-resource))
+  (s/and (s/or :text-resource :contents/text-resource
+               :blob-resource :contents/blob-resource)
+         (s/conformer second)))
 (s/def :resource/embedded
   (s/merge ::annotated (s/keys :req-un [:embedded-resource/type
                                         :embedded-resource/resource])))
@@ -470,10 +473,11 @@
 (s/def :call-tool/content ;; yes, this is a collection, and the name is not
                           ;; `contents`. This looks like a mistake they
                           ;; made and kept for backwards compatibility.
-  (s/coll-of (s/or :text :content/text
-                   :image :content/image
-                   :audio :content/audio
-                   :resource :resource/embedded)))
+  (s/coll-of (s/and (s/or :text :content/text
+                          :image :content/image
+                          :audio :content/audio
+                          :resource :resource/embedded)
+                    (s/conformer second))))
 ;; If not set, this is assumed to be false (the call was successful).
 (s/def :call-tool/isError boolean?)
 (s/def :result/call-tool
@@ -582,8 +586,9 @@
 (s/def :sampling-message/model string?)
 ;; The reason why sampling stopped, if known.
 (s/def :sampling-message/stopReason
-  (s/or :known-reasons #{"endTurn" "stopSequence" "maxTokens"}
-        :unknown-reasons string?))
+  (s/and (s/or :known-reasons #{"endTurn" "stopSequence" "maxTokens"}
+               :unknown-reasons string?)
+         (s/conformer second)))
 (s/def :result/create-message
   (s/merge ::result
            ::sampling-message (s/keys :req-un [:sampling-message/model]
@@ -591,9 +596,10 @@
 
 ;; Describes a message issued to or received from an LLM API.
 (s/def :sampling-message/content
-  (s/or :text :content/text
-        :image :content/image
-        :audio :content/audio))
+  (s/and (s/or :text :content/text
+               :image :content/image
+               :audio :content/audio)
+         (s/conformer second)))
 (s/def ::sampling-message (s/keys :req-un [::role :sampling-message/content]))
 
 ;;; Annotated
@@ -689,8 +695,9 @@
 ;; A request from the client to the server, to ask for completion options.
 (s/def :complete/method #{"completion/complete"})
 (s/def :complete/ref
-  (s/or :prompt-ref :ref/prompt
-        :resource-ref :ref/resource))
+  (s/and (s/or :prompt-ref :ref/prompt
+               :resource-ref :ref/resource)
+         (s/conformer second)))
 (s/def :complete/argument
   (s/keys :req-un [:complete-argument/name :complete-argument/value]))
 (s/def :complete-argument/name string?)
