@@ -284,3 +284,74 @@
           (is (= specs/method-not-found (:code error)))
           (is (= "Prompt Not Found!" (:message error)))))
       (lsp.server/shutdown server))))
+
+(deftest resource-listing
+  (testing "Listing available resources"
+    (let [server (server/chan-server)
+          context (server/create-context! {:name "test-server",
+                                           :version "1.0.0",
+                                           :tools [],
+                                           :prompts [],
+                                           :resources [resource-test-file
+                                                       resource-test-json]})
+          _join (server/start! server context)]
+      (testing "Resources list request"
+        (async/put! (:input-ch server)
+                    (lsp.requests/request 1 "resources/list" {}))
+        (let [response (h/assert-take (:output-ch server))
+              result (:result response)]
+          (is (= 2 (count (:resources result))))
+          (let [file-resource (first (:resources result))
+                json-resource (second (:resources result))]
+            (is (= "file:///test.txt" (:uri file-resource)))
+            (is (= "Test File" (:name file-resource)))
+            (is (= "A test file" (:description file-resource)))
+            (is (= "text/plain" (:mimeType file-resource)))
+            (is (= "file:///data.json" (:uri json-resource)))
+            (is (= "Test Data" (:name json-resource)))
+            (is (= "Test JSON data" (:description json-resource)))
+            (is (= "application/json" (:mimeType json-resource)))))
+        (lsp.server/shutdown server)))))
+
+(deftest resource-reading
+  (testing "Reading resources"
+    (let [server (server/chan-server)
+          context (server/create-context! {:name "test-server",
+                                           :version "1.0.0",
+                                           :tools [],
+                                           :prompts [],
+                                           :resources [resource-test-file
+                                                       resource-test-json]})
+          _join (server/start! server context)]
+      (testing "Read text file resource"
+        (async/put!
+          (:input-ch server)
+          (lsp.requests/request 2 "resources/read" {:uri "file:///test.txt"}))
+        (let [response (h/assert-take (:output-ch server))
+              result (:result response)]
+          (is (= 1 (count (:contents result))))
+          (let [content (first (:contents result))]
+            (is (= "file:///test.txt" (:uri content)))
+            (is (= "text/plain" (:mimeType content)))
+            (is (contains? content :text)))))
+      (testing "Read JSON resource"
+        (async/put!
+          (:input-ch server)
+          (lsp.requests/request 3 "resources/read" {:uri "file:///data.json"}))
+        (let [response (h/assert-take (:output-ch server))
+              result (:result response)]
+          (is (= 1 (count (:contents result))))
+          (let [content (first (:contents result))]
+            (is (= "file:///data.json" (:uri content)))
+            (is (= "application/json" (:mimeType content)))
+            (is (contains? content :blob)))))
+      (testing "Invalid resource request"
+        (async/put! (:input-ch server)
+                    (lsp.requests/request 4
+                                          "resources/read"
+                                          {:uri "file:///invalid.txt"}))
+        (let [response (h/assert-take (:output-ch server))
+              error (:error response)]
+          (is (= specs/method-not-found (:code error)))
+          (is (= "Resource Not Found!" (:message error)))))
+      (lsp.server/shutdown server))))
