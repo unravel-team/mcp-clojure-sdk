@@ -28,8 +28,7 @@
 #_{:clj-kondo/ignore [:redefined-var]}
 (defn run!
   [spec]
-  (lsp.server/discarding-stdout
-    (let [log-ch (async/chan (async/sliding-buffer 20))
-          server (lsp.io-server/stdio-server
-                   {:log-ch log-ch, :trace-ch log-ch, :trace-level :trace})]
-      (start! server spec))))
+  (let [log-ch (async/chan (async/sliding-buffer 20))
+        server (lsp.io-server/stdio-server
+                 {:log-ch log-ch, :trace-ch log-ch, :trace-level :trace})]
+    (start! server spec)))
