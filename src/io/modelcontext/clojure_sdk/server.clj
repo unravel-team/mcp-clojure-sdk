@@ -31,7 +31,7 @@
         _client-capabilities (:capabilities params)
         server-info (:server-info context)
         server-capabilities @(:capabilities context)]
-    (log/debug :fn ::handle-initialize
+    (log/debug :fn :handle-initialize
                :msg "[Initialize] Client connected"
                :client client-info)
     {:protocolVersion specs/stable-protocol-version,
@@ -40,12 +40,12 @@
 
 (defn- handle-list-tools
   [context _params]
-  (log/debug :fn ::handle-list-tools)
+  (log/debug :fn :handle-list-tools)
   {:tools (mapv :tool (vals @(:tools context)))})
 
 (defn- handle-call-tool
   [context params]
-  (log/debug :fn ::handle-call-tool
+  (log/debug :fn :handle-call-tool
              :tool (:name params)
              :args (:arguments params))
   (let [tools @(:tools context)
@@ -56,8 +56,8 @@
            (catch Exception e
              {:content [{:type "text", :text (str "Error: " (.getMessage e))}],
               :isError true}))
-      (do (log/debug :fn ::handle-call-tool
-                     :tool (:name params)
+      (do (log/debug :fn :handle-call-tool
+                     :tool tool-name
                      :error :method-not-found)
           {:error {:code specs/method-not-found,
                    :message "Tool Not Found!",
@@ -65,29 +65,31 @@
 
 (defn- handle-list-resources
   [context _params]
-  (log/debug :fn ::handle-list-resources)
+  (log/debug :fn :handle-list-resources)
   {:resources (mapv :resource (vals @(:resources context)))})
 
 (defn- handle-read-resource
   [context params]
-  (log/debug :fn ::handle-read-resource :resource (:uri params))
+  (log/debug :fn :handle-read-resource :resource (:uri params))
   (let [resources @(:resources context)
         uri (:uri params)]
     (if-let [{:keys [handler]} (get resources uri)]
       {:contents [(handler uri)]}
-      (throw (ex-info "Resource not found"
-                      {:code specs/method-not-found,
-                       :message "The requested resource was not found",
-                       :data {:uri uri}})))))
+      (do (log/debug :fn :handle-read-resource
+                     :resource uri
+                     :error :method-not-found)
+          {:error {:code specs/method-not-found,
+                   :message "Resource Not Found!",
+                   :data {:uri uri}}}))))
 
 (defn- handle-list-prompts
   [context _params]
-  (log/debug :fn ::handle-list-prompts)
+  (log/debug :fn :handle-list-prompts)
   {:prompts (mapv :prompt (vals @(:prompts context)))})
 
 (defn- handle-get-prompt
   [context params]
-  (log/debug :fn ::handle-get-prompt
+  (log/debug :fn :handle-get-prompt
              :prompt (:name params)
              :args (:arguments params))
   (let [prompts @(:prompts context)
@@ -95,52 +97,54 @@
         arguments (:arguments params)]
     (if-let [{:keys [handler]} (get prompts prompt-name)]
       (handler arguments)
-      (throw (ex-info "Prompt not found"
-                      {:code specs/method-not-found,
-                       :message "The requested prompt was not found",
-                       :data {:prompt-name prompt-name}})))))
+      (do (log/debug :fn :handle-get-prompt
+                     :prompt prompt-name
+                     :error :method-not-found)
+          {:error {:code specs/method-not-found,
+                   :message "Prompt Not Found!",
+                   :data {:prompt-name prompt-name}}}))))
 
 (defmethod lsp.server/receive-request "initialize"
   [_ context params]
   (->> params
        (handle-initialize context)
-       (conform-or-log :result/initialize-or-error)))
+       (conform-or-log :response/initialize-or-error)))
 
 (defmethod lsp.server/receive-request "tools/list"
   [_ context params]
   (->> params
        (handle-list-tools context)
-       (conform-or-log :result/list-tools-or-error)))
+       (conform-or-log :response/list-tools-or-error)))
 
 (defmethod lsp.server/receive-request "tools/call"
   [_ context params]
   (->> params
        (handle-call-tool context)
-       (conform-or-log :result/call-tool-or-error)))
+       (conform-or-log :response/call-tool-or-error)))
 
 (defmethod lsp.server/receive-request "resources/list"
   [_ context params]
   (->> params
        (handle-list-resources context)
-       (conform-or-log :result/list-resources)))
+       (conform-or-log :response/list-resources-or-error)))
 
 (defmethod lsp.server/receive-request "resources/read"
   [_ context params]
   (->> params
        (handle-read-resource context)
-       (conform-or-log :result/read-resource)))
+       (conform-or-log :response/read-resource-or-error)))
 
 (defmethod lsp.server/receive-request "prompts/list"
   [_ context params]
   (->> params
        (handle-list-prompts context)
-       (conform-or-log :result/list-prompts)))
+       (conform-or-log :response/list-prompts-or-error)))
 
 (defmethod lsp.server/receive-request "prompts/get"
   [_ context params]
   (->> params
        (handle-get-prompt context)
-       (conform-or-log :result/read-prompt)))
+       (conform-or-log :response/get-prompt-or-error)))
 
 (defn- check-object-and-handler
   [object-type object handler]

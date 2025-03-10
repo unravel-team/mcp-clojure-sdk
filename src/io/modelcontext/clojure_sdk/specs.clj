@@ -136,7 +136,7 @@
                             ;; For example, this information MAY be added
                             ;; to the system prompt.
                             :opt-un [:initialize/instructions])))
-(s/def :result/initialize-or-error
+(s/def :response/initialize-or-error
   (s/and (s/or :error ::coercer/response-error
                :initialize :result/initialize)
          (s/conformer second)))
@@ -234,6 +234,10 @@
 (s/def :list-resources/resources (s/coll-of ::resource))
 (s/def :result/list-resources
   (s/merge :result/paginated (s/keys :req-un [:list-resources/resources])))
+(s/def :response/list-resources-or-error
+  (s/and (s/or :error ::coercer/response-error
+               :list-resources :result/list-resources)
+         (s/conformer second)))
 
 ;; Sent from the client to request a list of resource templates the server has.
 (s/def :list-resource-templates/method #{"resources/templates/list"})
@@ -262,6 +266,10 @@
 (s/def :read-resource/contents (s/coll-of :read-resource/content))
 (s/def :result/read-resource
   (s/merge ::result (s/keys :req-un [:read-resource/contents])))
+(s/def :response/read-resource-or-error
+  (s/and (s/or :error ::coercer/response-error
+               :read-resource :result/read-resource)
+         (s/conformer second)))
 
 ;;; Resource List Changed Notification
 ;; An optional notification from the server to the client, informing
@@ -355,7 +363,10 @@
 (s/def :list-prompts/prompts (s/coll-of ::prompt))
 (s/def :result/list-prompts
   (s/merge :result/paginated (s/keys :req-un [:list-prompts/prompts])))
-
+(s/def :response/list-prompts-or-error
+  (s/and (s/or :error ::coercer/response-error
+               :list-prompts :result/list-prompts)
+         (s/conformer second)))
 ;;; Get Prompt
 ;; Used by the client to get a prompt provided by the server.
 (s/def :get-prompt/method #{"prompts/get"})
@@ -370,6 +381,10 @@
 (s/def :result/get-prompt
   (s/merge ::result (s/keys :req-un [:get-prompt/messages]
                             :opt-un [:prompt/description])))
+(s/def :response/get-prompt-or-error
+  (s/and (s/or :error ::coercer/response-error
+               :get-prompt :result/get-prompt)
+         (s/conformer second)))
 
 ;;; Prompt
 (s/def :prompt/name string?)
@@ -437,7 +452,7 @@
 (s/def :list-tools/tools (s/coll-of ::tool))
 (s/def :result/list-tools
   (s/merge :result/paginated (s/keys :req-un [:list-tools/tools])))
-(s/def :result/list-tools-or-error
+(s/def :response/list-tools-or-error
   (s/and (s/or :error ::coercer/response-error
                :list-tools :result/list-tools)
          (s/conformer second)))
@@ -464,7 +479,7 @@
 (s/def :result/call-tool
   (s/merge ::result (s/keys :req-un [:call-tool/content]
                             :opt-un [:call-tool/isError])))
-(s/def :result/call-tool-or-error
+(s/def :response/call-tool-or-error
   (s/and (s/or :error ::coercer/response-error
                :call-tool :result/call-tool)
          (s/conformer second)))

@@ -138,7 +138,13 @@
           server (server/chan-server)
           _join (server/start! server context)]
       (testing "Client initialization"
-        (async/put! (:input-ch server) (lsp.requests/request 1 "initialize" {}))
+        (async/put! (:input-ch server)
+                    (lsp.requests/request
+                      1
+                      "initialize"
+                      {:protocolVersion "2024-11-05",
+                       :capabilities {:roots {:listChanged true}, :sampling {}},
+                       :clientInfo {:name "ExampleClient", :version "1.0.0"}}))
         (is (= {:jsonrpc specs/jsonrpc-version,
                 :id 1,
                 :result {:protocolVersion specs/stable-protocol-version,
