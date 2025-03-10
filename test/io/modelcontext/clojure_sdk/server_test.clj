@@ -146,3 +146,41 @@
                          :serverInfo {:name "test-server", :version "1.0.0"}}}
                (h/take-or-timeout (:output-ch server) 200))))
       (lsp.server/shutdown server))))
+
+(deftest tool-execution
+  (testing "Tool execution through protocol"
+    (let [context (server/create-context!
+                    {:name "test-server", :version "1.0.0", :tools [tool-echo]})
+          server (server/chan-server)
+          _join (server/start! server context)]
+      (testing "Tool list request"
+        (async/put! (:input-ch server) (lsp.requests/request 1 "tools/list" {}))
+        (is (= {:jsonrpc specs/jsonrpc-version,
+                :id 1,
+                :result {:tools [{:name "echo",
+                                  :description "Echo input",
+                                  :inputSchema {:type "object",
+                                                :properties {"message"
+                                                             {:type "string"}},
+                                                :required ["message"]}}]}}
+               (h/assert-take (:output-ch server)))))
+      (testing "Tool execution request"
+        (async/put! (:input-ch server)
+                    (lsp.requests/request 2
+                                          "tools/call"
+                                          {:name "echo",
+                                           :arguments {:message "test"}}))
+        (is (= {:jsonrpc specs/jsonrpc-version,
+                :id 2,
+                :result {:content [[:text {:type "text", :text "test"}]]}}
+               (h/assert-take (:output-ch server)))))
+      (testing "Invalid tool request"
+        (async/put! (:input-ch server)
+                    (lsp.requests/request 3 "tools/call" {:name "invalid"}))
+        (is (= {:jsonrpc specs/jsonrpc-version,
+                :id 3,
+                :error {:code specs/method-not-found,
+                        :message "Tool Not Found!",
+                        :data {:tool-name "invalid"}}}
+               (h/assert-take (:output-ch server)))))
+      (lsp.server/shutdown server))))

@@ -31,17 +31,23 @@
         _client-capabilities (:capabilities params)
         server-info (:server-info context)
         server-capabilities @(:capabilities context)]
-    (log/debug :msg "Client connected" :client client-info)
+    (log/debug :fn ::handle-initialize
+               :msg "[Initialize] Client connected"
+               :client client-info)
     {:protocolVersion specs/stable-protocol-version,
      :capabilities server-capabilities,
      :serverInfo server-info}))
 
 (defn- handle-list-tools
   [context _params]
+  (log/debug :fn ::handle-list-tools)
   {:tools (mapv :tool (vals @(:tools context)))})
 
 (defn- handle-call-tool
   [context params]
+  (log/debug :fn ::handle-call-tool
+             :tool (:name params)
+             :args (:arguments params))
   (let [tools @(:tools context)
         tool-name (:name params)
         arguments (:arguments params)]
@@ -49,18 +55,22 @@
       (try {:content [(handler arguments)]}
            (catch Exception e
              {:content [{:type "text", :text (str "Error: " (.getMessage e))}],
-              :is-error true}))
-      (throw (ex-info "Tool not found"
-                      {:code specs/method-not-found,
-                       :message "The requested tool was not found",
-                       :data {:tool-name tool-name}})))))
+              :isError true}))
+      (do (log/debug :fn ::handle-call-tool
+                     :tool (:name params)
+                     :error :method-not-found)
+          {:error {:code specs/method-not-found,
+                   :message "Tool Not Found!",
+                   :data {:tool-name tool-name}}}))))
 
 (defn- handle-list-resources
   [context _params]
+  (log/debug :fn ::handle-list-resources)
   {:resources (mapv :resource (vals @(:resources context)))})
 
 (defn- handle-read-resource
   [context params]
+  (log/debug :fn ::handle-read-resource :resource (:uri params))
   (let [resources @(:resources context)
         uri (:uri params)]
     (if-let [{:keys [handler]} (get resources uri)]
@@ -72,10 +82,14 @@
 
 (defn- handle-list-prompts
   [context _params]
+  (log/debug :fn ::handle-list-prompts)
   {:prompts (mapv :prompt (vals @(:prompts context)))})
 
 (defn- handle-get-prompt
   [context params]
+  (log/debug :fn ::handle-get-prompt
+             :prompt (:name params)
+             :args (:arguments params))
   (let [prompts @(:prompts context)
         prompt-name (:name params)
         arguments (:arguments params)]
@@ -90,19 +104,19 @@
   [_ context params]
   (->> params
        (handle-initialize context)
-       (conform-or-log :result/initialize)))
+       (conform-or-log :result/initialize-or-error)))
 
 (defmethod lsp.server/receive-request "tools/list"
   [_ context params]
   (->> params
        (handle-list-tools context)
-       (conform-or-log :result/list-tools)))
+       (conform-or-log :result/list-tools-or-error)))
 
 (defmethod lsp.server/receive-request "tools/call"
   [_ context params]
   (->> params
        (handle-call-tool context)
-       (conform-or-log :result/call-tool)))
+       (conform-or-log :result/call-tool-or-error)))
 
 (defmethod lsp.server/receive-request "resources/list"
   [_ context params]

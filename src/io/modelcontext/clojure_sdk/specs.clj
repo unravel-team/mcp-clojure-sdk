@@ -1,5 +1,6 @@
 (ns io.modelcontext.clojure-sdk.specs
-  (:require [clojure.spec.alpha :as s]))
+  (:require [clojure.spec.alpha :as s]
+            [lsp4clj.coercer :as coercer]))
 
 ;; JSON-RPC types
 (s/def :jsonrpc/message
@@ -135,6 +136,10 @@
                             ;; For example, this information MAY be added
                             ;; to the system prompt.
                             :opt-un [:initialize/instructions])))
+(s/def :result/initialize-or-error
+  (s/and (s/or :error ::coercer/response-error
+               :initialize :result/initialize)
+         (s/conformer second)))
 
 ;; This notification is sent from the client to the server after initialization
 ;; has finished.
@@ -432,7 +437,10 @@
 (s/def :list-tools/tools (s/coll-of ::tool))
 (s/def :result/list-tools
   (s/merge :result/paginated (s/keys :req-un [:list-tools/tools])))
-
+(s/def :result/list-tools-or-error
+  (s/and (s/or :error ::coercer/response-error
+               :list-tools :result/list-tools)
+         (s/conformer second)))
 ;; Tool Call
 ;; The server's response to a tool call.
 ;;
@@ -456,6 +464,10 @@
 (s/def :result/call-tool
   (s/merge ::result (s/keys :req-un [:call-tool/content]
                             :opt-un [:call-tool/isError])))
+(s/def :result/call-tool-or-error
+  (s/and (s/or :error ::coercer/response-error
+               :call-tool :result/call-tool)
+         (s/conformer second)))
 
 ;; Used by the client to invoke a tool provided by the server.
 (s/def :call-tool/method #{"tools/call"})
