@@ -21,11 +21,11 @@
 (defn start!
   [server spec]
   (let [context (assoc (server/create-context! spec) :server server)]
-    (log/info :msg "[SERVER] Starting server...")
+    (log/info :msg "[STDIO SERVER] Starting server...")
     (monitor-server-logs (:log-ch server))
     (lsp.server/start server context)))
 
-#_{:clj-kondo/ignore [:redefined-var]}
+#_{:clj-kondo/ignore [:unused-public-var]}
 (defn run!
   [spec]
   (let [log-ch (async/chan (async/sliding-buffer 20))

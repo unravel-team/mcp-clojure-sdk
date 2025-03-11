@@ -106,6 +106,7 @@
 
 (defmethod lsp.server/receive-request "initialize"
   [_ context params]
+  (log/debug :fn :receive-request :method "initialize")
   (->> params
        (handle-initialize context)
        (conform-or-log :response/initialize-or-error)))
@@ -149,29 +150,35 @@
 (defn- check-object-and-handler
   [object-type object handler]
   (when-not (ifn? handler)
-    (throw (ex-info (str "Invalid handler for " object-type)
-                    {:handler handler, object-type object})))
+    (let [msg (str "Invalid handler for " object-type)]
+      (log/debug :msg msg object-type object)
+      (throw (ex-info msg {:handler handler, object-type object}))))
   (case object-type
     :tool (when-not (specs/valid-tool? object)
-            (throw (ex-info "Invalid tool definition"
-                            (specs/explain-tool object))))
+            (let [msg "Invalid tool definition"]
+              (log/debug :msg msg object-type object)
+              (throw (ex-info msg (specs/explain-tool object)))))
     :resource (when-not (specs/valid-resource? object)
-                (throw (ex-info "Invalid resource definition"
-                                (specs/explain-resource object))))
+                (let [msg "Invalid resource definition"]
+                  (log/debug :msg msg object-type object)
+                  (throw (ex-info msg (specs/explain-resource object)))))
     :prompt (when-not (specs/valid-prompt? object)
-              (throw (ex-info "Invalid prompt definition"
-                              (specs/explain-prompt object))))))
+              (let [msg "Invalid prompt definition"]
+                (log/debug :msg msg object-type object)
+                (throw (ex-info msg (specs/explain-prompt object)))))))
 
 
 (defn register-tool!
   [context tool handler]
-  (check-object-and-handler :tool tool handler)
+  (log/with-context {:fn :register-tool!}
+    (check-object-and-handler :tool tool handler))
   (swap! (:tools context) assoc (:name tool) {:tool tool, :handler handler})
   context)
 
 (defn register-resource!
   [context resource handler]
-  (check-object-and-handler :resource resource handler)
+  (log/with-context {:fn :register-resource!}
+    (check-object-and-handler :resource resource handler))
   (swap! (:resources context) assoc
     (:uri resource)
     {:resource resource, :handler handler})
@@ -179,7 +186,8 @@
 
 (defn register-prompt!
   [context prompt handler]
-  (check-object-and-handler :prompt prompt handler)
+  (log/with-context {:fn :register-prompt!}
+    (check-object-and-handler :prompt prompt handler))
   (swap! (:prompts context) assoc
     (:name prompt)
     {:prompt prompt, :handler handler})
@@ -187,6 +195,7 @@
 
 (defn- create-empty-context
   [name version]
+  (log/debug :fn :create-empty-context)
   {:server-info {:name name, :version version},
    :tools (atom {}),
    :resources (atom {}),
@@ -210,16 +219,29 @@
                  :type \"text\"
                  :handler (fn [uri] ...)}]}"
   [{:keys [name version tools prompts resources]}]
-  (let [context (create-empty-context name version)]
-    (doseq [tool tools]
-      (register-tool! context (dissoc tool :handler) (:handler tool)))
-    (doseq [resource resources]
-      (register-resource! context
-                          (dissoc resource :handler)
-                          (:handler resource)))
-    (doseq [prompt prompts]
-      (register-prompt! context (dissoc prompt :handler) (:handler prompt)))
-    context))
+  (log/with-context {:action :create-context!}
+    (let [context (create-empty-context name version)]
+      (when (> (count tools) 0)
+        (log/debug :num-tools (count tools)
+                   :msg "Registering tools"
+                   :server-info {:name name, :version version}))
+      (doseq [tool tools]
+        (register-tool! context (dissoc tool :handler) (:handler tool)))
+      (when (> (count resources) 0)
+        (log/debug :num-resources (count resources)
+                   :msg "Registering resources"
+                   :server-info {:name name, :version version}))
+      (doseq [resource resources]
+        (register-resource! context
+                            (dissoc resource :handler)
+                            (:handler resource)))
+      (when (> (count prompts) 0)
+        (log/debug :num-prompts (count prompts)
+                   :msg "Registering prompts"
+                   :server-info {:name name, :version version}))
+      (doseq [prompt prompts]
+        (register-prompt! context (dissoc prompt :handler) (:handler prompt)))
+      context)))
 
 (defn start!
   [server context]
