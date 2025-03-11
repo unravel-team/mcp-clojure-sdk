@@ -1,6 +1,6 @@
 (ns io.modelcontext.clojure-sdk.stdio-server
   (:require [clojure.core.async :as async]
-            [io.modelcontext.clojure-sdk.server :as server]
+            [io.modelcontext.clojure-sdk.server :as core]
             [lsp4clj.io-server :as lsp.io-server]
             [lsp4clj.server :as lsp.server]
             [me.vedang.logger.interface :as log])
@@ -20,7 +20,7 @@
 
 (defn start!
   [server spec]
-  (let [context (assoc (server/create-context! spec) :server server)]
+  (let [context (assoc (core/create-context! spec) :server server)]
     (log/info :msg "[STDIO SERVER] Starting server...")
     (monitor-server-logs (:log-ch server))
     (lsp.server/start server context)))

@@ -9,7 +9,7 @@
     "-Dlog4j2.configurationFile=log4j2-mcp.xml"
     "-Dbabashka.json.provider=metosin/jsonista" "-Dlogging.level=DEBUG"
     "-Dlog4j2.statusLoggerLevel=OFF" "-cp"
-    "/Users/nejo/src/prototypes/mcp-cljc-sdk/v2-clojure-sdk/examples/target/io.modelcontextprotocol.clojure-sdk/examples-1.0.30.jar"
+    "/Users/nejo/src/prototypes/mcp-cljc-sdk/v2-clojure-sdk/examples/target/io.modelcontextprotocol.clojure-sdk/examples-1.0.36.jar"
     "calculator_server"],
    :command "java"},
   :logs
