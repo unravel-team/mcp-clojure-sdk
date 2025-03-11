@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Configuration status="OFF" strict="true" name="me.vedang.Logging">
   <Properties>
-    <Property name="filename">mcpdev.log</Property>
+    <Property name="filename">/tmp/mcpdev.log</Property>
   </Properties>
   <Filter type="ThresholdFilter" level="${sys:logging.level}"/>
 
