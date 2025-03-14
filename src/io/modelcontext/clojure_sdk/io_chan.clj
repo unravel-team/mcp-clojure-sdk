@@ -35,7 +35,8 @@
 (defn ^:private write-message
   [^OutputStream output msg]
   (let [content (json/write-str (cske/transform-keys kw->camelCaseString msg))]
-    (locking write-lock (doto output (.write content) (.flush)))))
+    (locking write-lock
+      (doto output (.write content) (.newLine content) (.flush)))))
 
 (defn input-stream->input-chan
   "Returns a channel which will yield parsed messages that have been read off
@@ -54,6 +55,7 @@
            (cond
              ;; input closed; also close channel
              (= msg :parse_error) (do (log/debug :fn :input-stream->input-chan
+                                                 :error true
                                                  :msg "Parse error or EOF")
                                       (async/close! messages))
              :else (do (log/trace :fn :input-stream->input-chan :msg msg)
