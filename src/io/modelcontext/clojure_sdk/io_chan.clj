@@ -22,7 +22,7 @@
   (try (let [content (.readLine input)]
          (log/trace :fn :read-message :line content)
          (json/read-str content))
-       (catch Exception _ (log/error :fn :read-message) :parse-error)))
+       (catch Exception ex (log/error :fn :read-message :ex ex) :parse-error)))
 
 (defn ^:private kw->camelCaseString
   "Convert keywords to camelCase strings, but preserve capitalization of things
@@ -54,7 +54,7 @@
          (let [msg (read-message input)]
            (cond
              ;; input closed; also close channel
-             (= msg :parse_error) (do (log/debug :fn :input-stream->input-chan
+             (= msg :parse-error) (do (log/debug :fn :input-stream->input-chan
                                                  :error true
                                                  :msg "Parse error or EOF")
                                       (async/close! messages))
