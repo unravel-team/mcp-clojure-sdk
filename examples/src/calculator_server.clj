@@ -1,6 +1,7 @@
 (ns calculator-server
   (:gen-class)
-  (:require [io.modelcontext.clojure-sdk.stdio-server :as io-server]))
+  (:require [io.modelcontext.clojure-sdk.stdio-server :as io-server]
+            [me.vedang.logger.interface :as log]))
 
 (defn validate-array
   "Helper function to validate array inputs"
@@ -161,7 +162,7 @@
 (defn -main
   [& _args]
   (let [server-id (random-uuid)]
-    (log/debug "[MAIN] Starting calculator server: " server-idid)
+    (log/debug "[MAIN] Starting calculator server: " server-id)
     @(io-server/run! (assoc calculator-server-spec :server-id server-id))))
 
 (comment

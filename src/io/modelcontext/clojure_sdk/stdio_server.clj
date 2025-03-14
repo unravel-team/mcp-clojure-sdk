@@ -45,6 +45,5 @@
   (log/with-context {:server-id (:server-id spec)}
     (log/trace :fn run! :msg "Starting calculator server")
     (let [log-ch (async/chan (async/sliding-buffer 20))
-          server (stdio-server
-                   {:log-ch log-ch, :trace-ch log-ch, :trace-level :trace})]
+          server (stdio-server {:log-ch log-ch})]
       (start! server spec))))
