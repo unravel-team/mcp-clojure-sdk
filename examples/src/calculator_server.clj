@@ -62,11 +62,7 @@
                   "exponent" {:type "number", :description "Exponent"}},
                  :required ["base" "exponent"]},
    :handler (fn [{:keys [base exponent]}]
-              (try {:type "text", :text (str (Math/pow base exponent))}
-                   (catch Exception e
-                     {:type "text",
-                      :text (str "Error calculating power: " (.getMessage e)),
-                      :is-error true})))})
+              {:type "text", :text (str (Math/pow base exponent))})})
 
 (def tool-square-root
   {:name "square-root",
@@ -78,9 +74,9 @@
                  :required ["number"]},
    :handler (fn [{:keys [number]}]
               (if (neg? number)
-                {:type "text",
-                 :text "Error: Cannot calculate square root of negative number",
-                 :is-error true}
+                (throw (ex-info
+                         "Cannot calculate square root of negative number"
+                         {:input number}))
                 {:type "text", :text (str (Math/sqrt number))}))})
 
 (def tool-sum-array
@@ -93,12 +89,9 @@
                                          "Array of numbers to sum"}},
                  :required ["numbers"]},
    :handler (fn [{:keys [numbers]}]
-              (try (validate-array numbers)
-                   {:type "text", :text (str (reduce + numbers))}
-                   (catch Exception e
-                     {:type "text",
-                      :text (str "Error: " (.getMessage e)),
-                      :is-error true})))})
+              #_{:clj-kondo/ignore [:clojure-lsp/unused-value]}
+              (validate-array numbers)
+              {:type "text", :text (str (reduce + numbers))})})
 
 (def tool-average
   {:name "average",
@@ -110,18 +103,14 @@
                                          "Array of numbers to average"}},
                  :required ["numbers"]},
    :handler (fn [{:keys [numbers]}]
-              (try (validate-array numbers)
-                   (if (empty? numbers)
-                     {:type "text",
-                      :text "Error: Cannot calculate average of empty array",
-                      :is-error true}
-                     {:type "text",
-                      :text (str (double (/ (reduce + numbers)
-                                            (count numbers))))})
-                   (catch Exception e
-                     {:type "text",
-                      :text (str "Error: " (.getMessage e)),
-                      :is-error true})))})
+              (validate-array numbers)
+              (if (empty? numbers)
+                {:type "text",
+                 :text "Error: Cannot calculate average of empty array",
+                 :isError true}
+                {:type "text",
+                 :text (str (double (/ (reduce + numbers)
+                                       (count numbers))))}))})
 
 (def tool-factorial
   {:name "factorial",
@@ -136,16 +125,11 @@
               (if (or (neg? number) (not (integer? number)))
                 {:type "text",
                  :text "Error: Factorial requires a non-negative integer",
-                 :is-error true}
-                (try
-                  ;; Simulate longer computation for large numbers
-                  (when (> number 10) (Thread/sleep 1000))
-                  {:type "text", :text (str (reduce * (range 1 (inc number))))}
-                  (catch Exception e
-                    {:type "text",
-                     :text (str "Error calculating factorial: "
-                                (.getMessage e)),
-                     :is-error true}))))})
+                 :isError true}
+                ;; Simulate longer computation for large numbers
+                (when (> number 10) (Thread/sleep 1000))
+                {:type "text",
+                 :text (str (reduce * (range 1 (inc number))))}))})
 
 (def calculator-server-spec
   {:name "calculator",
@@ -167,7 +151,7 @@
 
 (comment
   ;; Test error handling
-  "What's the square root of -4?"
+  "What's the square root of -4? Use the square-root tool"
   "Calculate the factorial of -1"
     ;; Test overflow
     "What's 2 to the power of 1000?"

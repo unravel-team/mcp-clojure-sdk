@@ -183,6 +183,6 @@ deploy: build    ## Deploy the current code to production
 	@echo "Run fly.io deployment commands here!"
 
 clean-projects:
-	rm -rf projects/*/target/public
+	rm -rf target/
 
 clean: clean-projects    ## Delete any existing artifacts
