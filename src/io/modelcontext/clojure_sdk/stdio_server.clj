@@ -1,7 +1,7 @@
 (ns io.modelcontext.clojure-sdk.stdio-server
   (:require [clojure.core.async :as async]
             [io.modelcontext.clojure-sdk.server :as core]
-            [lsp4clj.io-server :as lsp.io-server]
+            [io.modelcontext.clojure-sdk.io-chan :as mcp.io-chan]
             [lsp4clj.server :as lsp.server]
             [me.vedang.logger.interface :as log])
   (:refer-clojure :exclude [run!]))
@@ -25,10 +25,26 @@
     (monitor-server-logs (:log-ch server))
     (lsp.server/start server context)))
 
-#_{:clj-kondo/ignore [:unused-public-var]}
+;;;; Create server
+
+(defn stdio-server
+  "Starts a server reading from stdin and writing to stdout."
+  [{:keys [in out], :as opts}]
+  (let [in (or in System/in)
+        out (or out System/out)
+        input-ch (mcp.io-chan/input-stream->input-chan in)
+        output-ch (mcp.io-chan/output-stream->output-chan out)]
+    (lsp.server/chan-server (assoc opts
+                              :in in
+                              :out out
+                              :input-ch input-ch
+                              :output-ch output-ch))))
+
 (defn run!
   [spec]
-  (let [log-ch (async/chan (async/sliding-buffer 20))
-        server (lsp.io-server/stdio-server
-                 {:log-ch log-ch, :trace-ch log-ch, :trace-level :trace})]
-    (start! server spec)))
+  (log/with-context {:server-id (:server-id spec)}
+    (log/debug :fn run! :msg "Starting calculator server")
+    (let [log-ch (async/chan (async/sliding-buffer 20))
+          server (stdio-server
+                   {:log-ch log-ch, :trace-ch log-ch, :trace-level :trace})]
+      (start! server spec))))
