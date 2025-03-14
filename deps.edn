@@ -47,7 +47,7 @@
  ;; 2. Write a short description about what the dep does
  :deps {;; STDIO / SSE transport implementation: Build on top of lsp4clj,
         ;; the excellent library provided by the clojure-lsp team.
-        com.github.clojure-lsp/lsp4clj {:local/root "vendors/lsp4clj"},
+        com.github.clojure-lsp/lsp4clj {:mvn/version "1.11.0"},
         ;; Logging: Use me.vedang/logger as a thin wrapper over
         ;; pedestal.log and timbre. Uses log for Clojure, timbre for
         ;; Babashka projects. Uses SLF4J + Log4J2

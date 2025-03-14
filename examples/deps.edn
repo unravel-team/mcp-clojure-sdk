@@ -26,9 +26,6 @@
                                                             :git/tag "v0.5.1"},
                       org.clojure/test.check {:mvn/version "1.1.1"}},
          :extra-paths ["test"]}},
- :deps {;; io.modelcontextprotocol/mcp-clojure-sdk
-        ;; {:git/sha "09afc418416046ac6361925f981f1e6a327a2c6e",
-        ;;  :git/url "git@github.com:unravel-team/mcp-clojure-sdk.git"}
-        io.modelcontextprotocol/mcp-clojure-sdk {:local/root "../"},
+ :deps {io.modelcontextprotocol/mcp-clojure-sdk {:local/root "../"},
         org.clojure/clojure {:mvn/version "1.12.0"}},
  :paths ["src" "resources"]}
