@@ -158,7 +158,11 @@
            ;; Test long-running operation
            tool-factorial]})
 
-(defn -main [& _args] @(io-server/run! calculator-server-spec))
+(defn -main
+  [& _args]
+  (let [server-id (random-uuid)]
+    (log/debug "[MAIN] Starting calculator server: " server-idid)
+    @(io-server/run! (assoc calculator-server-spec :server-id server-id))))
 
 (comment
   ;; Test error handling

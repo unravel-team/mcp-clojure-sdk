@@ -15,7 +15,7 @@
   ;; any logs.
   (async/go-loop []
     (when-let [log-args (async/<! log-ch)]
-      (log/debug :level (first log-args) :args (rest log-args))
+      (log/trace :level (first log-args) :args (rest log-args))
       (recur))))
 
 (defn start!
@@ -43,7 +43,7 @@
 (defn run!
   [spec]
   (log/with-context {:server-id (:server-id spec)}
-    (log/debug :fn run! :msg "Starting calculator server")
+    (log/trace :fn run! :msg "Starting calculator server")
     (let [log-ch (async/chan (async/sliding-buffer 20))
           server (stdio-server
                    {:log-ch log-ch, :trace-ch log-ch, :trace-level :trace})]

@@ -106,43 +106,49 @@
 
 (defmethod lsp.server/receive-request "initialize"
   [_ context params]
-  (log/debug :fn :receive-request :method "initialize")
+  (log/trace :fn :receive-request :method "initialize" :params params)
   (->> params
        (handle-initialize context)
        (conform-or-log :response/initialize-or-error)))
 
 (defmethod lsp.server/receive-request "tools/list"
   [_ context params]
+  (log/trace :fn :receive-request :method "tools/list" :params params)
   (->> params
        (handle-list-tools context)
        (conform-or-log :response/list-tools-or-error)))
 
 (defmethod lsp.server/receive-request "tools/call"
   [_ context params]
+  (log/trace :fn :receive-request :method "tools/call" :params params)
   (->> params
        (handle-call-tool context)
        (conform-or-log :response/call-tool-or-error)))
 
 (defmethod lsp.server/receive-request "resources/list"
   [_ context params]
+  (log/trace :fn :receive-request :method "resources/list" :params params)
   (->> params
        (handle-list-resources context)
        (conform-or-log :response/list-resources-or-error)))
 
 (defmethod lsp.server/receive-request "resources/read"
   [_ context params]
+  (log/trace :fn :receive-request :method "resources/read" :params params)
   (->> params
        (handle-read-resource context)
        (conform-or-log :response/read-resource-or-error)))
 
 (defmethod lsp.server/receive-request "prompts/list"
   [_ context params]
+  (log/trace :fn :receive-request :method "prompts/list" :params params)
   (->> params
        (handle-list-prompts context)
        (conform-or-log :response/list-prompts-or-error)))
 
 (defmethod lsp.server/receive-request "prompts/get"
   [_ context params]
+  (log/trace :fn :receive-request :method "prompts/get" :params params)
   (->> params
        (handle-get-prompt context)
        (conform-or-log :response/get-prompt-or-error)))
