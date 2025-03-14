@@ -127,9 +127,10 @@
                  :text "Error: Factorial requires a non-negative integer",
                  :isError true}
                 ;; Simulate longer computation for large numbers
-                (when (> number 10) (Thread/sleep 1000))
-                {:type "text",
-                 :text (str (reduce * (range 1 (inc number))))}))})
+                (when (> number 10)
+                  (Thread/sleep 1000)
+                  {:type "text",
+                   :text (str (reduce * (range 1 (inc number))))})))})
 
 (def calculator-server-spec
   {:name "calculator",
