@@ -1,6 +1,7 @@
 (ns vegalite-server
   (:gen-class)
-  (:require [babashka.json :as json]
+  (:require [babashka.fs :as fs]
+            [babashka.json :as json]
             [babashka.process :as process]
             [io.modelcontext.clojure-sdk.stdio-server :as io-server]
             [me.vedang.logger.interface :as log]))
@@ -30,34 +31,27 @@
 
 (defn- vl2png
   [spec]
-  (try (let [spec-file (java.io.File/createTempFile "vegalite-spec-" ".json")
-             spec-path (.getAbsolutePath spec-file)
-             temp-file (java.io.File/createTempFile "vegalite-" ".png")
-             output-path (.getAbsolutePath temp-file)]
-         
+  (try (let [spec-file (str (fs/create-temp-file {:prefix "vegalite-spec-",
+                                                  :suffix ".json"}))
+             output-file (str (fs/create-temp-file {:prefix "vegalite-",
+                                                    :suffix ".png"}))]
          ;; Write the spec to a temporary file
          (spit spec-file (json/write-str spec))
-         
          ;; Run vl-convert with the temp files
          (let [result (process/sh "vl-convert" "vl2png"
-                                 "--input" spec-path
-                                 "--output" output-path)]
+                                  "--input" spec-file
+                                  "--output" output-file)]
            ;; Clean up the spec file regardless of result
-           (.delete spec-file)
-           
+           (fs/delete spec-file)
            (if (zero? (:exit result))
-             (let [png-data (-> temp-file
-                               java.io.FileInputStream.
-                               org.apache.commons.io.IOUtils/toByteArray
-                               java.util.Base64/getEncoder
-                               .encode
-                               (String.))]
-               (.delete temp-file)   ; Clean up the temporary file
+             (let [png-data (String. (.encode (java.util.Base64/getEncoder)
+                                              (fs/read-all-bytes output-file)))]
+               (fs/delete output-file) ; Clean up the temporary file
                {:type "image", :data png-data, :mimeType "image/png"})
-             (do (.delete temp-file) ; Clean up even on error
+             (do (fs/delete output-file) ; Clean up even on error
                  {:type "text",
                   :text (str "PNG conversion error: " (:err result)),
-                  :is-error true}))))))
+                  :is-error true}))))
        (catch Exception e
          {:type "text",
           :text (str "Conversion failed: " (.getMessage e)),
