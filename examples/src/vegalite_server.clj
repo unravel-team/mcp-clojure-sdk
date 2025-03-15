@@ -30,28 +30,34 @@
 
 (defn- vl2png
   [spec]
-  ;; // no need for json. write spec to temp file and pass that as --input
-  ;; ai!
-  (try (let [spec-json (json/write-str spec)
+  (try (let [spec-file (java.io.File/createTempFile "vegalite-spec-" ".json")
+             spec-path (.getAbsolutePath spec-file)
              temp-file (java.io.File/createTempFile "vegalite-" ".png")
-             output-path (.getAbsolutePath temp-file)
-             result (process/sh "vl-convert" "vl2png"
-                                "--input" "-"
-                                "--output" output-path
-                                :in spec-json)]
-         (if (zero? (:exit result))
-           (let [png-data (-> temp-file
-                              java.io.FileInputStream.
-                              org.apache.commons.io.IOUtils/toByteArray
-                              java.util.Base64/getEncoder
-                              .encode
-                              (String.))]
-             (.delete temp-file)   ; Clean up the temporary file
-             {:type "image", :data png-data, :mimeType "image/png"})
-           (do (.delete temp-file) ; Clean up even on error
-               {:type "text",
-                :text (str "PNG conversion error: " (:err result)),
-                :is-error true})))
+             output-path (.getAbsolutePath temp-file)]
+         
+         ;; Write the spec to a temporary file
+         (spit spec-file (json/write-str spec))
+         
+         ;; Run vl-convert with the temp files
+         (let [result (process/sh "vl-convert" "vl2png"
+                                 "--input" spec-path
+                                 "--output" output-path)]
+           ;; Clean up the spec file regardless of result
+           (.delete spec-file)
+           
+           (if (zero? (:exit result))
+             (let [png-data (-> temp-file
+                               java.io.FileInputStream.
+                               org.apache.commons.io.IOUtils/toByteArray
+                               java.util.Base64/getEncoder
+                               .encode
+                               (String.))]
+               (.delete temp-file)   ; Clean up the temporary file
+               {:type "image", :data png-data, :mimeType "image/png"})
+             (do (.delete temp-file) ; Clean up even on error
+                 {:type "text",
+                  :text (str "PNG conversion error: " (:err result)),
+                  :is-error true}))))))
        (catch Exception e
          {:type "text",
           :text (str "Conversion failed: " (.getMessage e)),
