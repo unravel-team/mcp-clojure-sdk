@@ -35,7 +35,7 @@
     "-Dorg.eclipse.jetty.util.log.class=org.eclipse.jetty.util.log.Slf4jLog"
     "-Dlog4j2.contextSelector=org.apache.logging.log4j.core.async.AsyncLoggerContextSelector"
     "-Dlog4j2.configurationFile=log4j2-mcp.xml"
-    "-Dmcp.vegalite.vl_convert_executable=/Users/nejo/.cargo/bin/vl-convert"
+    "-Dmcp.vegalite.vl_convert_executable=/Users/vedang/.cargo/bin/vl-convert"
     "-Dbabashka.json.provider=metosin/jsonista" "-Dlogging.level=INFO" "-cp"
     "<full-path>/examples/target/io.modelcontextprotocol.clojure-sdk/examples-1.1.0.jar"
     "vegalite_server"]},

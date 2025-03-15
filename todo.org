@@ -1,5 +1,6 @@
 * DONE Create a Stdio-transport based server implementation
 * TODO Fix the clunky API for declaring tools, prompts and resources
+and clean up the code.
 * TODO Checks and Balances in the mcp-cljc-sdk code
 ** TODO Make sure that handle-* functions are implement proper checks
 Read through the python decorator code to double-check if we are doing the right thing here.
@@ -15,3 +16,8 @@ Read through the python decorator code to double-check if we are doing the right
 ** TODO Implement the SSE-transport based server
 ** TODO Implement the SSE-transport based client
 * TODO Create a CLI tool for how tools, prompts, resources should be defined
+1. Easily create new projects, in ~deps-new~ style
+2. Organize them properly, making it possible to build servers fast.
+3. Make it language-agnostic, allowing the tool to create Clojure, Python, TS projects.
+* TODO Explore babashka as the runner in Claude Desktop / Inspector
+The current code is wildly incompatible with bb, so this is a long-shot. But bb compatibility will mean speed and ease of use.
