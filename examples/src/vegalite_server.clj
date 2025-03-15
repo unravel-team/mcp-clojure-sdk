@@ -30,6 +30,8 @@
 
 (defn- vl2png
   [spec]
+  ;; // no need for json. write spec to temp file and pass that as --input
+  ;; ai!
   (try (let [spec-json (json/write-str spec)
              temp-file (java.io.File/createTempFile "vegalite-" ".png")
              output-path (.getAbsolutePath temp-file)
