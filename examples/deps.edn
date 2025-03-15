@@ -1,16 +1,6 @@
 {:aliases
  {:build {:deps {io.github.clojure/tools.build {:mvn/version "0.10.5"}},
           :ns-default build},
-  :claude
-  {:args
-   ["-Dclojure.tools.logging.factory=clojure.tools.logging.impl/log4j2-factory"
-    "-Dorg.eclipse.jetty.util.log.class=org.eclipse.jetty.util.log.Slf4jLog"
-    "-Dlog4j2.contextSelector=org.apache.logging.log4j.core.async.AsyncLoggerContextSelector"
-    "-Dlog4j2.configurationFile=log4j2-mcp.xml"
-    "-Dbabashka.json.provider=metosin/jsonista" "-Dlogging.level=INFO" "-cp"
-    "<full-path>/examples/target/io.modelcontextprotocol.clojure-sdk/examples-1.1.0.jar"
-    "calculator_server"],
-   :command "java"},
   :logs
   {:jvm-opts
    ["-Dclojure.tools.logging.factory=clojure.tools.logging.impl/log4j2-factory"
@@ -19,7 +9,26 @@
     "-Dlog4j2.configurationFile=log4j2-mcp.xml"
     "-Dbabashka.json.provider=metosin/jsonista" "-Dlogging.level=INFO"]},
   :run-calculator
-  {:exec-args {}, :exec-fn -main, :ns-default calculator-server},
+  {:command "java",
+   :jvm-opts
+   ["-Dclojure.tools.logging.factory=clojure.tools.logging.impl/log4j2-factory"
+    "-Dorg.eclipse.jetty.util.log.class=org.eclipse.jetty.util.log.Slf4jLog"
+    "-Dlog4j2.contextSelector=org.apache.logging.log4j.core.async.AsyncLoggerContextSelector"
+    "-Dlog4j2.configurationFile=log4j2-mcp.xml"
+    "-Dbabashka.json.provider=metosin/jsonista" "-Dlogging.level=INFO" "-cp"
+    "<full-path>/examples/target/io.modelcontextprotocol.clojure-sdk/examples-1.1.0.jar"
+    "calculator_server"]},
+  :run-vegalite
+  {:command "java",
+   :jvm-opts
+   ["-Dclojure.tools.logging.factory=clojure.tools.logging.impl/log4j2-factory"
+    "-Dorg.eclipse.jetty.util.log.class=org.eclipse.jetty.util.log.Slf4jLog"
+    "-Dlog4j2.contextSelector=org.apache.logging.log4j.core.async.AsyncLoggerContextSelector"
+    "-Dlog4j2.configurationFile=log4j2-mcp.xml"
+    "-Dmcp.vegalite.vl_convert_executable=/Users/nejo/.cargo/bin/vl-convert"
+    "-Dbabashka.json.provider=metosin/jsonista" "-Dlogging.level=INFO" "-cp"
+    "<full-path>/examples/target/io.modelcontextprotocol.clojure-sdk/examples-1.1.0.jar"
+    "vegalite_server"]},
   :test {:extra-deps {io.github.cognitect-labs/test-runner {:git/sha "dfb30dd",
                                                             :git/tag "v0.5.1"},
                       org.clojure/test.check {:mvn/version "1.1.1"}},

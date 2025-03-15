@@ -11,6 +11,9 @@
                         {:name "Bob", :age 30, :city "San Francisco"}
                         {:name "Charlie", :age 35, :city "Los Angeles"}]}))
 
+(def vl-convert-path
+  (System/getProperty "mcp.vegalite.vl_convert_executable" "vl-convert"))
+
 (def tool-save-data
   {:name "save-data",
    :description
@@ -38,7 +41,8 @@
          ;; Write the spec to a temporary file
          (spit spec-file (json/write-str spec))
          ;; Run vl-convert with the temp files
-         (let [result (process/sh "vl-convert" "vl2png"
+         (let [result (process/sh vl-convert-path
+                                  "vl2png"
                                   "--input" spec-file
                                   "--output" output-file)]
            ;; Clean up the spec file regardless of result
