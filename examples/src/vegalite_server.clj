@@ -33,24 +33,23 @@
   (try (let [spec-json (json/write-str spec)
              temp-file (java.io.File/createTempFile "vegalite-" ".png")
              output-path (.getAbsolutePath temp-file)
-             result (process/sh "vl-convert" "vl2png" 
-                               "--input" "-" 
-                               "--output" output-path
-                               :in spec-json)]
+             result (process/sh "vl-convert" "vl2png"
+                                "--input" "-"
+                                "--output" output-path
+                                :in spec-json)]
          (if (zero? (:exit result))
            (let [png-data (-> temp-file
-                             java.io.FileInputStream.
-                             org.apache.commons.io.IOUtils/toByteArray
-                             java.util.Base64/getEncoder
-                             .encode
-                             (String.))]
-             (.delete temp-file) ; Clean up the temporary file
+                              java.io.FileInputStream.
+                              org.apache.commons.io.IOUtils/toByteArray
+                              java.util.Base64/getEncoder
+                              .encode
+                              (String.))]
+             (.delete temp-file)   ; Clean up the temporary file
              {:type "image", :data png-data, :mimeType "image/png"})
-           (do
-             (.delete temp-file) ; Clean up even on error
-             {:type "text",
-              :text (str "PNG conversion error: " (:err result)),
-              :is-error true})))
+           (do (.delete temp-file) ; Clean up even on error
+               {:type "text",
+                :text (str "PNG conversion error: " (:err result)),
+                :is-error true})))
        (catch Exception e
          {:type "text",
           :text (str "Conversion failed: " (.getMessage e)),
