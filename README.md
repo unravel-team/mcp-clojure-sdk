@@ -4,11 +4,21 @@ A `clojure-sdk` for creating Model Context Protocol servers!
 
 ## Usage
 
-The [examples/calculator_server.clj
-file](examples/calculator_server.clj) contains a full working example
-of defining an MCP server. `examples` is a `deps-new` app project, and
-instructions for compiling and running the various example servers are
-in [the examples/README.md file](examples/README.md)
+The [calculator_server.clj file](examples/src/calculator_server.clj)
+and [vegalite_server.clj file](examples/src/vegalite_server.clj)
+examples contains a full working code for defining an MCP server.
+
+`examples` is a `deps-new` app project, and instructions for compiling
+and running the various example servers are in [the examples/README.md
+file](examples/README.md)
+
+The deps for `clojure-sdk` are:
+
+```clojure
+{io.modelcontextprotocol/mcp-clojure-sdk
+ {:git/url "https://github.com/unravel-team/mcp-clojure-sdk.git"
+  :git/sha "1892d76cb2430c64ed3318d71d96fd857f9b95c9"}}
+```
 
 ## Pending Work
 
