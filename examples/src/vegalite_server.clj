@@ -31,6 +31,21 @@
 (defn- vl2png
   [spec]
   (try (let [spec-json (json/write-str spec)
+             ;; vl-convert tool has the following help:
+             ;;
+             ;; vl-convert vl2png --help
+             ;;
+             ;; Convert a Vega-Lite specification to an PNG image
+             ;;
+             ;; Usage: vl-convert vl2png [OPTIONS] --input <INPUT> --output
+             ;; <OUTPUT>
+             ;;
+             ;; Options:
+             ;;   -i, --input <INPUT>
+             ;;           Path to input Vega-Lite file
+             ;;   -o, --output <OUTPUT>
+             ;;           Path to output PNG file to be created
+             ;; // Update this code to use vl-convert correctly ai!
              result (process/sh "vl-convert" "vl2png" :in spec-json)]
          (if (zero? (:exit result))
            {:type "image", :data (:out result), :mimeType "image/png"}
