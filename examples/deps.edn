@@ -18,6 +18,16 @@
     "-Dbabashka.json.provider=metosin/jsonista" "-Dlogging.level=INFO" "-cp"
     "<full-path>/examples/target/io.modelcontextprotocol.clojure-sdk/examples-1.1.0.jar"
     "calculator_server"]},
+  :run-code-analysis
+  {:command "java",
+   :jvm-opts
+   ["-Dclojure.tools.logging.factory=clojure.tools.logging.impl/log4j2-factory"
+    "-Dorg.eclipse.jetty.util.log.class=org.eclipse.jetty.util.log.Slf4jLog"
+    "-Dlog4j2.contextSelector=org.apache.logging.log4j.core.async.AsyncLoggerContextSelector"
+    "-Dlog4j2.configurationFile=log4j2-mcp.xml"
+    "-Dbabashka.json.provider=metosin/jsonista" "-Dlogging.level=INFO" "-cp"
+    "<full-path>/examples/target/io.modelcontextprotocol.clojure-sdk/examples-1.1.0.jar"
+    "code_analysis_server"]},
   :run-vegalite
   {:command "java",
    :jvm-opts
