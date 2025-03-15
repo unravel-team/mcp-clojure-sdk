@@ -4,7 +4,6 @@
 
 (def lib 'io.modelcontextprotocol.clojure-sdk/examples)
 (def version "1.1.0")
-(def main 'calculator-server)
 (def class-dir "target/classes")
 
 (defn test
@@ -22,12 +21,12 @@
   [opts]
   (assoc opts
     :lib lib
-    :main main
+    :main 'vegalite-server
     :uber-file (format "target/%s-%s.jar" lib version)
     :basis (b/create-basis {})
     :class-dir class-dir
     :src-dirs ["src"]
-    :ns-compile [main]))
+    :ns-compile ['vegalite-server 'code-analysis-server 'calculator-server]))
 
 (defn ci
   "Run the CI pipeline of tests (and build the uberjar)."
@@ -37,7 +36,7 @@
   (let [opts (uber-opts opts)]
     (println "\nCopying source...")
     (b/copy-dir {:src-dirs ["resources" "src"], :target-dir class-dir})
-    (println (str "\nCompiling " main "..."))
+    (println "\nCompiling ...")
     (b/compile-clj opts)
     (println "\nBuilding JAR..." (:uber-file opts))
     (b/uber opts))
