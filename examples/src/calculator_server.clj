@@ -151,15 +151,14 @@
     @(io-server/run! (assoc calculator-server-spec :server-id server-id))))
 
 (comment
-  ;; Test error handling
-  "What's the square root of -4? Use the square-root tool"
-  "Calculate the factorial of -1"
-    ;; Test overflow
-    "What's 2 to the power of 1000?"
+  ;; Test power / maybe overflow
+  "What's 2 to the power of 1000?"
   ;; Test array operations
   "What's the average of [1, 2, 3, 4, 5]?"
     "Sum up the numbers [10, 20, 30, 40, 50]"
   "Calculate the average of []" ; Test empty array
     ;; Test long computation
     "What's the factorial of 15?" ; Should take > 1 second
-)
+  ;; Test error handling
+  "What's the square root of -4? Use the square-root tool"
+    "Calculate the factorial of -1")
