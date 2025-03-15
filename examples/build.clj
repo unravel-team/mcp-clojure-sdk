@@ -3,7 +3,7 @@
   (:require [clojure.tools.build.api :as b]))
 
 (def lib 'io.modelcontextprotocol.clojure-sdk/examples)
-(def version (format "1.0.%s" (b/git-count-revs nil)))
+(def version "1.1.0")
 (def main 'calculator-server)
 (def class-dir "target/classes")
 

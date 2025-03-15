@@ -1,4 +1,5 @@
-* WORKING Create a Stdio-transport based server implementation
+* DONE Create a Stdio-transport based server implementation
+* TODO Fix the clunky API for declaring tools, prompts and resources
 * TODO Checks and Balances in the mcp-cljc-sdk code
 ** TODO Make sure that handle-* functions are implement proper checks
 Read through the python decorator code to double-check if we are doing the right thing here.

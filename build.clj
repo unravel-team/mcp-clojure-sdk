@@ -20,16 +20,14 @@
 
 (defn- pom-template
   [version]
-  [[:description "FIXME: my new library."]
-   [:url "https://github.com/io.modelcontext/clojure-sdk"]
-   [:licenses
-    [:license [:name "Eclipse Public License"]
-     [:url "http://www.eclipse.org/legal/epl-v10.html"]]]
-   [:developers [:developer [:name "Nejo"]]]
-   [:scm [:url "https://github.com/io.modelcontext/clojure-sdk"]
-    [:connection "scm:git:https://github.com/io.modelcontext/clojure-sdk.git"]
+  [[:description "A Clojure SDK for building MCP servers!"]
+   [:url "https://github.com/unravel-team/mcp-clojure-sdk"]
+   [:licenses [:license [:name "MIT License"] [:url ""]]]
+   [:developers [:developer [:name "Vedang Manerikar"]]]
+   [:scm [:url "https://github.com/unravel-team/mcp-clojure-sdk"]
+    [:connection "scm:git:https://github.com/unravel-team/mcp-clojure-sdk.git"]
     [:developerConnection
-     "scm:git:ssh:git@github.com:io.modelcontext/clojure-sdk.git"]
+     "scm:git:ssh:git@github.com:unravel-team/mcp-clojure-sdk.git"]
     [:tag (str "v" version)]]])
 
 (defn- jar-opts
