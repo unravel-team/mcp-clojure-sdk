@@ -103,6 +103,9 @@
           {:error (mcp.errors/body :prompt-not-found
                                    {:prompt-name prompt-name})}))))
 
+;;; Requests and Notifications
+
+;; [ref: initialize_request]
 (defmethod lsp.server/receive-request "initialize"
   [_ context params]
   (log/trace :fn :receive-request :method "initialize" :params params)
@@ -115,6 +118,11 @@
   (->> params
        (handle-initialize context)
        (conform-or-log ::specs/initialize-response)))
+
+;; [ref: initialized_notification]
+(defmethod lsp.server/receive-notification "notifications/initialized"
+  [_ _ params]
+  (conform-or-log ::specs/initialized-notification params))
 
 (defmethod lsp.server/receive-request "tools/list"
   [_ context params]
@@ -168,6 +176,8 @@
   [_method _context _params]
   (identity ::specs/cancelled-notification)
   ::lsp.server/method-not-found)
+
+;;; Server Spec
 
 (defn- check-object-and-handler
   [object-type object handler]

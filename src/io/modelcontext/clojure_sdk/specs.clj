@@ -74,7 +74,7 @@
                    :cancelled-notification/params]))
 
 ;;; Initialization
-;;
+;; [tag: initialize_request]
 ;; This request is sent from the client to the server when it first connects,
 ;; asking it to begin initialization
 (s/def :initialize/protocolVersion string?)
@@ -110,11 +110,11 @@
                :initialize :initialize-response/result)
          (s/conformer second)))
 
+;; [tag: initialized_notification]
 ;; This notification is sent from the client to the server after initialization
-;; has finished.
-(s/def :initialized/method #{"notifications/initialized"})
-(s/def :notification/initialized
-  (s/merge ::notification (s/keys :req-un [:initialized/method])))
+;; has finished. The server should start processing requests after this
+;; notification.
+(s/def ::initialized-notification (s/keys :opt-un [:json-rpc.message/params]))
 
 ;;; Capabilities
 ;; Experimental, non-standard capabilities that the server/client supports.
