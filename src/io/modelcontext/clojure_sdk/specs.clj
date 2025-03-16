@@ -230,16 +230,17 @@
 (s/def ::read-resource-request (s/keys :req-un [:resource/uri]))
 
 ;; The server's response to a resources/read request from the client.
-(s/def :read-resource/content
+(s/def :read-resource-response/content
   (s/and (s/or :text-resource :contents/text-resource
                :blob-resource :contents/blob-resource)
          (s/conformer second)))
-(s/def :read-resource/contents (s/coll-of :read-resource/content))
-(s/def :result/read-resource
-  (s/merge ::result (s/keys :req-un [:read-resource/contents])))
+(s/def :read-resource-response/contents
+  (s/coll-of :read-resource-response/content))
+(s/def :read-resource-response/result
+  (s/keys :req-un [:read-resource-response/contents]))
 (s/def ::read-resource-response
   (s/and (s/or :error ::coercer/response-error
-               :read-resource :result/read-resource)
+               :read-resource :read-resource-response/result)
          (s/conformer second)))
 
 ;;; Resource List Changed Notification
