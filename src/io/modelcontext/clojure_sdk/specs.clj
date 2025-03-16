@@ -32,7 +32,7 @@
 ;; receiver is not obligated to provide these notifications.
 (s/def :json-rpc.message/_meta (s/keys :opt-un [::progressToken]))
 ;; Parameters
-(s/def :json-rpc.message/params (s/keys :opt-un [:json-prc.message/_meta]))
+(s/def :json-rpc.message/params (s/keys :opt-un [:json-rpc.message/_meta]))
 
 ;;; Base interface: Notification
 ;; [ref: reuse_lsp4clj_coercer]
@@ -116,7 +116,7 @@
 ;; This notification is sent from the client to the server after initialization
 ;; has finished. The server should start processing requests after this
 ;; notification.
-(s/def ::initialized-notification (s/keys :opt-un [:json-rpc.message/params]))
+(s/def ::initialized-notification (s/keys :opt-un [:json-rpc.message/_meta]))
 
 ;;; Capabilities
 ;; Experimental, non-standard capabilities that the server/client supports.
@@ -189,27 +189,23 @@
           :opt-un [:progress-notification/total]))
 
 ;;; Pagination
-(s/def :paginated/params (s/keys :opt-un [::cursor]))
-(s/def :request/paginated
-  (s/merge ::request (s/keys :opt-un [:paginated/params])))
-
+(s/def ::paginated-request (s/keys :opt-un [::cursor]))
 (s/def :paginated/nextCursor ::cursor)
-(s/def :result/paginated
-  (s/merge ::result (s/keys :opt-un [:paginated/nextCursor])))
+(s/def ::paginated-response (s/keys :opt-un [:paginated/nextCursor]))
 
 ;;; Resources
+;; [tag: list_resources_request]
 ;; Sent from the client to request a list of resources the server has.
-(s/def :list-resources/method #{"resources/list"})
-(s/def :request/list-resources
-  (s/merge :request/paginated (s/keys :req-un [:list-resources/method])))
+(s/def ::list-resources-request ::paginated-request)
 
 ;; The server's response to a resources/list request from the client.
-(s/def :list-resources/resources (s/coll-of ::resource))
-(s/def :result/list-resources
-  (s/merge :result/paginated (s/keys :req-un [:list-resources/resources])))
-(s/def :response/list-resources-or-error
+(s/def :list-resources-response/resources (s/coll-of ::resource))
+(s/def :list-resources-response/result
+  (s/merge ::paginated-response
+             (s/keys :req-un [:list-resources-response/resources])))
+(s/def ::list-resources-response
   (s/and (s/or :error ::coercer/response-error
-               :list-resources :result/list-resources)
+               :list-resources :list-resources-response/result)
          (s/conformer second)))
 
 ;; Sent from the client to request a list of resource templates the server has.
