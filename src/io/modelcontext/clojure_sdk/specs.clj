@@ -226,6 +226,7 @@
          (s/conformer second)))
 
 ;; Sent from the client to the server, to read a specific resource URI.
+;; // look at the code above this point and modify the resources/read specs ai!
 (s/def :read-resource/method #{"resources/read"})
 (s/def :read-resource/params (s/keys :req-un [:resource/uri]))
 (s/def :request/read-resource
