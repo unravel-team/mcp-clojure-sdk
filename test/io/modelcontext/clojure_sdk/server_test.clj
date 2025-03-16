@@ -2,10 +2,11 @@
   (:require [clojure.core.async :as async]
             [clojure.test :refer [deftest is testing]]
             [io.modelcontext.clojure-sdk.server :as server]
+            [io.modelcontext.clojure-sdk.specs :as specs]
             [io.modelcontext.clojure-sdk.test-helper :as h]
             [lsp4clj.lsp.requests :as lsp.requests]
-            [lsp4clj.server :as lsp.server]
-            [io.modelcontext.clojure-sdk.specs :as specs]))
+            [lsp4clj.lsp.responses :as lsp.responses]
+            [lsp4clj.server :as lsp.server]))
 
 ;;; Tools
 (def tool-greet
@@ -145,11 +146,11 @@
                       {:protocolVersion "2024-11-05",
                        :capabilities {:roots {:listChanged true}, :sampling {}},
                        :clientInfo {:name "ExampleClient", :version "1.0.0"}}))
-        (is (= {:jsonrpc specs/jsonrpc-version,
-                :id 1,
-                :result {:protocolVersion specs/stable-protocol-version,
-                         :capabilities {:tools {}, :resources {}, :prompts {}},
-                         :serverInfo {:name "test-server", :version "1.0.0"}}}
+        (is (= (lsp.responses/response
+                 1
+                 {:protocolVersion specs/stable-protocol-version,
+                  :capabilities {:tools {}, :resources {}, :prompts {}},
+                  :serverInfo {:name "test-server", :version "1.0.0"}})
                (h/take-or-timeout (:output-ch server) 200))))
       (lsp.server/shutdown server))))
 
@@ -161,14 +162,14 @@
           _join (server/start! server context)]
       (testing "Tool list request"
         (async/put! (:input-ch server) (lsp.requests/request 1 "tools/list" {}))
-        (is (= {:jsonrpc specs/jsonrpc-version,
-                :id 1,
-                :result {:tools [{:name "echo",
-                                  :description "Echo input",
-                                  :inputSchema {:type "object",
-                                                :properties {"message"
-                                                             {:type "string"}},
-                                                :required ["message"]}}]}}
+        (is (= (lsp.responses/response 1
+                                       {:tools [{:name "echo",
+                                                 :description "Echo input",
+                                                 :inputSchema
+                                                 {:type "object",
+                                                  :properties
+                                                  {"message" {:type "string"}},
+                                                  :required ["message"]}}]})
                (h/assert-take (:output-ch server)))))
       (testing "Tool execution request"
         (async/put! (:input-ch server)
@@ -176,18 +177,17 @@
                                           "tools/call"
                                           {:name "echo",
                                            :arguments {:message "test"}}))
-        (is (= {:jsonrpc specs/jsonrpc-version,
-                :id 2,
-                :result {:content [{:type "text", :text "test"}]}}
+        (is (= (lsp.responses/response 2
+                                       {:content [{:type "text",
+                                                   :text "test"}]})
                (h/assert-take (:output-ch server)))))
       (testing "Invalid tool request"
         (async/put! (:input-ch server)
                     (lsp.requests/request 3 "tools/call" {:name "invalid"}))
-        (is (= {:jsonrpc specs/jsonrpc-version,
-                :id 3,
-                :error {:code specs/method-not-found,
-                        :message "Tool Not Found!",
-                        :data {:tool-name "invalid"}}}
+        (is (= (lsp.responses/error (lsp.responses/response 3)
+                                    {:code specs/method-not-found,
+                                     :message "Tool Not Found!",
+                                     :data {:tool-name "invalid"}})
                (h/assert-take (:output-ch server)))))
       (lsp.server/shutdown server))))
 

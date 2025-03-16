@@ -2,6 +2,11 @@
   (:require [clojure.spec.alpha :as s]
             [lsp4clj.coercer :as coercer]))
 
+;; [tag: reuse_lsp4clj_coercer]
+;;
+;; This file heavily reuses specs defined in the `lsp4clj.coercer` namespace.
+;; If you don't find the definition of a spec in this ns, check the coercer ns.
+
 ;; JSON-RPC types
 (s/def :jsonrpc/message
   (s/or :jsonrpc-request :jsonrpc/request
@@ -12,7 +17,6 @@
 ;; Protocol constants
 (def latest-protocol-version "DRAFT-2025-v1")
 (def stable-protocol-version "2024-11-05")
-(def jsonrpc-version "2.0")
 
 ;;; Base Interface: Request
 ;; A progress token, used to associate progress notifications with the original
@@ -50,11 +54,6 @@
 (s/def ::result (s/keys :opt-un [:result/_meta]))
 
 
-;;; JSON-RPC
-(s/def ::jsonrpc #(= jsonrpc-version %))
-(s/def :request/id
-  (s/or :str string?
-        :num number?))
 ;; Standard error codes
 (def parse-error -32700)
 (def invalid-request -32600)
