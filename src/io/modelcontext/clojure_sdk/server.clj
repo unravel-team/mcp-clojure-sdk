@@ -159,7 +159,7 @@
        (handle-list-resources context)
        (conform-or-log ::specs/list-resources-response)))
 
-;; // modify this defmethod ai
+;; [ref: read_resource_request]
 (defmethod lsp.server/receive-request "resources/read"
   [_ context params]
   (log/trace :fn :receive-request :method "resources/read" :params params)
