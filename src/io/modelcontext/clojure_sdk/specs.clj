@@ -78,11 +78,11 @@
 ;; This request is sent from the client to the server when it first connects,
 ;; asking it to begin initialization
 (s/def :initialize/protocolVersion string?)
-(s/def :initialize-request/clientInfo (s/map-of keyword? any?))
 ;; The latest version of the Model Context Protocol that the client
 ;; supports. The client MAY decide to support older versions as
 ;; well.
-;; [ref: client_capabilities] for :initialize-request/capabilities
+;; [ref: client_capabilities] for :initialize-request/capabilities and
+;; [ref: implementation_server_client_info] for :initialize-request/clientInfo
 (s/def ::initialize-request
   (s/keys :req-un [:initialize/protocolVersion :initialize-request/capabilities
                    :initialize-request/clientInfo]))
@@ -94,7 +94,9 @@
   ;; The version of the Model Context Protocol that the server wants to
   ;; use. This may not match the version that the client requested. If the
   ;; client cannot support this version, it MUST disconnect.
-  ;; [ref: server_capabilities] for :initialize-response/capabilities
+  ;; [ref: server_capabilities] for :initialize-response/capabilities and
+  ;; [ref: implementation_server_client_info] for
+  ;; :initialize-response/serverInfo
   (s/keys :req-un [:initialize/protocolVersion :initialize-response/capabilities
                    :initialize-response/serverInfo]
           ;; Instructions describing how to use the
@@ -159,12 +161,14 @@
                    :capabilities/tools]))
 (s/def :initialize-response/capabilities ::server-capabilities)
 
-;;; Implementation
+;;; [tag: implementation_server_client_info]
 ;; Describes the name and version of an MCP implementation.
 (s/def :implementation/name string?)
 (s/def :implementation/version string?)
 (s/def ::implementation
   (s/keys :req-un [:implementation/name :implementation/version]))
+(s/def :initialize-request/clientInfo ::implementation)
+(s/def :initialize-response/serverInfo ::implementation)
 
 ;;; Ping Request
 ;; A ping, issued by either the server or the client, to check that the other
@@ -842,8 +846,3 @@
 (defn explain-model-preferences
   [prefs]
   (s/explain-data ::model-preferences prefs))
-
-;; Helper functions for implementation validation
-(defn valid-implementation? [impl] (s/valid? ::implementation impl))
-
-(defn explain-implementation [impl] (s/explain-data ::implementation impl))
