@@ -52,7 +52,7 @@
 ;; be reused using the helpers provided there
 
 ;; Cancellation
-;;
+;; [tag: cancelled_notification]
 ;; This notification can be sent by either side to indicate that it is
 ;; cancelling a previously-issued request.
 ;;
@@ -64,15 +64,16 @@
 ;; associated processing SHOULD cease.
 ;;
 ;; A client MUST NOT attempt to cancel its `initialize` request.
-(s/def ::requestId :request/id)
-(s/def ::reason string?)
+(s/def :cancelled-notification/requestId :json-rpc.message/id)
+(s/def :cancelled-notification/reason string?)
 (s/def :cancelled-notification/method #{"notifications/cancelled"})
 (s/def :cancelled-notification/params
-  (s/keys :req-un [::requestId] :opt-un [::reason]))
+  (s/keys :req-un [:cancelled-notification/requestId]
+          :opt-un [:cancelled-notification/reason]))
 
-(s/def :notification/cancelled
-  (s/merge ::notification (s/keys :req-un [:cancelled-notification/method
-                                           :cancelled-notification/params])))
+(s/def ::cancelled-notification
+  (s/keys :req-un [:cancelled-notification/method
+                   :cancelled-notification/params]))
 ;;; Initialization
 ;;
 ;; This request is sent from the client to the server when it first connects,

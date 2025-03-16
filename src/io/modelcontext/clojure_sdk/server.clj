@@ -89,7 +89,7 @@
 
 (defn- handle-get-prompt
   [context params]
-  (log/debug :fn :handle-get-prompt
+  (log/trace :fn :handle-get-prompt
              :prompt (:name params)
              :args (:arguments params))
   (let [prompts @(:prompts context)
@@ -151,6 +151,17 @@
   (->> params
        (handle-get-prompt context)
        (conform-or-log :response/get-prompt-or-error)))
+
+;;; @TODO: Requests to Implement
+
+
+;;; @TODO: Notifications to Implement
+
+;; [ref: cancelled_notification]
+(defmethod lsp.server/receive-notification "notifications/cancelled"
+  [_method _context _params]
+  #_(conform-or-log ::specs/cancelled-notification {})
+  ::lsp.server/method-not-found)
 
 (defn- check-object-and-handler
   [object-type object handler]
