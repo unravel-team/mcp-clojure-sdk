@@ -37,7 +37,7 @@ commit-prompt: |
 ## Main model (Architect) and editor model (Editor)
 model: sonnet
 architect: true
-editor-model: deepseek
+editor-model: sonnet
 
 ## Testing and Linting of my code
 lint-cmd: make format
