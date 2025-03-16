@@ -841,3 +841,8 @@
 (defn explain-model-preferences
   [prefs]
   (s/explain-data ::model-preferences prefs))
+
+;; Helper functions for implementation validation
+(defn valid-implementation? [impl] (s/valid? ::implementation impl))
+
+(defn explain-implementation [impl] (s/explain-data ::implementation impl))
