@@ -176,19 +176,17 @@
 ;; disconnected.
 (s/def ::ping-request any?)
 
-;;; Progress Notification
+;;; [tag: progress_notification]
 ;; An out-of-band notification used to inform the receiver of a progress update
 ;; for a long-running request.
-(s/def :progress/method #{"notifications/progress"})
 ;; The progress thus far. This should increase every time progress is made,
 ;; even if the total is unknown.
-(s/def ::progress number?)
+(s/def :progress-notification/progress number?)
 ;; Total number of items to process (or total progress required), if known.
-(s/def ::total number?)
-(s/def :progress/params
-  (s/keys :req-un [::progressToken ::progress] :opt-un [::total]))
-(s/def :notification/progress
-  (s/merge ::notification (s/keys :req-un [:progress/method :progress/params])))
+(s/def :progress-notification/total number?)
+(s/def ::progress-notification
+  (s/keys :req-un [::progressToken :progress-notification/progress]
+          :opt-un [:progress-notification/total]))
 
 ;;; Pagination
 (s/def :paginated/params (s/keys :opt-un [::cursor]))
@@ -748,8 +746,8 @@
         :list-tools :request/list-tools))
 
 (s/def :notification/client
-  (s/or :cancelled :notification/cancelled
-        :progress :notification/progress
+  (s/or :cancelled ::cancelled-notification
+        :progress ::progress-notification
         :initialized :notification/initialized
         :roots-list-changed :notification/roots-list-changed))
 
@@ -760,8 +758,8 @@
         :list-roots :request/list-roots))
 
 (s/def :notification/server
-  (s/or :cancelled :notification/cancelled
-        :progress :notification/progress
+  (s/or :cancelled ::cancelled-notification
+        :progress ::progress-notification
         :logging-message :notification/logging-message
         :resource-updated :notification/resource-updated
         :resource-list-changed :notification/resource-list-changed

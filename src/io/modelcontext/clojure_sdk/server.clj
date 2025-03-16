@@ -188,6 +188,12 @@
   (identity ::specs/cancelled-notification)
   ::lsp.server/method-not-found)
 
+;; [ref: progress_notification]
+(defmethod lsp.server/receive-notification "notifications/progress"
+  [_method _context _params]
+  (identity ::specs/progress-notification)
+  ::lsp.server/method-not-found)
+
 ;;; Server Spec
 
 (defn- check-object-and-handler
