@@ -163,9 +163,11 @@
 (defmethod lsp.server/receive-request "resources/read"
   [_ context params]
   (log/trace :fn :receive-request :method "resources/read" :params params)
+  ;; [ref: log_bad_input_params]
+  (conform-or-log ::specs/read-resource-request params)
   (->> params
        (handle-read-resource context)
-       (conform-or-log :response/read-resource-or-error)))
+       (conform-or-log ::specs/read-resource-response)))
 
 (defmethod lsp.server/receive-request "prompts/list"
   [_ context params]
