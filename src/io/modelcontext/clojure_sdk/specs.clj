@@ -225,8 +225,8 @@
                  :list-resource-templates-response/result)
          (s/conformer second)))
 
-;; Sent from the client to the server, to read a specific resource URI.
 ;; [tag: read_resource_request]
+;; Sent from the client to the server, to read a specific resource URI.
 (s/def ::read-resource-request (s/keys :req-un [:resource/uri]))
 
 ;; The server's response to a resources/read request from the client.
