@@ -226,12 +226,8 @@
          (s/conformer second)))
 
 ;; Sent from the client to the server, to read a specific resource URI.
-;; // look at the code above this point and modify the resources/read specs ai!
-(s/def :read-resource/method #{"resources/read"})
-(s/def :read-resource/params (s/keys :req-un [:resource/uri]))
-(s/def ::read-resource-request
-  (s/merge ::request (s/keys :req-un [:read-resource/method
-                                      :read-resource/params])))
+;; [tag: read_resource_request]
+(s/def ::read-resource-request (s/keys :req-un [:resource/uri]))
 
 ;; The server's response to a resources/read request from the client.
 (s/def :read-resource/content
