@@ -229,7 +229,7 @@
 ;; // look at the code above this point and modify the resources/read specs ai!
 (s/def :read-resource/method #{"resources/read"})
 (s/def :read-resource/params (s/keys :req-un [:resource/uri]))
-(s/def :request/read-resource
+(s/def ::read-resource-request
   (s/merge ::request (s/keys :req-un [:read-resource/method
                                       :read-resource/params])))
 
@@ -241,7 +241,7 @@
 (s/def :read-resource/contents (s/coll-of :read-resource/content))
 (s/def :result/read-resource
   (s/merge ::result (s/keys :req-un [:read-resource/contents])))
-(s/def :response/read-resource-or-error
+(s/def ::read-resource-response
   (s/and (s/or :error ::coercer/response-error
                :read-resource :result/read-resource)
          (s/conformer second)))
