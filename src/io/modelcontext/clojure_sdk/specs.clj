@@ -8,11 +8,9 @@
 ;; If you don't find the definition of a spec in this ns, check the coercer ns.
 
 ;; JSON-RPC types
-(s/def :jsonrpc/message
-  (s/or :jsonrpc-request :jsonrpc/request
-        :jsonrpc-notification :jsonrpc/notification
-        :jsonrpc-response :jsonrpc/response
-        :jsonrpc-error :jsonrpc/error))
+;; Refer to `::coercer/json-rpc.input` to see all the possible inputs as
+;; defined
+;; in the JSON-RPC spec.
 
 ;; Protocol constants
 (def latest-protocol-version "DRAFT-2025-v1")
@@ -74,39 +72,42 @@
 (s/def ::cancelled-notification
   (s/keys :req-un [:cancelled-notification/method
                    :cancelled-notification/params]))
+
 ;;; Initialization
 ;;
 ;; This request is sent from the client to the server when it first connects,
 ;; asking it to begin initialization
-(s/def ::protocolVersion string?)
-(s/def :initialize/method #{"initialize"})
-(s/def :initialize/params
-  ;; The latest version of the Model Context Protocol that the client
-  ;; supports. The client MAY decide to support older versions as well.
-  (s/keys :req-un [::protocolVersion :client/capabilities ::clientInfo]))
-(s/def :request/initialize
-  (s/merge ::request (s/keys :req-un [:initialize/method :initialize/params])))
+(s/def :initialize/protocolVersion string?)
+(s/def :initialize-request/clientInfo (s/map-of keyword? any?))
+;; The latest version of the Model Context Protocol that the client
+;; supports. The client MAY decide to support older versions as
+;; well.
+;; [ref: client_capabilities] for :initialize-request/capabilities
+(s/def ::initialize-request
+  (s/keys :req-un [:initialize/protocolVersion :initialize-request/capabilities
+                   :initialize-request/clientInfo]))
 
 ;; After receiving an initialize request from the client, the server sends this
 ;; response.
-(s/def :initialize/instructions string?)
-(s/def :result/initialize
+(s/def :initialize-response/instructions string?)
+(s/def :initialize-response/result
   ;; The version of the Model Context Protocol that the server wants to
   ;; use. This may not match the version that the client requested. If the
   ;; client cannot support this version, it MUST disconnect.
-  (s/merge ::result (s/keys :req-un [::protocolVersion :server/capabilities
-                                     ::serverInfo]
-                            ;; Instructions describing how to use the
-                            ;; server and its features. This can be used by
-                            ;; clients to improve the LLM's understanding
-                            ;; of available tools, resources, etc. It can
-                            ;; be thought of like a "hint" to the model.
-                            ;; For example, this information MAY be added
-                            ;; to the system prompt.
-                            :opt-un [:initialize/instructions])))
-(s/def :response/initialize-or-error
+  ;; [ref: server_capabilities] for :initialize-response/capabilities
+  (s/keys :req-un [:initialize/protocolVersion :initialize-response/capabilities
+                   :initialize-response/serverInfo]
+          ;; Instructions describing how to use the
+          ;; server and its features. This can be used by
+          ;; clients to improve the LLM's understanding
+          ;; of available tools, resources, etc. It can
+          ;; be thought of like a "hint" to the model.
+          ;; For example, this information MAY be added
+          ;; to the system prompt.
+          :opt-un [:initialize-response/instructions]))
+(s/def ::initialize-response
   (s/and (s/or :error ::coercer/response-error
-               :initialize :result/initialize)
+               :initialize :initialize-response/result)
          (s/conformer second)))
 
 ;; This notification is sent from the client to the server after initialization
@@ -126,14 +127,15 @@
 ;; Present if the client supports sampling from an LLM.
 (s/def :capabilities/sampling any?)
 
-;; Client Capabilities
+;; [tag: client_capabilities]
 ;;
 ;; Capabilities a client may support. Known capabilities are defined here, in
 ;; this schema, but this is not a closed set: any client can define its own,
 ;; additional capabilities.
-(s/def :capabilities/client
+(s/def ::client-capabilities
   (s/keys :opt-un [:capabilities/experimental :capabilities/roots
                    :capabilities/sampling]))
+(s/def :initialize-request/capabilities ::client-capabilities)
 
 ;; Present if the server supports sending log messages to the client.
 (s/def :capabilities/logging any?)
@@ -145,15 +147,17 @@
   (s/keys :opt-un [:capabilities/subscribe :capabilities/listChanged]))
 ;; Present if the server offers any tools to call.
 (s/def :capabilities/tools (s/keys :opt-un [:capabilities/listChanged]))
-;; Server Capabilities
+
+;; [tag: server_capabilities]
 ;;
 ;; Capabilities that a server may support. Known capabilities are defined here,
 ;; in this schema, but this is not a closed set: any server can define its own,
 ;; additional capabilities.
-(s/def :capabilities/server
+(s/def ::server-capabilities
   (s/keys :opt-un [:capabilities/experimental :capabilities/logging
                    :capabilities/prompts :capabilities/resources
                    :capabilities/tools]))
+(s/def :initialize-response/capabilities ::server-capabilities)
 
 ;;; Implementation
 ;; Describes the name and version of an MCP implementation.

@@ -106,9 +106,15 @@
 (defmethod lsp.server/receive-request "initialize"
   [_ context params]
   (log/trace :fn :receive-request :method "initialize" :params params)
+  ;; [tag: log_bad_input_params]
+  ;;
+  ;; If the input is non-conformant, we should log it. But we shouldn't
+  ;; take any other action. The principle we want to follow is Postel's
+  ;; law: https://en.wikipedia.org/wiki/Robustness_principle
+  (conform-or-log ::specs/initialize-request params)
   (->> params
        (handle-initialize context)
-       (conform-or-log :response/initialize-or-error)))
+       (conform-or-log ::specs/initialize-response)))
 
 (defmethod lsp.server/receive-request "tools/list"
   [_ context params]
@@ -160,7 +166,7 @@
 ;; [ref: cancelled_notification]
 (defmethod lsp.server/receive-notification "notifications/cancelled"
   [_method _context _params]
-  #_(conform-or-log ::specs/cancelled-notification {})
+  (identity ::specs/cancelled-notification)
   ::lsp.server/method-not-found)
 
 (defn- check-object-and-handler
