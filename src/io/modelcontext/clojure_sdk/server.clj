@@ -182,6 +182,16 @@
 
 ;;; @TODO: Requests to Implement
 
+;; [ref: list_resource_templates_request]
+(defmethod lsp.server/receive-request "resources/templates/list"
+  [_ _context params]
+  (log/trace :fn :receive-request
+             :method "resources/templates/list"
+             :params params)
+  ;; [ref: log_bad_input_params]
+  (conform-or-log ::specs/list-resource-templates-request params)
+  (identity ::specs/list-resource-templates-response)
+  ::lsp.server/method-not-found)
 
 ;;; @TODO: Notifications to Implement
 

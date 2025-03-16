@@ -208,18 +208,22 @@
                :list-resources :list-resources-response/result)
          (s/conformer second)))
 
+;; [tag: list_resource_templates_request]
 ;; Sent from the client to request a list of resource templates the server has.
-(s/def :list-resource-templates/method #{"resources/templates/list"})
-(s/def :request/list-resource-templates
-  (s/merge :request/paginated (s/keys :req-un
-                                        [:list-resource-templates/method])))
+(s/def ::list-resource-templates-request ::paginated-request)
 
 ;; The server's response to a resources/templates/list request from the client.
-(s/def :list-resource-templates/resourceTemplates
+(s/def :list-resource-templates-response/resourceTemplates
   (s/coll-of ::resource-template))
-(s/def :result/list-resource-templates
-  (s/merge :result/paginated
-             (s/keys :req-un [:list-resource-templates/resourceTemplates])))
+(s/def :list-resource-templates-response/result
+  (s/merge ::paginated-response
+             (s/keys :req-un
+                       [:list-resource-templates-response/resourceTemplates])))
+(s/def ::list-resource-templates-response
+  (s/and (s/or :error ::coercer/response-error
+               :list-resource-templates
+                 :list-resource-templates-response/result)
+         (s/conformer second)))
 
 ;; Sent from the client to the server, to read a specific resource URI.
 (s/def :read-resource/method #{"resources/read"})
