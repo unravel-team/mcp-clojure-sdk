@@ -36,12 +36,14 @@
         _client-capabilities (:capabilities params)
         server-info (:server-info context)
         server-capabilities @(:capabilities context)]
-    (log/debug :fn :handle-initialize
+    (log/trace :fn :handle-initialize
                :msg "[Initialize] Client connected"
                :client client-info)
     {:protocolVersion specs/stable-protocol-version,
      :capabilities server-capabilities,
      :serverInfo server-info}))
+
+(defn- handle-ping [_context _params] (log/trace :fn :handle-ping) "pong")
 
 (defn- handle-list-tools
   [context _params]
@@ -123,6 +125,15 @@
 (defmethod lsp.server/receive-notification "notifications/initialized"
   [_ _ params]
   (conform-or-log ::specs/initialized-notification params))
+
+;; [ref: ping_request]
+(defmethod lsp.server/receive-request "ping"
+  [_ context params]
+  (log/trace :fn :receive-request :method "ping" :params params)
+  ;; [ref: log_bad_input_params]
+  (conform-or-log ::specs/ping-request params)
+  (->> params
+       (handle-ping context)))
 
 (defmethod lsp.server/receive-request "tools/list"
   [_ context params]

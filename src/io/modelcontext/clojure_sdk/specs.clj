@@ -170,12 +170,11 @@
 (s/def :initialize-request/clientInfo ::implementation)
 (s/def :initialize-response/serverInfo ::implementation)
 
-;;; Ping Request
+;;; [tag: ping_request]
 ;; A ping, issued by either the server or the client, to check that the other
 ;; party is still alive. The receiver must promptly respond, or else may be
 ;; disconnected.
-(s/def :ping/method #{"ping"})
-(s/def :request/ping (s/merge ::request (s/keys :req-un [:ping/method])))
+(s/def ::ping-request any?)
 
 ;;; Progress Notification
 ;; An out-of-band notification used to inform the receiver of a progress update
