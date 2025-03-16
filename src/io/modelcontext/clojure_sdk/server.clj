@@ -1,10 +1,13 @@
 (ns io.modelcontext.clojure-sdk.server
   (:require [clojure.core.async :as async]
+            [io.modelcontext.clojure-sdk.mcp.errors :as mcp.errors]
             [io.modelcontext.clojure-sdk.specs :as specs]
             [lsp4clj.coercer :as coercer]
             [lsp4clj.server :as lsp.server]
             [me.vedang.logger.interface :as log]))
 
+;;; Helpers
+;; Logging and Spec Checking
 (defmacro conform-or-log
   "Provides log function for conformation, while preserving line numbers."
   [spec value]
@@ -24,6 +27,8 @@
                :else (throw (ex-info "Unknown Conform Error" :args args#))))
        ~spec
        ~value)))
+
+;;; Helper functions for handling various requests
 
 (defn- handle-initialize
   [context params]
@@ -56,12 +61,9 @@
            (catch Exception e
              {:content [{:type "text", :text (str "Error: " (.getMessage e))}],
               :isError true}))
-      (do (log/debug :fn :handle-call-tool
-                     :tool tool-name
-                     :error :method-not-found)
-          {:error {:code specs/method-not-found,
-                   :message "Tool Not Found!",
-                   :data {:tool-name tool-name}}}))))
+      (do
+        (log/debug :fn :handle-call-tool :tool tool-name :error :tool-not-found)
+        {:error (mcp.errors/body :tool-not-found {:tool-name tool-name})}))))
 
 (defn- handle-list-resources
   [context _params]
@@ -77,10 +79,8 @@
       {:contents [(handler uri)]}
       (do (log/debug :fn :handle-read-resource
                      :resource uri
-                     :error :method-not-found)
-          {:error {:code specs/method-not-found,
-                   :message "Resource Not Found!",
-                   :data {:uri uri}}}))))
+                     :error :resource-not-found)
+          {:error (mcp.errors/body :resource-not-found {:uri uri})}))))
 
 (defn- handle-list-prompts
   [context _params]
@@ -99,10 +99,9 @@
       (handler arguments)
       (do (log/debug :fn :handle-get-prompt
                      :prompt prompt-name
-                     :error :method-not-found)
-          {:error {:code specs/method-not-found,
-                   :message "Prompt Not Found!",
-                   :data {:prompt-name prompt-name}}}))))
+                     :error :prompt-not-found)
+          {:error (mcp.errors/body :prompt-not-found
+                                   {:prompt-name prompt-name})}))))
 
 (defmethod lsp.server/receive-request "initialize"
   [_ context params]

@@ -1,6 +1,7 @@
 (ns io.modelcontext.clojure-sdk.server-test
   (:require [clojure.core.async :as async]
             [clojure.test :refer [deftest is testing]]
+            [io.modelcontext.clojure-sdk.mcp.errors :as mcp.errors]
             [io.modelcontext.clojure-sdk.server :as server]
             [io.modelcontext.clojure-sdk.specs :as specs]
             [io.modelcontext.clojure-sdk.test-helper :as h]
@@ -185,9 +186,8 @@
         (async/put! (:input-ch server)
                     (lsp.requests/request 3 "tools/call" {:name "invalid"}))
         (is (= (lsp.responses/error (lsp.responses/response 3)
-                                    {:code specs/method-not-found,
-                                     :message "Tool Not Found!",
-                                     :data {:tool-name "invalid"}})
+                                    (mcp.errors/body :tool-not-found
+                                                     {:tool-name "invalid"}))
                (h/assert-take (:output-ch server)))))
       (lsp.server/shutdown server))))
 
@@ -279,10 +279,11 @@
         (async/put!
           (:input-ch server)
           (lsp.requests/request 3 "prompts/get" {:name "invalid-prompt"}))
-        (let [response (h/assert-take (:output-ch server))
-              error (:error response)]
-          (is (= specs/method-not-found (:code error)))
-          (is (= "Prompt Not Found!" (:message error)))))
+        (is (= (lsp.responses/error (lsp.responses/response 3)
+                                    (mcp.errors/body :prompt-not-found
+                                                     {:prompt-name
+                                                      "invalid-prompt"}))
+               (h/assert-take (:output-ch server)))))
       (lsp.server/shutdown server))))
 
 (deftest resource-listing
@@ -350,8 +351,9 @@
                     (lsp.requests/request 4
                                           "resources/read"
                                           {:uri "file:///invalid.txt"}))
-        (let [response (h/assert-take (:output-ch server))
-              error (:error response)]
-          (is (= specs/method-not-found (:code error)))
-          (is (= "Resource Not Found!" (:message error)))))
+        (is (= (lsp.responses/error (lsp.responses/response 4)
+                                    (mcp.errors/body :resource-not-found
+                                                     {:uri
+                                                      "file:///invalid.txt"}))
+               (h/assert-take (:output-ch server)))))
       (lsp.server/shutdown server))))
