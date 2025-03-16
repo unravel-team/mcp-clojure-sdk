@@ -244,13 +244,13 @@
          (s/conformer second)))
 
 ;;; Resource List Changed Notification
+;; [tag: resource_list_changed_notification]
 ;; An optional notification from the server to the client, informing
 ;; it that the list of resources it can read from has changed. This
 ;; may be issued by servers without any previous subscription from the
 ;; client.
-(s/def :resource-list-changed/method #{"notifications/resources/list_changed"})
-(s/def :notification/resource-list-changed
-  (s/merge ::notification (s/keys :req-un [:resource-list-changed/method])))
+(s/def ::resource-list-changed-notification
+  (s/keys :opt-un [:json-rpc.message/_meta]))
 
 ;;; Resource Subscribe/Unsubscribe
 ;; Sent from the client to request resources/updated notifications from the

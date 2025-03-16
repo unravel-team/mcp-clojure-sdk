@@ -210,6 +210,13 @@
   (identity ::specs/progress-notification)
   ::lsp.server/method-not-found)
 
+;; [ref: resource_list_changed_notification]
+(defmethod lsp.server/receive-notification
+  "notifications/resources/list_changed"
+  [_method _context _params]
+  (identity ::specs/resource-list-changed-notification)
+  ::lsp.server/method-not-found)
+
 ;;; Server Spec
 
 (defn- check-object-and-handler
