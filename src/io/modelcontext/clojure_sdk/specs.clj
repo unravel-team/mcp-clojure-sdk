@@ -318,20 +318,21 @@
   (s/merge :contents/resource (s/keys :req-un [:contents/blob])))
 
 ;;; Prompts
+;; [tag: list_prompts_request]
 ;; Sent from the client to request a list of prompts and prompt templates the
 ;; server has.
-(s/def :list-prompts/method #{"prompts/list"})
-(s/def :request/list-prompts
-  (s/merge :request/paginated (s/keys :req-un [:list-prompts/method])))
+(s/def ::list-prompts-request ::paginated-request)
 
 ;; The server's response to a prompts/list request from the client.
-(s/def :list-prompts/prompts (s/coll-of ::prompt))
-(s/def :result/list-prompts
-  (s/merge :result/paginated (s/keys :req-un [:list-prompts/prompts])))
-(s/def :response/list-prompts-or-error
+(s/def :list-prompts-response/prompts (s/coll-of ::prompt))
+(s/def :list-prompts-response/result
+  (s/merge ::paginated-response (s/keys :req-un
+                                          [:list-prompts-response/prompts])))
+(s/def ::list-prompts-response
   (s/and (s/or :error ::coercer/response-error
-               :list-prompts :result/list-prompts)
+               :list-prompts :list-prompts-response/result)
          (s/conformer second)))
+
 ;;; Get Prompt
 ;; Used by the client to get a prompt provided by the server.
 (s/def :get-prompt/method #{"prompts/get"})

@@ -169,12 +169,15 @@
        (handle-read-resource context)
        (conform-or-log ::specs/read-resource-response)))
 
+;; [ref: list_prompts_request]
 (defmethod lsp.server/receive-request "prompts/list"
   [_ context params]
   (log/trace :fn :receive-request :method "prompts/list" :params params)
+  ;; [ref: log_bad_input_params]
+  (conform-or-log ::specs/list-prompts-request params)
   (->> params
        (handle-list-prompts context)
-       (conform-or-log :response/list-prompts-or-error)))
+       (conform-or-log ::specs/list-prompts-response)))
 
 (defmethod lsp.server/receive-request "prompts/get"
   [_ context params]
