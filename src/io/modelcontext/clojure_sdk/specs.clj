@@ -481,14 +481,12 @@
   (s/keys :req-un [:tool/name :tool/inputSchema] :opt-un [:tool/description]))
 
 ;;; Logging
+;; [tag: set_logging_level_request]
 ;; A request from the client to the server, to enable or adjust logging.
-(s/def :set-level/method #{"logging/setLevel"})
 ;; The level of logging that the client wants to receive from the server. The
 ;; server should send all logs at this level and higher (i.e., more severe) to
 ;; the client as notifications/logging/message.
-(s/def :set-level/params (s/keys :req-un [:logging/level]))
-(s/def :request/set-level
-  (s/merge ::request (s/keys :req-un [:set-level/method :set-level/params])))
+(s/def ::set-logging-level-request (s/keys :req-un [:logging/level]))
 
 ;; Notification of a log message passed from server to client. If no
 ;; logging/setLevel request has been sent from the client, the server MAY
