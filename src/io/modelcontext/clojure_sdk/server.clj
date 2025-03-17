@@ -196,6 +196,24 @@
   (identity ::specs/list-resource-templates-response)
   ::lsp.server/method-not-found)
 
+;; [ref: resource_subscribe_unsubscribe_request]
+(defmethod lsp.server/receive-request "resources/subscribe"
+  [_ _context params]
+  (log/trace :fn :receive-request :method "resources/subscribe" :params params)
+  ;; [ref: log_bad_input_params]
+  (conform-or-log ::specs/resource-subscribe-unsubscribe-request params)
+  ::lsp.server/method-not-found)
+
+;; [ref: resource_subscribe_unsubscribe_request]
+(defmethod lsp.server/receive-request "resources/unsubscribe"
+  [_ _context params]
+  (log/trace :fn :receive-request
+             :method "resources/unsubscribe"
+             :params params)
+  ;; [ref: log_bad_input_params]
+  (conform-or-log ::specs/resource-subscribe-unsubscribe-request params)
+  ::lsp.server/method-not-found)
+
 ;;; @TODO: Notifications to Implement
 
 ;; [ref: cancelled_notification]

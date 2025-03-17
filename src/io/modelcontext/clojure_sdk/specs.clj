@@ -253,21 +253,17 @@
   (s/keys :opt-un [:json-rpc.message/_meta]))
 
 ;;; Resource Subscribe/Unsubscribe
-;; Sent from the client to request resources/updated notifications from the
+;; [tag: resource_subscribe_unsubscribe_request]
+;; Subscribe: Sent from the client to request resources/updated notifications
+;; from the
 ;; server whenever a particular resource changes.
-(s/def :subscribe/method #{"resources/subscribe"})
-(s/def :subscribe/params (s/keys :req-un [:resource/uri]))
-(s/def :request/subscribe
-  (s/merge ::request (s/keys :req-un [:subscribe/method :subscribe/params])))
-
-;; Sent from the client to request cancellation of resources/updated
+;; Unsubscribe: Sent from the client to request cancellation of
+;; resources/updated
 ;; notifications from the server. This should follow a previous
 ;; resources/subscribe request.
-(s/def :unsubscribe/method #{"resources/unsubscribe"})
-(s/def :unsubscribe/params (s/keys :req-un [:resource/uri]))
-(s/def :request/unsubscribe
-  (s/merge ::request (s/keys :req-un [:unsubscribe/method
-                                      :unsubscribe/params])))
+;; Both requests expect an empty response from the server
+(s/def ::resource-subscribe-unsubscribe-request
+  (s/keys :req-un [:resource/uri]))
 
 ;;; Resource Updated Notification
 ;; A notification from the server to the client, informing it that a
