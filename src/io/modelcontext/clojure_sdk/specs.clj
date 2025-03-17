@@ -266,15 +266,12 @@
   (s/keys :req-un [:resource/uri]))
 
 ;;; Resource Updated Notification
+;; [tag: resource_updated_notification]
 ;; A notification from the server to the client, informing it that a
 ;; resource has changed and may need to be read again. This should
 ;; only be sent if the client previously sent a resources/subscribe
 ;; request.
-(s/def :resource-updated/method #{"notifications/resources/updated"})
-(s/def :resource-updated/params (s/keys :req-un [:resource/uri]))
-(s/def :notification/resource-updated
-  (s/merge ::notification (s/keys :req-un [:resource-updated/method
-                                           :resource-updated/params])))
+(s/def ::resource-updated-notification (s/keys :req-un [:resource/uri]))
 
 ;;; Resource
 ;; A known resource that the server is capable of reading.
