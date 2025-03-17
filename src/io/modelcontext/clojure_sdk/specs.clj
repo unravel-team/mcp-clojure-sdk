@@ -439,9 +439,10 @@
   (s/keys :req-un [:tool/name] :opt-un [:call-tool-request/arguments]))
 
 ;; The server's response to a tool call.
-(s/def :call-tool-response/content ;; yes, this is a collection, and the name is not
-                                  ;; `contents`. This looks like a mistake they
-                                  ;; made and kept for backwards compatibility.
+(s/def :call-tool-response/content ;; yes, this is a collection, and the
+                                   ;; name is not
+  ;; `contents`. This looks like a mistake they
+  ;; made and kept for backwards compatibility.
   (s/coll-of (s/and (s/or :text :content/text
                           :image :content/image
                           :audio :content/audio
