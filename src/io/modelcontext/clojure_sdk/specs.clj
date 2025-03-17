@@ -458,51 +458,13 @@
                :call-tool :call-tool-response/result)
          (s/conformer second)))
 
-;; [tag: list_tools_changed_notification]
-;; Below is the diff of the `notifications/prompts/list_changed` method.
-;; Refactor `notifications/tools/list_changed` in the same way. Remove this
-;; entire comment block after refactoring. //ai!
-;;
-;; modified   src/io/modelcontext/clojure_sdk/server.clj
-;; @@ -228,24 +228,26 @@ (defmethod lsp.server/receive-notification
-;; "notifications/cancelled"
-;;    (identity ::specs/cancelled-notification)
-;;    ::lsp.server/method-not-found)
-;; +
-;; +;; @TODO: Implement [ref: prompt_list_changed_notification] for when list
-;; of
-;; +;; prompts available to the client changes.
-;;
-;;  ;;; Server Spec
-;;
-;; modified   src/io/modelcontext/clojure_sdk/specs.clj
-;; @@ -62,17 +62,13 @@ (def stable-protocol-version "2024-11-05")
-;; -;;; Prompt List Changed Notification
-;; +;;; [tag: prompt_list_changed_notification]
-;;  ;; An optional notification from the server to the client, informing it
-;;  that
-;;  ;; the
-;;  ;; list of prompts it offers has changed. This may be issued by servers
-;;  without
-;;  ;; any previous subscription from the client.
-;; -(s/def :prompt-list-changed/method #{"notifications/prompts/list_changed"})
-;; -(s/def :notification/prompt-list-changed
-;; -  (s/merge ::notification (s/keys :req-un [:prompt-list-changed/method])))
-;; +;; method: "notifications/prompts/list_changed"
-;; +(s/def ::prompt-list-changed-notification
-;; +  (s/keys :opt-un [:json-rpc.message/_meta]))
-;;
-;;  ;;; Tools
-;;  ;; Sent from the client to request a list of tools the server has.
-;;
-
+;; [tag: tool_list_changed_notification]
 ;; An optional notification from the server to the client, informing it that
-;; the
-;; list of tools it offers has changed. This may be issued by servers without
+;; the list of tools it offers has changed. This may be issued by servers without
 ;; any previous subscription from the client.
-(s/def :tool-list-changed/method #{"notifications/tools/list_changed"})
-(s/def :notification/tool-list-changed
-  (s/merge ::notification (s/keys :req-un [:tool-list-changed/method])))
+;; method: "notifications/tools/list_changed"
+(s/def ::tool-list-changed-notification
+  (s/keys :opt-un [:json-rpc.message/_meta]))
 
 ;;; Tool
 ;; Definition for a tool the client can call.
@@ -790,8 +752,8 @@
         :logging-message :notification/logging-message
         :resource-updated :notification/resource-updated
         :resource-list-changed :notification/resource-list-changed
-        :tool-list-changed :notification/tool-list-changed
-        :prompt-list-changed :notification/prompt-list-changed))
+        :tool-list-changed ::tool-list-changed-notification
+        :prompt-list-changed ::prompt-list-changed-notification))
 
 (s/def :result/server
   (s/or :empty ::result

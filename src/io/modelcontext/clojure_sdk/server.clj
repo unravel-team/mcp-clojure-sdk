@@ -255,6 +255,9 @@
 ;; @TODO: Implement [ref: prompt_list_changed_notification] for when list of
 ;; prompts available to the client changes.
 
+;; @TODO: Implement [ref: tool_list_changed_notification] for when list of
+;; tools available to the client changes.
+
 ;;; Server Spec
 
 (defn- check-object-and-handler
