@@ -135,12 +135,15 @@
   (->> params
        (handle-ping context)))
 
+;; [ref: list_tools_request]
 (defmethod lsp.server/receive-request "tools/list"
   [_ context params]
   (log/trace :fn :receive-request :method "tools/list" :params params)
+  ;; [ref: log_bad_input_params]
+  (conform-or-log ::specs/list-tools-request params)
   (->> params
        (handle-list-tools context)
-       (conform-or-log :response/list-tools-or-error)))
+       (conform-or-log ::specs/list-tools-response)))
 
 (defmethod lsp.server/receive-request "tools/call"
   [_ context params]

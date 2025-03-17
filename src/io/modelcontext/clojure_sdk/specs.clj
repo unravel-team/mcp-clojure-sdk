@@ -406,71 +406,18 @@
   (s/keys :opt-un [:json-rpc.message/_meta]))
 
 ;;; Tools
+;; [tag: list_tools_request]
 ;; Sent from the client to request a list of tools the server has.
 
-;; // implement comment block and then remove it ai!
-;; Here is the diff for the prompts/list refactor:
-;;
-;; modified   src/io/modelcontext/clojure_sdk/server.clj
-;; @@ -169,12 +169,15 @@ (defmethod lsp.server/receive-request "resources/read"
-;;         (handle-read-resource context)
-;;         (conform-or-log ::specs/read-resource-response)))
-;;
-;; +;; [ref: list_prompts_request]
-;;  (defmethod lsp.server/receive-request "prompts/list"
-;;    [_ context params]
-;;    (log/trace :fn :receive-request :method "prompts/list" :params params)
-;; +  ;; [ref: log_bad_input_params]
-;; +  (conform-or-log ::specs/list-prompts-request params)
-;;    (->> params
-;;         (handle-list-prompts context)
-;; -       (conform-or-log :response/list-prompts-or-error)))
-;; +       (conform-or-log ::specs/list-prompts-response)))
-;;
-;;  (defmethod lsp.server/receive-request "prompts/get"
-;;    [_ context params]
-;; modified   src/io/modelcontext/clojure_sdk/specs.clj
-;; @@ -318,20 +318,21 @@ (def stable-protocol-version "2024-11-05")
-;;    (s/merge :contents/resource (s/keys :req-un [:contents/blob])))
-;;
-;;  ;;; Prompts
-;; +;; [tag: list_prompts_request]
-;;  ;; Sent from the client to request a list of prompts and prompt templates
-;;  the
-;;  ;; server has.
-;; -(s/def :list-prompts/method #{"prompts/list"})
-;; -(s/def :request/list-prompts
-;; -  (s/merge :request/paginated (s/keys :req-un [:list-prompts/method])))
-;; +(s/def ::list-prompts-request ::paginated-request)
-;;
-;;  ;; The server's response to a prompts/list request from the client.
-;; -(s/def :list-prompts/prompts (s/coll-of ::prompt))
-;; -(s/def :result/list-prompts
-;; -  (s/merge :result/paginated (s/keys :req-un [:list-prompts/prompts])))
-;; -(s/def :response/list-prompts-or-error
-;; +(s/def :list-prompts-response/prompts (s/coll-of ::prompt))
-;; +(s/def :list-prompts-response/result
-;; +  (s/merge ::paginated-response (s/keys :req-un
-;; +
-;; [:list-prompts-response/prompts])))
-;; +(s/def ::list-prompts-response
-;;    (s/and (s/or :error ::coercer/response-error
-;; -               :list-prompts :result/list-prompts)
-;; +               :list-prompts :list-prompts-response/result)
-;;           (s/conformer second)))
-;;
-;; Based on this diff, please refactor the tools/list code.
-(s/def :list-tools/method #{"tools/list"})
-(s/def :request/list-tools
-  (s/merge :request/paginated (s/keys :req-un [:list-tools/method])))
+(s/def ::list-tools-request ::paginated-request)
 
 ;; The server's response to a tools/list request from the client.
-(s/def :list-tools/tools (s/coll-of ::tool))
-(s/def :result/list-tools
-  (s/merge :result/paginated (s/keys :req-un [:list-tools/tools])))
-(s/def :response/list-tools-or-error
+(s/def :list-tools-response/tools (s/coll-of ::tool))
+(s/def :list-tools-response/result
+  (s/merge ::paginated-response (s/keys :req-un [:list-tools-response/tools])))
+(s/def ::list-tools-response
   (s/and (s/or :error ::coercer/response-error
-               :list-tools :result/list-tools)
+               :list-tools :list-tools-response/result)
          (s/conformer second)))
 ;; Tool Call
 ;; The server's response to a tool call.
