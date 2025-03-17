@@ -145,12 +145,15 @@
        (handle-list-tools context)
        (conform-or-log ::specs/list-tools-response)))
 
+;; [ref: call_tool_request]
 (defmethod lsp.server/receive-request "tools/call"
   [_ context params]
   (log/trace :fn :receive-request :method "tools/call" :params params)
+  ;; [ref: log_bad_input_params]
+  (conform-or-log ::specs/call-tool-request params)
   (->> params
        (handle-call-tool context)
-       (conform-or-log :response/call-tool-or-error)))
+       (conform-or-log ::specs/call-tool-response)))
 
 ;; [ref: list_resources_request]
 (defmethod lsp.server/receive-request "resources/list"

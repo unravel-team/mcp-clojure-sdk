@@ -421,6 +421,7 @@
          (s/conformer second)))
 
 ;; Tool Call
+;; [tag: call_tool_request]
 ;; The server's response to a tool call.
 ;;
 ;; Any errors that originate from the tool SHOULD be reported inside the result
@@ -432,90 +433,29 @@
 ;; server does not support tool calls, or any other exceptional conditions,
 ;; should be reported as an MCP error response.
 
-;; Below is the diff for the refactor of `prompts/get` request. Follow this
-;; pattern and refactor the `tools/call` request and specs. Afterwards, remove
-;; this entire comment block. //ai!
-;;
-;; modified   src/io/modelcontext/clojure_sdk/server.clj
-;; @@ -179,12 +179,15 @@ (defmethod lsp.server/receive-request "prompts/list"
-;;         (handle-list-prompts context)
-;;         (conform-or-log ::specs/list-prompts-response)))
-;;
-;; +;; [ref: get_prompt_request]
-;;  (defmethod lsp.server/receive-request "prompts/get"
-;;    [_ context params]
-;;    (log/trace :fn :receive-request :method "prompts/get" :params params)
-;; +  ;; [ref: log_bad_input_params]
-;; +  (conform-or-log ::specs/get-prompt-request params)
-;;    (->> params
-;;         (handle-get-prompt context)
-;; -       (conform-or-log :response/get-prompt-or-error)))
-;; +       (conform-or-log ::specs/get-prompt-response)))
-;;
-;;  ;;; @TODO: Requests to Implement
-;;
-;; modified   src/io/modelcontext/clojure_sdk/specs.clj
-;; @@ -333,23 +333,20 @@ (def stable-protocol-version "2024-11-05")
-;;                 :list-prompts :list-prompts-response/result)
-;;           (s/conformer second)))
-;;
-;; -;;; Get Prompt
-;; +;; [ref: get_prompt_request]
-;;  ;; Used by the client to get a prompt provided by the server.
-;; -(s/def :get-prompt/method #{"prompts/get"})
-;; -(s/def :get-prompt/arguments (s/map-of string? string?))
-;; -(s/def :get-prompt/params
-;; -  (s/keys :req-un [:prompt/name] :opt-un [:get-prompt/arguments]))
-;; -(s/def :request/get-prompt
-;; -  (s/merge ::request (s/keys :req-un [:get-prompt/method
-;; :get-prompt/params])))
-;; +(s/def :get-prompt-request/arguments (s/map-of string? string?))
-;; +(s/def ::get-prompt-request
-;; +  (s/keys :req-un [:prompt/name] :opt-un [:get-prompt-request/arguments]))
-;;
-;;  ;; The server's response to a prompts/get request from the client.
-;; -(s/def :get-prompt/messages (s/coll-of ::prompt-message))
-;; -(s/def :result/get-prompt
-;; -  (s/merge ::result (s/keys :req-un [:get-prompt/messages]
-;; -                            :opt-un [:prompt/description])))
-;; -(s/def :response/get-prompt-or-error
-;; +(s/def :get-prompt-response/messages (s/coll-of ::prompt-message))
-;; +(s/def :get-prompt-response/result
-;; +  (s/keys :req-un [:get-prompt-response/messages]
-;; +          :opt-un [:prompt/description]))
-;; +(s/def ::get-prompt-response
-;;    (s/and (s/or :error ::coercer/response-error
-;; -               :get-prompt :result/get-prompt)
-;; +               :get-prompt :get-prompt-response/result)
-;;           (s/conformer second)))
-;;
-;;  ;;; Prompt
-;;
-(s/def :call-tool/content ;; yes, this is a collection, and the name is not
-                          ;; `contents`. This looks like a mistake they
-                          ;; made and kept for backwards compatibility.
+;; Used by the client to invoke a tool provided by the server.
+(s/def :call-tool-request/arguments (s/map-of string? any?))
+(s/def ::call-tool-request
+  (s/keys :req-un [:tool/name] :opt-un [:call-tool-request/arguments]))
+
+;; The server's response to a tool call.
+(s/def :call-tool-response/content ;; yes, this is a collection, and the name is not
+                                  ;; `contents`. This looks like a mistake they
+                                  ;; made and kept for backwards compatibility.
   (s/coll-of (s/and (s/or :text :content/text
                           :image :content/image
                           :audio :content/audio
                           :resource :resource/embedded)
                     (s/conformer second))))
 ;; If not set, this is assumed to be false (the call was successful).
-(s/def :call-tool/isError boolean?)
-(s/def :result/call-tool
-  (s/merge ::result (s/keys :req-un [:call-tool/content]
-                            :opt-un [:call-tool/isError])))
-(s/def :response/call-tool-or-error
+(s/def :call-tool-response/isError boolean?)
+(s/def :call-tool-response/result
+  (s/keys :req-un [:call-tool-response/content]
+          :opt-un [:call-tool-response/isError]))
+(s/def ::call-tool-response
   (s/and (s/or :error ::coercer/response-error
-               :call-tool :result/call-tool)
+               :call-tool :call-tool-response/result)
          (s/conformer second)))
-
-;; Used by the client to invoke a tool provided by the server.
-(s/def :call-tool/method #{"tools/call"})
-(s/def :call-tool/arguments (s/map-of string? any?))
-(s/def :call-tool/params
-  (s/keys :req-un [:tool/name] :opt-un [:call-tool/arguments]))
-(s/def :request/call-tool
-  (s/merge ::request (s/keys :req-un [:call-tool/method :call-tool/params])))
 
 ;; An optional notification from the server to the client, informing it that
 ;; the
