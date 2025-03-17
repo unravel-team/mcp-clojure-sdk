@@ -752,7 +752,7 @@
         :progress ::progress-notification
         :logging-message :notification/logging-message
         :resource-updated :notification/resource-updated
-        :resource-list-changed :notification/resource-list-changed
+        :resource-list-changed ::resource-list-changed-notification
         :tool-list-changed ::tool-list-changed-notification
         :prompt-list-changed ::prompt-list-changed-notification))
 
