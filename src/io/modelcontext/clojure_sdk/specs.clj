@@ -419,6 +419,7 @@
   (s/and (s/or :error ::coercer/response-error
                :list-tools :list-tools-response/result)
          (s/conformer second)))
+
 ;; Tool Call
 ;; The server's response to a tool call.
 ;;
@@ -430,6 +431,66 @@
 ;; However, any errors in _finding_ the tool, an error indicating that the
 ;; server does not support tool calls, or any other exceptional conditions,
 ;; should be reported as an MCP error response.
+
+;; Below is the diff for the refactor of `prompts/get` request. Follow this
+;; pattern and refactor the `tools/call` request and specs. Afterwards, remove
+;; this entire comment block. //ai!
+;;
+;; modified   src/io/modelcontext/clojure_sdk/server.clj
+;; @@ -179,12 +179,15 @@ (defmethod lsp.server/receive-request "prompts/list"
+;;         (handle-list-prompts context)
+;;         (conform-or-log ::specs/list-prompts-response)))
+;;
+;; +;; [ref: get_prompt_request]
+;;  (defmethod lsp.server/receive-request "prompts/get"
+;;    [_ context params]
+;;    (log/trace :fn :receive-request :method "prompts/get" :params params)
+;; +  ;; [ref: log_bad_input_params]
+;; +  (conform-or-log ::specs/get-prompt-request params)
+;;    (->> params
+;;         (handle-get-prompt context)
+;; -       (conform-or-log :response/get-prompt-or-error)))
+;; +       (conform-or-log ::specs/get-prompt-response)))
+;;
+;;  ;;; @TODO: Requests to Implement
+;;
+;; modified   src/io/modelcontext/clojure_sdk/specs.clj
+;; @@ -333,23 +333,20 @@ (def stable-protocol-version "2024-11-05")
+;;                 :list-prompts :list-prompts-response/result)
+;;           (s/conformer second)))
+;;
+;; -;;; Get Prompt
+;; +;; [ref: get_prompt_request]
+;;  ;; Used by the client to get a prompt provided by the server.
+;; -(s/def :get-prompt/method #{"prompts/get"})
+;; -(s/def :get-prompt/arguments (s/map-of string? string?))
+;; -(s/def :get-prompt/params
+;; -  (s/keys :req-un [:prompt/name] :opt-un [:get-prompt/arguments]))
+;; -(s/def :request/get-prompt
+;; -  (s/merge ::request (s/keys :req-un [:get-prompt/method
+;; :get-prompt/params])))
+;; +(s/def :get-prompt-request/arguments (s/map-of string? string?))
+;; +(s/def ::get-prompt-request
+;; +  (s/keys :req-un [:prompt/name] :opt-un [:get-prompt-request/arguments]))
+;;
+;;  ;; The server's response to a prompts/get request from the client.
+;; -(s/def :get-prompt/messages (s/coll-of ::prompt-message))
+;; -(s/def :result/get-prompt
+;; -  (s/merge ::result (s/keys :req-un [:get-prompt/messages]
+;; -                            :opt-un [:prompt/description])))
+;; -(s/def :response/get-prompt-or-error
+;; +(s/def :get-prompt-response/messages (s/coll-of ::prompt-message))
+;; +(s/def :get-prompt-response/result
+;; +  (s/keys :req-un [:get-prompt-response/messages]
+;; +          :opt-un [:prompt/description]))
+;; +(s/def ::get-prompt-response
+;;    (s/and (s/or :error ::coercer/response-error
+;; -               :get-prompt :result/get-prompt)
+;; +               :get-prompt :get-prompt-response/result)
+;;           (s/conformer second)))
+;;
+;;  ;;; Prompt
+;;
 (s/def :call-tool/content ;; yes, this is a collection, and the name is not
                           ;; `contents`. This looks like a mistake they
                           ;; made and kept for backwards compatibility.
