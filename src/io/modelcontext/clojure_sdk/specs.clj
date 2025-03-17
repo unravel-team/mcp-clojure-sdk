@@ -460,7 +460,8 @@
 
 ;; [tag: tool_list_changed_notification]
 ;; An optional notification from the server to the client, informing it that
-;; the list of tools it offers has changed. This may be issued by servers without
+;; the list of tools it offers has changed. This may be issued by servers
+;; without
 ;; any previous subscription from the client.
 ;; method: "notifications/tools/list_changed"
 (s/def ::tool-list-changed-notification
