@@ -228,24 +228,26 @@
   (identity ::specs/cancelled-notification)
   ::lsp.server/method-not-found)
 
+;; @TODO: Implement send-notification "notifications/cancelled" when request is
+;; cancelled
+
 ;; [ref: progress_notification]
 (defmethod lsp.server/receive-notification "notifications/progress"
   [_method _context _params]
   (identity ::specs/progress-notification)
   ::lsp.server/method-not-found)
 
-;; [ref: resource_list_changed_notification]
-(defmethod lsp.server/receive-notification
-  "notifications/resources/list_changed"
-  [_method _context _params]
-  (identity ::specs/resource-list-changed-notification)
-  ::lsp.server/method-not-found)
+;; @TODO: Implement send-notification "notifications/progress" for long-lived
+;; requests
 
-;; [ref: resource_updated_notification]
-(defmethod lsp.server/receive-notification "notifications/resources/updated"
-  [_method _context _params]
-  (identity ::specs/resource-updated-notification)
-  ::lsp.server/method-not-found)
+;; @TODO: Implement [ref: resource_list_changed_notification] for when list of
+;; resources available to the client changes.
+
+;; @TODO: Implement [ref: resource_updated_notification] for when a resource is
+;; updated at the server
+
+;; @TODO: Implement [ref: prompt_list_changed_notification] for when list of
+;; prompts available to the client changes.
 
 ;;; Server Spec
 

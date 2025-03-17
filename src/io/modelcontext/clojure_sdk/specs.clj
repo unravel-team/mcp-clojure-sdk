@@ -62,16 +62,12 @@
 ;; associated processing SHOULD cease.
 ;;
 ;; A client MUST NOT attempt to cancel its `initialize` request.
+;; method: "notifications/cancelled"
 (s/def :cancelled-notification/requestId :json-rpc.message/id)
 (s/def :cancelled-notification/reason string?)
-(s/def :cancelled-notification/method #{"notifications/cancelled"})
-(s/def :cancelled-notification/params
+(s/def ::cancelled-notification
   (s/keys :req-un [:cancelled-notification/requestId]
           :opt-un [:cancelled-notification/reason]))
-
-(s/def ::cancelled-notification
-  (s/keys :req-un [:cancelled-notification/method
-                   :cancelled-notification/params]))
 
 ;;; Initialization
 ;; [tag: initialize_request]
@@ -249,6 +245,7 @@
 ;; it that the list of resources it can read from has changed. This
 ;; may be issued by servers without any previous subscription from the
 ;; client.
+;; method: "notifications/resources/list_changed"
 (s/def ::resource-list-changed-notification
   (s/keys :opt-un [:json-rpc.message/_meta]))
 
@@ -271,6 +268,7 @@
 ;; resource has changed and may need to be read again. This should
 ;; only be sent if the client previously sent a resources/subscribe
 ;; request.
+;; method: "notifications/resources/updated"
 (s/def ::resource-updated-notification (s/keys :req-un [:resource/uri]))
 
 ;;; Resource
@@ -398,14 +396,14 @@
   (s/merge ::annotated (s/keys :req-un [:embedded-resource/type
                                         :embedded-resource/resource])))
 
-;;; Prompt List Changed Notification
+;;; [tag: prompt_list_changed_notification]
 ;; An optional notification from the server to the client, informing it that
 ;; the
 ;; list of prompts it offers has changed. This may be issued by servers without
 ;; any previous subscription from the client.
-(s/def :prompt-list-changed/method #{"notifications/prompts/list_changed"})
-(s/def :notification/prompt-list-changed
-  (s/merge ::notification (s/keys :req-un [:prompt-list-changed/method])))
+;; method: "notifications/prompts/list_changed"
+(s/def ::prompt-list-changed-notification
+  (s/keys :opt-un [:json-rpc.message/_meta]))
 
 ;;; Tools
 ;; Sent from the client to request a list of tools the server has.
