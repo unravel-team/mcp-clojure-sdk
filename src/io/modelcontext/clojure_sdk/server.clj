@@ -179,12 +179,15 @@
        (handle-list-prompts context)
        (conform-or-log ::specs/list-prompts-response)))
 
+;; [ref: get_prompt_request]
 (defmethod lsp.server/receive-request "prompts/get"
   [_ context params]
   (log/trace :fn :receive-request :method "prompts/get" :params params)
+  ;; [ref: log_bad_input_params]
+  (conform-or-log ::specs/get-prompt-request params)
   (->> params
        (handle-get-prompt context)
-       (conform-or-log :response/get-prompt-or-error)))
+       (conform-or-log ::specs/get-prompt-response)))
 
 ;;; @TODO: Requests to Implement
 

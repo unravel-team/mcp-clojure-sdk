@@ -333,23 +333,20 @@
                :list-prompts :list-prompts-response/result)
          (s/conformer second)))
 
-;;; Get Prompt
+;; [ref: get_prompt_request]
 ;; Used by the client to get a prompt provided by the server.
-(s/def :get-prompt/method #{"prompts/get"})
-(s/def :get-prompt/arguments (s/map-of string? string?))
-(s/def :get-prompt/params
-  (s/keys :req-un [:prompt/name] :opt-un [:get-prompt/arguments]))
-(s/def :request/get-prompt
-  (s/merge ::request (s/keys :req-un [:get-prompt/method :get-prompt/params])))
+(s/def :get-prompt-request/arguments (s/map-of string? string?))
+(s/def ::get-prompt-request
+  (s/keys :req-un [:prompt/name] :opt-un [:get-prompt-request/arguments]))
 
 ;; The server's response to a prompts/get request from the client.
-(s/def :get-prompt/messages (s/coll-of ::prompt-message))
-(s/def :result/get-prompt
-  (s/merge ::result (s/keys :req-un [:get-prompt/messages]
-                            :opt-un [:prompt/description])))
-(s/def :response/get-prompt-or-error
+(s/def :get-prompt-response/messages (s/coll-of ::prompt-message))
+(s/def :get-prompt-response/result
+  (s/keys :req-un [:get-prompt-response/messages]
+          :opt-un [:prompt/description]))
+(s/def ::get-prompt-response
   (s/and (s/or :error ::coercer/response-error
-               :get-prompt :result/get-prompt)
+               :get-prompt :get-prompt-response/result)
          (s/conformer second)))
 
 ;;; Prompt
