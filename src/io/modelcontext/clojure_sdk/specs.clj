@@ -331,7 +331,7 @@
                :list-prompts :list-prompts-response/result)
          (s/conformer second)))
 
-;; [ref: get_prompt_request]
+;; [tag: get_prompt_request]
 ;; Used by the client to get a prompt provided by the server.
 (s/def :get-prompt-request/arguments (s/map-of string? string?))
 (s/def ::get-prompt-request

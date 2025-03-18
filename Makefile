@@ -182,7 +182,10 @@ install: build    ## Install the artifact locally
 deploy: build  ## Deploy to Clojars. needs `CLOJARS_USERNAME` and `CLOJARS_PASSWORD` env vars
 	clojure -T:build deploy
 
-clean-projects:
-	rm -rf projects/*/target/public
+clean-examples:
+	rm -rf examples/target
 
-clean: clean-projects    ## Delete any existing artifacts
+clean-sdk:
+	rm -rf target/
+
+clean: clean-examples clean-sdk
