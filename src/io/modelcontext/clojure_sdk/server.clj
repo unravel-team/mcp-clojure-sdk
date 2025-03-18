@@ -234,6 +234,15 @@
   (conform-or-log ::specs/set-logging-level-request params)
   ::lsp.server/method-not-found)
 
+;; [ref: complete_request]
+(defmethod lsp.server/receive-request "completion/complete"
+  [_ _context params]
+  (log/trace :fn :receive-request :method "completion/complete" :params params)
+  ;; [ref: log_bad_input_params]
+  (conform-or-log ::specs/complete-request params)
+  (identity ::specs/complete-response)
+  ::lsp.server/method-not-found)
+
 ;;; @TODO: Notifications to Implement
 
 ;; [ref: cancelled_notification]

@@ -651,29 +651,33 @@
 (s/def :create-message/modelPreferences ::model-preferences)
 
 ;;; Completion
+;; [tag: complete_request]
 ;; A request from the client to the server, to ask for completion options.
-(s/def :complete/method #{"completion/complete"})
-(s/def :complete/ref
+(s/def :complete-request/ref
   (s/and (s/or :prompt-ref :ref/prompt
                :resource-ref :ref/resource)
          (s/conformer second)))
-(s/def :complete/argument
-  (s/keys :req-un [:complete-argument/name :complete-argument/value]))
-(s/def :complete-argument/name string?)
-(s/def :complete-argument/value string?)
-(s/def :complete/params (s/keys :req-un [:complete/ref :complete/argument]))
-(s/def :request/complete
-  (s/merge ::request (s/keys :req-un [:complete/method :complete/params])))
+(s/def :complete-request/argument
+  (s/keys :req-un [:complete-request-argument/name
+                   :complete-request-argument/value]))
+(s/def :complete-request-argument/name string?)
+(s/def :complete-request-argument/value string?)
+(s/def ::complete-request
+  (s/keys :req-un [:complete-request/ref :complete-request/argument]))
 
 ;; The server's response to a completion/complete request
-(s/def :completion/values (s/coll-of string?))
-(s/def :completion/total number?)
-(s/def :completion/hasMore boolean?)
-(s/def :completion/completion
-  (s/keys :req-un [:completion/values]
-          :opt-un [:completion/total :completion/hasMore]))
-(s/def :result/complete
-  (s/merge ::result (s/keys :req-un [:completion/completion])))
+(s/def :complete-response/values (s/coll-of string?))
+(s/def :complete-response/total number?)
+(s/def :complete-response/hasMore boolean?)
+(s/def :complete-response/completion
+  (s/keys :req-un [:complete-response/values]
+          :opt-un [:complete-response/total :complete-response/hasMore]))
+(s/def :complete-response/result
+  (s/keys :req-un [:complete-response/completion]))
+(s/def ::complete-response
+  (s/and (s/or :error ::coercer/response-error
+               :complete :complete-response/result)
+         (s/conformer second)))
 
 ;;; Reference Types
 (s/def :ref/type #{"ref/prompt" "ref/resource"})
