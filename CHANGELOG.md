@@ -5,20 +5,21 @@ All notable changes to this project will be documented in this file. This change
 ### Changed
 - Add a new arity to `make-widget-async` to provide a different widget shape.
 
-## [0.1.1] - 2025-02-06
+## [1.0.105] - 2025-03-18
 ### Changed
-- Documentation on how to make the widgets.
+- Internals change: Created Clojure specs for the entire MCP specification
+  - The SDK stubs out all the request and notification methods that it does not currently support
+  - Improves the error reporting of servers built on top of `mcp-clojure-sdk`
+- Bumped version of `examples` jar to `1.2.0` to highlight improved internals
 
 ### Removed
-- `make-widget-sync` - we're all async, all the time.
 
 ### Fixed
-- Fixed widget maker to keep working when daylight savings switches over.
 
-## 0.1.0 - 2025-02-06
+## 1.0.65 - 2025-03-16
 ### Added
-- Files from the new template.
-- Widget maker public API - `make-widget-sync`.
+- `stdio_server` implementation of MCP
+- `examples` folder shows `tools` and `prompts` based servers
 
-[Unreleased]: https://github.com/io.modelcontext/clojure-sdk/compare/0.1.1...HEAD
-[0.1.1]: https://github.com/io.modelcontext/clojure-sdk/compare/0.1.0...0.1.1
+[Unreleased]: https://github.com/io.modelcontext/clojure-sdk/compare/fb947ebc8dd59fc778b886d832850f38974cbdc6...HEAD
+[1.1.105]: https://github.com/io.modelcontext/clojure-sdk/compare/e0e410ee115256362d964df1272ea42428bf9a21...fb947ebc8dd59fc778b886d832850f38974cbdc6
