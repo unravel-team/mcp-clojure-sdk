@@ -16,7 +16,7 @@
     "-Dlog4j2.contextSelector=org.apache.logging.log4j.core.async.AsyncLoggerContextSelector"
     "-Dlog4j2.configurationFile=log4j2-mcp.xml"
     "-Dbabashka.json.provider=metosin/jsonista" "-Dlogging.level=INFO" "-cp"
-    "<full-path>/examples/target/io.modelcontextprotocol.clojure-sdk/examples-1.1.0.jar"
+    "<full-path>/examples/target/io.modelcontextprotocol.clojure-sdk/examples-1.2.0.jar"
     "calculator_server"]},
   :run-code-analysis
   {:command "java",
@@ -26,7 +26,7 @@
     "-Dlog4j2.contextSelector=org.apache.logging.log4j.core.async.AsyncLoggerContextSelector"
     "-Dlog4j2.configurationFile=log4j2-mcp.xml"
     "-Dbabashka.json.provider=metosin/jsonista" "-Dlogging.level=INFO" "-cp"
-    "<full-path>/examples/target/io.modelcontextprotocol.clojure-sdk/examples-1.1.0.jar"
+    "<full-path>/examples/target/io.modelcontextprotocol.clojure-sdk/examples-1.2.0.jar"
     "code_analysis_server"]},
   :run-vegalite
   {:command "java",
@@ -37,7 +37,7 @@
     "-Dlog4j2.configurationFile=log4j2-mcp.xml"
     "-Dmcp.vegalite.vl_convert_executable=/Users/vedang/.cargo/bin/vl-convert"
     "-Dbabashka.json.provider=metosin/jsonista" "-Dlogging.level=INFO" "-cp"
-    "<full-path>/examples/target/io.modelcontextprotocol.clojure-sdk/examples-1.1.0.jar"
+    "<full-path>/examples/target/io.modelcontextprotocol.clojure-sdk/examples-1.2.0.jar"
     "vegalite_server"]},
   :test {:extra-deps {io.github.cognitect-labs/test-runner {:git/sha "dfb30dd",
                                                             :git/tag "v0.5.1"},

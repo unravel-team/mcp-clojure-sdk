@@ -3,7 +3,7 @@
   (:require [clojure.tools.build.api :as b]))
 
 (def lib 'io.modelcontextprotocol.clojure-sdk/examples)
-(def version "1.1.0")
+(def version "1.2.0")
 (def class-dir "target/classes")
 
 (defn test
