@@ -266,6 +266,9 @@
 ;; @TODO: Implement [ref: tool_list_changed_notification] for when list of
 ;; tools available to the client changes.
 
+;; @TODO: Implement [ref: logging_message_notification] for when server wants
+;; to send a logging message to the client.
+
 ;;; Server Spec
 
 (defn- check-object-and-handler

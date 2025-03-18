@@ -488,19 +488,17 @@
 ;; the client as notifications/logging/message.
 (s/def ::set-logging-level-request (s/keys :req-un [:logging/level]))
 
+;; [tag: logging_message_notification]
 ;; Notification of a log message passed from server to client. If no
 ;; logging/setLevel request has been sent from the client, the server MAY
-;; decide
-;; which messages to send automatically.
-(s/def :logging-message/method #{"notifications/message"})
+;; decide which messages to send automatically.
+;; method: "notifications/message"
 (s/def :logging-message/logger string?)
 (s/def :logging-message/data any?)
-(s/def :logging-message/params
+(s/def ::logging-message-notification
   (s/keys :req-un [:logging/level :logging-message/data]
           :opt-un [:logging-message/logger]))
-(s/def :notification/logging-message
-  (s/merge ::notification (s/keys :req-un [:logging-message/method
-                                           :logging-message/params])))
+
 ;; The severity of a log message. These map to syslog message severities, as
 ;; specified in RFC-5424:
 ;; https://datatracker.ietf.org/doc/html/rfc5424#section-6.2.1
