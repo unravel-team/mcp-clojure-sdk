@@ -506,35 +506,38 @@
   #{"debug" "info" "notice" "warning" "error" "critical" "alert" "emergency"})
 
 ;;; Sampling
+;; @TODO: Specs need to be cleaned up
 ;; A request from the server to sample an LLM via the client. The client has
 ;; full discretion over which model to select. The client should also inform
 ;; the
 ;; user before beginning sampling, to allow them to inspect the request (human
 ;; in the loop) and decide whether to approve it.
-(s/def :create-message/method #{"sampling/createMessage"})
-(s/def :create-message/messages (s/coll-of ::sampling-message))
+(s/def :sampling-create-message-request/method #{"sampling/createMessage"})
+(s/def :sampling-create-message-request/messages (s/coll-of ::sampling-message))
 ;; An optional system prompt the server wants to use for sampling. The client
 ;; MAY modify or omit this prompt.
-(s/def :create-message/systemPrompt string?)
+(s/def :sampling-create-message-request/systemPrompt string?)
 ;; A request to include context from one or more MCP servers (including the
 ;; caller), to be attached to the prompt. The client MAY ignore this request.
-(s/def :create-message/includeContext #{"none" "thisServer" "allServers"})
-(s/def :create-message/temperature number?)
+(s/def :sampling-create-message-request/includeContext
+  #{"none" "thisServer" "allServers"})
+(s/def :sampling-create-message-request/temperature number?)
 ;; The maximum number of tokens to sample, as requested by the server. The
 ;; client MAY choose to sample fewer tokens than requested.
-(s/def :create-message/maxTokens number?)
-(s/def :create-message/stopSequences (s/coll-of string?))
+(s/def :sampling-create-message-request/maxTokens number?)
+(s/def :sampling-create-message-request/stopSequences (s/coll-of string?))
 ;; Optional metadata to pass through to the LLM provider. The format of this
 ;; metadata is provider-specific.
-(s/def :create-message/metadata any?)
-(s/def :create-message/params
-  (s/keys :req-un [:create-message/messages :create-message/maxTokens]
-          :opt-un [:create-message/modelPreferences :create-message/systemPrompt
-                   :create-message/includeContext :create-message/temperature
-                   :create-message/stopSequences :create-message/metadata]))
-(s/def :request/create-message
-  (s/merge ::request (s/keys :req-un [:create-message/method
-                                      :create-message/params])))
+(s/def :sampling-create-message-request/metadata any?)
+(s/def ::sampling-create-message-request
+  (s/keys :req-un [:sampling-create-message-request/messages
+                   :sampling-create-message-request/maxTokens]
+          :opt-un [:sampling-create-message-request/modelPreferences
+                   :sampling-create-message-request/systemPrompt
+                   :sampling-create-message-request/includeContext
+                   :sampling-create-message-request/temperature
+                   :sampling-create-message-request/stopSequences
+                   :sampling-create-message-request/metadata]))
 
 ;; The client's response to a sampling/create_message request from the server.
 ;; The client should inform the user before returning the sampled message, to
@@ -542,16 +545,16 @@
 ;; allow the server to see it.
 
 ;; The name of the model that generated the message.
-(s/def :sampling-message/model string?)
+;; @TODO: Specs need to be cleaned up
+(s/def :sampling-create-message-response/model string?)
 ;; The reason why sampling stopped, if known.
-(s/def :sampling-message/stopReason
+(s/def :sampling-create-message-response/stopReason
   (s/and (s/or :known-reasons #{"endTurn" "stopSequence" "maxTokens"}
                :unknown-reasons string?)
          (s/conformer second)))
-(s/def :result/create-message
-  (s/merge ::result
-           ::sampling-message (s/keys :req-un [:sampling-message/model]
-                                      :opt-un [:sampling-message/stopReason])))
+(s/def :sampling-create-message-response/result
+  (s/keys :req-un [:sampling-create-message-response/model]
+          :opt-un [:sampling-create-message-response/stopReason]))
 
 ;; Describes a message issued to or received from an LLM API.
 (s/def :sampling-message/content
@@ -648,7 +651,7 @@
 ;;; later.
 ;; The server's preferences for which model to select. The client MAY ignore
 ;; these preferences.
-(s/def :create-message/modelPreferences ::model-preferences)
+(s/def :sampling-create-message-request/modelPreferences ::model-preferences)
 
 ;;; Completion
 ;; [tag: complete_request]
@@ -685,6 +688,7 @@
 (s/def :ref/resource (s/keys :req-un [:ref/type :resource/uri]))
 
 ;;; Roots
+;; @TODO: Specs need to be cleaned up
 ;; Sent from the server to request a list of root URIs from the client. Roots
 ;; allow servers to ask for specific directories or files to operate on. A
 ;; common example for roots is providing a set of repositories or directories a
@@ -693,17 +697,20 @@
 ;; This request is typically used when the server needs to understand the file
 ;; system structure or access specific locations that the client has permission
 ;; to read from.
-(s/def :list-roots/method #{"roots/list"})
-(s/def :request/list-roots
-  (s/merge ::request (s/keys :req-un [:list-roots/method])))
-
+;; method: "roots/list"
+(s/def ::list-roots-request (s/keys :opt-un [:json-rpc.message/_meta]))
 ;; The client's response to a roots/list request from the server. This result
 ;; contains an array of Root objects, each representing a root directory or
 ;; file
 ;; that the server can operate on.
-(s/def :list-roots/roots (s/coll-of ::root))
-(s/def :result/list-roots
-  (s/merge ::result (s/keys :req-un [:list-roots/roots])))
+(s/def :list-roots-response/roots (s/coll-of ::root))
+(s/def :list-roots-response/result
+  (s/keys :req-un [:list-roots-response/roots]))
+
+(s/def ::list-roots-response
+  (s/and (s/or :error ::coercer/response-error
+               :list-roots :list-roots-response/result)
+         (s/conformer second)))
 
 ;; Represents a root directory or file that the server can operate on.
 (s/def :root/uri string?)
@@ -716,56 +723,58 @@
 ;; This notification should be sent whenever the client adds, removes, or
 ;; modifies any root. The server should then request an updated list of roots
 ;; using the ListRootsRequest.
-(s/def :roots-list-changed/method #{"notifications/roots/list_changed"})
-(s/def :notification/roots-list-changed
-  (s/merge ::notification (s/keys :req-un [:roots-list-changed/method])))
+;; method: "notifications/roots/list_changed"
+(s/def ::root-list-changed-notification
+  (s/keys :opt-un [:json-rpc.message/_meta]))
 
 ;;; Client messages
-(s/def :request/client
-  (s/or :ping :request/ping
-        :initialize :request/initialize
-        :complete :request/complete
-        :set-level :request/set-level
-        :get-prompt :request/get-prompt
-        :list-prompts :request/list-prompts
-        :list-resources :request/list-resources
-        :read-resource :request/read-resource
-        :subscribe :request/subscribe
-        :unsubscribe :request/unsubscribe
-        :call-tool :request/call-tool
-        :list-tools :request/list-tools))
+(s/def ::client-request
+  (s/or :ping ::ping-request
+        :initialize ::initialize-request
+        :complete ::complete-request
+        :set-logging-level ::set-logging-level-request
+        :get-prompt ::get-prompt-request
+        :list-prompts ::list-prompts-request
+        :list-resources ::list-resources-request
+        :read-resource ::read-resource-request
+        :subscribe ::resource-subscribe-unsubscribe-request
+        :unsubscribe ::resource-subscribe-unsubscribe-request
+        :call-tool ::call-tool-request
+        :list-tools ::list-tools-request))
 
-(s/def :notification/client
+(s/def ::client-notification
   (s/or :cancelled ::cancelled-notification
         :progress ::progress-notification
-        :initialized :notification/initialized
-        :roots-list-changed :notification/roots-list-changed))
+        :initialized ::initialized-notification
+        :root-list-changed ::root-list-changed-notification))
 
 ;;; Server messages
-(s/def :request/server
-  (s/or :ping :request/ping
-        :create-message :request/create-message
-        :list-roots :request/list-roots))
+(s/def ::server-request
+  (s/or :ping ::ping-request
+        :sampling-create-message ::sampling-create-message-request
+        :list-roots ::list-roots-request))
 
-(s/def :notification/server
+(s/def ::server-notification
   (s/or :cancelled ::cancelled-notification
         :progress ::progress-notification
-        :logging-message :notification/logging-message
-        :resource-updated :notification/resource-updated
+        :logging-message ::logging-message-notification
+        :resource-updated ::resource-updated-notification
         :resource-list-changed ::resource-list-changed-notification
         :tool-list-changed ::tool-list-changed-notification
         :prompt-list-changed ::prompt-list-changed-notification))
 
-(s/def :result/server
-  (s/or :empty ::result
-        :initialize :result/initialize
-        :complete :result/complete
-        :get-prompt :result/get-prompt
-        :list-prompts :result/list-prompts
-        :list-resources :result/list-resources
-        :read-resource :result/read-resource
-        :call-tool :result/call-tool
-        :list-tools :result/list-tools))
+(s/def ::empty-response #(= {} %))
+
+(s/def ::server-response
+  (s/or :empty ::empty-response
+        :initialize ::initialize-response
+        :complete ::complete-response
+        :get-prompt ::get-prompt-response
+        :list-prompts ::list-prompts-response
+        :list-resources ::list-resources-response
+        :read-resource ::read-resource-response
+        :call-tool ::call-tool-response
+        :list-tools ::list-tools-response))
 
 ;; Helper functions for resource validation
 (defn valid-resource? [resource] (s/valid? ::resource resource))
@@ -781,23 +790,6 @@
 (defn valid-tool? [tool] (s/valid? ::tool tool))
 
 (defn explain-tool [tool] (s/explain-data ::tool tool))
-
-;; Helper functions
-(defn valid-request? [req] (s/valid? :jsonrpc/request req))
-
-(defn valid-response? [res] (s/valid? :jsonrpc/response res))
-
-(defn valid-error? [err] (s/valid? :jsonrpc/error err))
-
-(defn valid-notification? [notif] (s/valid? :jsonrpc/notification notif))
-
-(defn explain-request [req] (s/explain-data :jsonrpc/request req))
-
-(defn explain-response [res] (s/explain-data :jsonrpc/response res))
-
-(defn explain-error [err] (s/explain-data :jsonrpc/error err))
-
-(defn explain-notification [notif] (s/explain-data :jsonrpc/notification notif))
 
 ;; Helper functions for root validation
 (defn valid-root? [root] (s/valid? ::root root))
