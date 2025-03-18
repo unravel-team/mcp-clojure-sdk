@@ -333,7 +333,7 @@
 
 ;; [tag: get_prompt_request]
 ;; Used by the client to get a prompt provided by the server.
-(s/def :get-prompt-request/arguments (s/map-of string? string?))
+(s/def :get-prompt-request/arguments (s/map-of keyword? string?))
 (s/def ::get-prompt-request
   (s/keys :req-un [:prompt/name] :opt-un [:get-prompt-request/arguments]))
 
@@ -434,7 +434,7 @@
 ;; should be reported as an MCP error response.
 
 ;; Used by the client to invoke a tool provided by the server.
-(s/def :call-tool-request/arguments (s/map-of string? any?))
+(s/def :call-tool-request/arguments (s/map-of keyword? any?))
 (s/def ::call-tool-request
   (s/keys :req-un [:tool/name] :opt-un [:call-tool-request/arguments]))
 
