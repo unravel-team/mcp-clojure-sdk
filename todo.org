@@ -1,6 +1,8 @@
 * DONE Create a Stdio-transport based server implementation
 * TODO Fix the clunky API for declaring tools, prompts and resources
 and clean up the code.
+* TODO Add an integration test for end-to-end testing the server
+See ~integration.client~ from ~lsp4clj~ for inspiration
 * TODO Checks and Balances in the mcp-cljc-sdk code
 ** TODO Make sure that handle-* functions are implement proper checks
 Read through the python decorator code to double-check if we are doing the right thing here.
