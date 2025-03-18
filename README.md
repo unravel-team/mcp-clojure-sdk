@@ -17,7 +17,7 @@ The deps for `clojure-sdk` are:
 ```clojure
 {io.modelcontextprotocol/mcp-clojure-sdk
  {:git/url "https://github.com/unravel-team/mcp-clojure-sdk.git"
-  :git/sha "1892d76cb2430c64ed3318d71d96fd857f9b95c9"}}
+  :git/sha "039cf220ac6bb3858f71e823016035e257a5380d"}}
 ```
 
 ## Pending Work
