@@ -2,6 +2,19 @@
 
 A `clojure-sdk` for creating Model Context Protocol servers!
 
+## Table of Contents          :TOC_4:
+- [io.modelcontext/clojure-sdk](#iomodelcontextclojure-sdk)
+  - [Usage](#usage)
+    - [Examples](#examples)
+      - [Building the Examples Jar](#building-the-examples-jar)
+      - [Calculator: `calculator_server`](#calculator-calculator_server)
+      - [Vega-lite: `vegalite_server`](#vega-lite-vegalite_server)
+      - [Code Analysis: `code_analysis_server`](#code-analysis-code_analysis_server)
+  - [Pending Work](#pending-work)
+  - [Development of the SDK](#development-of-the-sdk)
+  - [Inspiration](#inspiration)
+  - [License](#license)
+
 ## Usage
 
 The [calculator_server.clj file](examples/src/calculator_server.clj)
