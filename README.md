@@ -10,7 +10,7 @@ examples contains a full working code for defining an MCP server.
 
 `examples` is a `deps-new` app project, and instructions for compiling
 and running the various example servers are in [the examples/README.md
-file](examples/README.md)
+file](examples/README.md) (also copied below this section)
 
 The deps for `clojure-sdk` are:
 
@@ -20,6 +20,7 @@ The deps for `clojure-sdk` are:
   :git/sha "039cf220ac6bb3858f71e823016035e257a5380d"}}
 ```
 
+<!-- Add the complete Examples README information here. Indent the headings properly. //ai! -->
 ## Pending Work
 
 You can help dear reader! Head over to the [todo.org file](todo.org)
