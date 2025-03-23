@@ -77,6 +77,7 @@ PRE-REQUISITES: Needs [vl-convert CLI](https://github.com/vega/vl-convert) to be
 
 Some example commands you can try in Claude Desktop or Inspector:
 
+<!-- Fix the example data, make it correct json with string escaping. // ai! -->
 Here is some example data for you:
 ```json
 [
