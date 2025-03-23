@@ -1,4 +1,4 @@
-.PHONY: install-antq install-kondo-configs install-zprint-config install-gitignore repl-enrich repl check-cljkondo check-tagref check-zprint-config check-zprint check test test-all test-coverage upgrade-libs build serve deploy clean-projects clean
+.PHONY: install-antq install-kondo-configs install-zprint-config install-gitignore repl-enrich repl check-cljkondo check-tagref check-zprint-config check-zprint check test test-all test-coverage upgrade-libs build serve deploy clean-projects clean examples-jar
 
 HOME := $(shell echo $$HOME)
 HERE := $(shell echo $$PWD)
@@ -189,3 +189,6 @@ clean-sdk:
 	rm -rf target/
 
 clean: clean-examples clean-sdk
+
+examples-jar: examples/Makefile
+	$(MAKE) -C examples build

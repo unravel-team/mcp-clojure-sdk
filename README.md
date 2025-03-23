@@ -22,6 +22,15 @@ The deps for `clojure-sdk` are:
 
 ### Examples
 
+#### Building the Examples Jar
+
+    $ make clean && make examples-jar
+
+The examples jar contains the following servers:
+1. Calculator: `calculator_server`
+2. Vega-lite: `vegalite_server`
+3. Code Analysis: `code_analysis_server`
+
 #### Calculator: `calculator_server`
 Provides basic arithmetic tools: `add`, `subtract`, `multiply`, `divide`, `power`, `square-root`, `average`, `factorial`
 
@@ -163,9 +172,6 @@ Remember:
 npx @modelcontextprotocol/inspector java -Dclojure.tools.logging.factory=clojure.tools.logging.impl/log4j2-factory -Dorg.eclipse.jetty.util.log.class=org.eclipse.jetty.util.log.Slf4jLog -Dlog4j2.contextSelector=org.apache.logging.log4j.core.async.AsyncLoggerContextSelector -Dlog4j2.configurationFile=log4j2-mcp.xml -Dbabashka.json.provider=metosin/jsonista -Dlogging.level=INFO -cp examples/target/io.modelcontextprotocol.clojure-sdk/examples-1.2.0.jar code_analysis_server
 ```
 
-#### Building the Jar
-
-    $ make clean && make build
 ## Pending Work
 
 You can help dear reader! Head over to the [todo.org file](todo.org)

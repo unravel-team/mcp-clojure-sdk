@@ -1,0 +1,1 @@
+{:linters {:redundant-ignore {:exclude [:clojure-lsp/unused-value]}}}
