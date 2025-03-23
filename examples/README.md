@@ -59,27 +59,27 @@ Some example commands you can try in Claude Desktop or Inspector:
 Here is some example data for you:
 ```json
 [
-    { year: 2011, value: 14.6, growth_type: Market Cap Growth },
-    { year: 2011, value: 11.4, growth_type: Revenue Growth },
-    { year: 2011, value: 26.6, growth_type: Net Income Growth },
-    { year: 2012, value: 40.1, growth_type: Market Cap Growth },
-    { year: 2012, value: 42.7, growth_type: Revenue Growth },
-    { year: 2012, value: 36.9, growth_type: Net Income Growth },
-    { year: 2013, value: 16.9, growth_type: Market Cap Growth },
-    { year: 2013, value: 14.6, growth_type: Revenue Growth },
-    { year: 2013, value: 15.3, growth_type: Net Income Growth },
-    { year: 2014, value: 9.6, growth_type: Market Cap Growth },
-    { year: 2014, value: 7.9, growth_type: Revenue Growth },
-    { year: 2014, value: 10.9, growth_type: Net Income Growth },
-    { year: 2015, value: 5.8, growth_type: Market Cap Growth },
-    { year: 2015, value: 6.7, growth_type: Revenue Growth },
-    { year: 2015, value: 6.2, growth_type: Net Income Growth },
-    { year: 2016, value: -12.4, growth_type: Market Cap Growth },
-    { year: 2016, value: -3.9, growth_type: Revenue Growth },
-    { year: 2016, value: -32.2, growth_type: Net Income Growth },
-    { year: 2017, value: 25.3, growth_type: Market Cap Growth },
-    { year: 2017, value: 5.9, growth_type: Revenue Growth },
-    { year: 2017, value: 43.9, growth_type: Net Income Growth }
+    { "year": 2011, "value": 14.6, "growth_type": "Market Cap Growth" },
+    { "year": 2011, "value": 11.4, "growth_type": "Revenue Growth" },
+    { "year": 2011, "value": 26.6, "growth_type": "Net Income Growth" },
+    { "year": 2012, "value": 40.1, "growth_type": "Market Cap Growth" },
+    { "year": 2012, "value": 42.7, "growth_type": "Revenue Growth" },
+    { "year": 2012, "value": 36.9, "growth_type": "Net Income Growth" },
+    { "year": 2013, "value": 16.9, "growth_type": "Market Cap Growth" },
+    { "year": 2013, "value": 14.6, "growth_type": "Revenue Growth" },
+    { "year": 2013, "value": 15.3, "growth_type": "Net Income Growth" },
+    { "year": 2014, "value": 9.6, "growth_type": "Market Cap Growth" },
+    { "year": 2014, "value": 7.9, "growth_type": "Revenue Growth" },
+    { "year": 2014, "value": 10.9, "growth_type": "Net Income Growth" },
+    { "year": 2015, "value": 5.8, "growth_type": "Market Cap Growth" },
+    { "year": 2015, "value": 6.7, "growth_type": "Revenue Growth" },
+    { "year": 2015, "value": 6.2, "growth_type": "Net Income Growth" },
+    { "year": 2016, "value": -12.4, "growth_type": "Market Cap Growth" },
+    { "year": 2016, "value": -3.9, "growth_type": "Revenue Growth" },
+    { "year": 2016, "value": -32.2, "growth_type": "Net Income Growth" },
+    { "year": 2017, "value": 25.3, "growth_type": "Market Cap Growth" },
+    { "year": 2017, "value": 5.9, "growth_type": "Revenue Growth" },
+    { "year": 2017, "value": 43.9, "growth_type": "Net Income Growth" }
 ]
 ```
 Visualize this data for me using vega-lite.
