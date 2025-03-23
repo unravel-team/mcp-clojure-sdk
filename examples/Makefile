@@ -173,7 +173,7 @@ install-antq:
 upgrade-libs: .antqtool.lastupdated install-antq    ## Install all the deps to their latest versions
 	clojure -Tantq outdated :check-clojure-tools true :upgrade true
 
-build: check    ## Build the deployment artifact
+build:    ## Build the deployment artifact
 	clojure -T:build ci
 
 install: build    ## Install the artifact locally
