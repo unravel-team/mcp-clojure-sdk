@@ -3,8 +3,7 @@ title: Cancellation
 weight: 10
 ---
 
-{{< callout type="info" >}} **Protocol Revision**: {{< param protocolRevision >}}
-{{< /callout >}}
+{{< callout type="info" >}} **Protocol Revision**: 2024-11-05 {{< /callout >}}
 
 The Model Context Protocol (MCP) supports optional cancellation of in-progress requests
 through notification messages. Either side can send a cancellation notification to

@@ -5,8 +5,7 @@ cascade:
 weight: 4
 ---
 
-{{< callout type="info" >}} **Protocol Revision**: {{< param protocolRevision >}}
-{{< /callout >}}
+{{< callout type="info" >}} **Protocol Revision**: 2024-11-05 {{< /callout >}}
 
 Clients can implement additional features to enrich connected MCP servers:
 

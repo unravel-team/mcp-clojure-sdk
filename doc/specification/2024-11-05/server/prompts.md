@@ -3,8 +3,7 @@ title: Prompts
 weight: 10
 ---
 
-{{< callout type="info" >}} **Protocol Revision**: {{< param protocolRevision >}}
-{{< /callout >}}
+{{< callout type="info" >}} **Protocol Revision**: 2024-11-05 {{< /callout >}}
 
 The Model Context Protocol (MCP) provides a standardized way for servers to expose prompt
 templates to clients. Prompts allow servers to provide structured messages and

@@ -2,8 +2,7 @@
 title: Utilities
 ---
 
-{{< callout type="info" >}} **Protocol Revision**: {{< param protocolRevision >}}
-{{< /callout >}}
+{{< callout type="info" >}} **Protocol Revision**: 2024-11-05 {{< /callout >}}
 
 These optional features can be used to enhance server functionality.
 

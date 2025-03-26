@@ -5,8 +5,7 @@ cascade:
 weight: 3
 ---
 
-{{< callout type="info" >}} **Protocol Revision**: {{< param protocolRevision >}}
-{{< /callout >}}
+{{< callout type="info" >}} **Protocol Revision**: 2024-11-05 {{< /callout >}}
 
 Servers provide the fundamental building blocks for adding context to language models via
 MCP. These primitives enable rich interactions between clients, servers, and language

@@ -1,15 +1,13 @@
 ---
-title: Specification (Latest)
+linkTitle: 2024-11-05 (Final)
+title: Model Context Protocol specification
 cascade:
   type: docs
 breadcrumbs: false
-weight: 10
-aliases:
-  - /latest
+weight: 2
 ---
 
-{{< callout type="info" >}} **Protocol Revision**: {{< param protocolRevision >}}
-{{< /callout >}}
+{{< callout type="info" >}} **Protocol Revision**: 2024-11-05 {{< /callout >}}
 
 [Model Context Protocol](https://modelcontextprotocol.io) (MCP) is an open protocol that
 enables seamless integration between LLM applications and external data sources and

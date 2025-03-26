@@ -4,8 +4,7 @@ type: docs
 weight: 40
 ---
 
-{{< callout type="info" >}} **Protocol Revision**: {{< param protocolRevision >}}
-{{< /callout >}}
+{{< callout type="info" >}} **Protocol Revision**: 2024-11-05 {{< /callout >}}
 
 The Model Context Protocol (MCP) provides a standardized way for clients to expose
 filesystem "roots" to servers. Roots define the boundaries of where servers can operate
