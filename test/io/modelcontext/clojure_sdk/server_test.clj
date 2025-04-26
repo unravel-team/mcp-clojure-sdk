@@ -357,3 +357,66 @@
                                                       "file:///invalid.txt"}))
                (h/assert-take (:output-ch server)))))
       (lsp.server/shutdown server))))
+
+(deftest validate-spec-test
+  (testing "Validating server specifications"
+    (let [valid-tool {:name "valid-tool",
+                      :description "A valid tool",
+                      :inputSchema {:type "object"},
+                      :handler identity}
+          valid-resource {:uri "file:///valid.txt",
+                          :name "Valid Resource",
+                          :handler (fn [_] {:uri "file:///valid.txt",
+                                            :text "valid"})}
+          valid-prompt {:name "valid-prompt",
+                        :handler (fn [_] {:messages []})}
+          invalid-tool-schema {:name "invalid-tool",
+                               :description "Bad schema",
+                               :inputSchema {:invalid "schema"}, ; Invalid key
+                               :handler identity}
+          invalid-resource-missing-name {:uri "file:///invalid.txt",
+                                         ;; Missing :name
+                                         :handler (fn [_] {:uri "file:///invalid.txt",
+                                                           :text "invalid"})}
+          invalid-prompt-missing-name {;; Missing :name
+                                       :handler (fn [_] {:messages []})}
+          invalid-handler-tool {:name "invalid-handler-tool",
+                                :description "Non-fn handler",
+                                :inputSchema {:type "object"},
+                                :handler "not-a-function"}]
+
+      (testing "Valid specification"
+        (is (nil? (server/validate-spec! {:tools [valid-tool],
+                                          :prompts [valid-prompt],
+                                          :resources [valid-resource]}))
+            "A completely valid spec should not throw"))
+
+      (testing "Empty specification"
+        (is (nil? (server/validate-spec! {}))
+            "An empty spec should be valid")
+        (is (nil? (server/validate-spec! {:tools [], :prompts [], :resources []}))
+            "A spec with empty lists should be valid"))
+
+      (testing "Partially valid specification"
+        (is (nil? (server/validate-spec! {:tools [valid-tool]}))
+            "A spec with only valid tools should be valid")
+        (is (nil? (server/validate-spec! {:prompts [valid-prompt]}))
+            "A spec with only valid prompts should be valid")
+        (is (nil? (server/validate-spec! {:resources [valid-resource]}))
+            "A spec with only valid resources should be valid"))
+
+      (testing "Invalid tool schema"
+        (is (thrown? Exception (server/validate-spec! {:tools [invalid-tool-schema]}))
+            "Spec with invalid tool schema should throw"))
+
+      (testing "Invalid resource definition"
+        (is (thrown? Exception (server/validate-spec! {:resources [invalid-resource-missing-name]}))
+            "Spec with invalid resource definition should throw"))
+
+      (testing "Invalid prompt definition"
+        (is (thrown? Exception (server/validate-spec! {:prompts [invalid-prompt-missing-name]}))
+            "Spec with invalid prompt definition should throw"))
+
+      (testing "Invalid handler type"
+        (is (thrown? Exception (server/validate-spec! {:tools [invalid-handler-tool]}))
+            "Spec with a non-function handler should throw")))))
