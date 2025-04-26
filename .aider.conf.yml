@@ -35,9 +35,9 @@ commit-prompt: |
   Reply only with the commit message, without any additional text or explanations.
 
 ## Main model (Architect) and editor model (Editor)
-model: sonnet
+model: gemini-exp
 architect: true
-editor-model: sonnet
+editor-model: gemini-exp
 
 ## Testing and Linting of my code
 lint-cmd: make format
