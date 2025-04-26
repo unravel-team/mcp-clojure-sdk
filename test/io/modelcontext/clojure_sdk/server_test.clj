@@ -369,6 +369,7 @@
                           :handler (fn [_]
                                      {:uri "file:///valid.txt", :text "valid"})}
           valid-prompt {:name "valid-prompt", :handler (fn [_] {:messages []})}
+          valid-server-info {:name "test-server", :version "1.0.0"}
           invalid-tool-schema {:name "invalid-tool",
                                :description "Bad schema",
                                :inputSchema {:invalid "schema"}, ; Invalid key
@@ -382,39 +383,63 @@
           invalid-handler-tool {:name "invalid-handler-tool",
                                 :description "Non-fn handler",
                                 :inputSchema {:type "object"},
-                                :handler "not-a-function"}]
+                                :handler "not-a-function"}
+          invalid-server-info-missing-name {:version "1.0.0"}
+          invalid-server-info-missing-version {:name "test-server"}
+          invalid-server-info-bad-type {:name 123, :version "1.0.0"}]
+
       (testing "Valid specification"
-        (is (nil? (server/validate-spec! {:tools [valid-tool],
-                                          :prompts [valid-prompt],
-                                          :resources [valid-resource]}))
+        (is (nil? (server/validate-spec! (merge valid-server-info
+                                                {:tools [valid-tool],
+                                                 :prompts [valid-prompt],
+                                                 :resources [valid-resource]})))
             "A completely valid spec should not throw"))
-      (testing "Empty specification"
-        (is (nil? (server/validate-spec! {})) "An empty spec should be valid")
-        (is (nil? (server/validate-spec!
-                    {:tools [], :prompts [], :resources []}))
-            "A spec with empty lists should be valid"))
-      (testing "Partially valid specification"
-        (is (nil? (server/validate-spec! {:tools [valid-tool]}))
+
+      (testing "Empty specification (requires server info)"
+        (is (nil? (server/validate-spec! valid-server-info))
+            "A spec with only server info should be valid")
+        (is (nil? (server/validate-spec! (merge valid-server-info
+                                                {:tools [], :prompts [], :resources []})))
+            "A spec with server info and empty lists should be valid"))
+
+      (testing "Partially valid specification (requires server info)"
+        (is (nil? (server/validate-spec! (merge valid-server-info {:tools [valid-tool]})))
             "A spec with only valid tools should be valid")
-        (is (nil? (server/validate-spec! {:prompts [valid-prompt]}))
+        (is (nil? (server/validate-spec! (merge valid-server-info {:prompts [valid-prompt]})))
             "A spec with only valid prompts should be valid")
-        (is (nil? (server/validate-spec! {:resources [valid-resource]}))
+        (is (nil? (server/validate-spec! (merge valid-server-info {:resources [valid-resource]})))
             "A spec with only valid resources should be valid"))
+
+      (testing "Invalid server info - missing name"
+        (is (thrown? Exception (server/validate-spec! invalid-server-info-missing-name))
+            "Spec with missing server name should throw"))
+
+      (testing "Invalid server info - missing version"
+        (is (thrown? Exception (server/validate-spec! invalid-server-info-missing-version))
+            "Spec with missing server version should throw"))
+
+      (testing "Invalid server info - bad type"
+        (is (thrown? Exception (server/validate-spec! invalid-server-info-bad-type))
+            "Spec with invalid server info type should throw"))
+
       (testing "Invalid tool schema"
         (is (thrown? Exception
-                     (server/validate-spec! {:tools [invalid-tool-schema]}))
+                     (server/validate-spec! (merge valid-server-info {:tools [invalid-tool-schema]})))
             "Spec with invalid tool schema should throw"))
+
       (testing "Invalid resource definition"
         (is (thrown? Exception
-                     (server/validate-spec! {:resources
-                                             [invalid-resource-missing-name]}))
+                     (server/validate-spec! (merge valid-server-info {:resources
+                                             [invalid-resource-missing-name]})))
             "Spec with invalid resource definition should throw"))
+
       (testing "Invalid prompt definition"
         (is (thrown? Exception
-                     (server/validate-spec! {:prompts
-                                             [invalid-prompt-missing-name]}))
+                     (server/validate-spec! (merge valid-server-info {:prompts
+                                             [invalid-prompt-missing-name]})))
             "Spec with invalid prompt definition should throw"))
+
       (testing "Invalid handler type"
         (is (thrown? Exception
-                     (server/validate-spec! {:tools [invalid-handler-tool]}))
+                     (server/validate-spec! (merge valid-server-info {:tools [invalid-handler-tool]})))
             "Spec with a non-function handler should throw")))))

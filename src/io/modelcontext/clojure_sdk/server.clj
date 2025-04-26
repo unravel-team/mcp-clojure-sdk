@@ -301,7 +301,12 @@
                 (throw (ex-info msg (specs/explain-prompt object)))))))
 
 (defn validate-spec!
-  [{:keys [tools prompts resources], :as _spec}]
+  [{:keys [tools prompts resources], :as spec}]
+  (let [msg "Invalid server name/version definition"
+        server-info (select-keys spec [:name :version])]
+    (when-not (specs/valid-implementation? server-info)
+      (log/debug :msg msg :server-info server-info)
+      (throw (ex-info msg (specs/explain-implementation server-info)))))
   (doseq [tool tools]
     (check-object-and-handler :tool (dissoc tool :handler) (:handler tool)))
   (doseq [resource resources]
