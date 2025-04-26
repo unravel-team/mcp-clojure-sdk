@@ -285,7 +285,8 @@
   (when-not (specs/valid-server-spec? server-spec)
     (let [msg "Invalid server-spec definition"]
       (log/debug :msg msg :spec server-spec)
-      (throw (ex-info msg (specs/explain-server-spec server-spec))))))
+      (throw (ex-info msg (specs/explain-server-spec server-spec)))))
+  server-spec)
 
 (defn register-tool!
   [context tool handler]
