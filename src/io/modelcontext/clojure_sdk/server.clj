@@ -300,6 +300,18 @@
                 (log/debug :msg msg object-type object)
                 (throw (ex-info msg (specs/explain-prompt object)))))))
 
+(defn validate-spec!
+  [{:keys [tools prompts resources], :as _spec}]
+  (doseq [tool tools]
+    (check-object-and-handler :tool (dissoc tool :handler) (:handler tool)))
+  (doseq [resource resources]
+    (check-object-and-handler :resource
+                              (dissoc resource :handler)
+                              (:handler resource)))
+  (doseq [prompt prompts]
+    (check-object-and-handler :prompt
+                              (dissoc prompt :handler)
+                              (:handler prompt))))
 
 (defn register-tool!
   [context tool handler]
