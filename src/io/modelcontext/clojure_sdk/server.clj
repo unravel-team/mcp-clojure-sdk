@@ -343,7 +343,7 @@
     :version \"1.0.0\"
     :tools [{:name \"tool-name\"
              :description \"Tool description\"
-             :schema {...}
+             :inputSchema {...}
              :handler (fn [args] ...)}]
     :prompts [{:name \"prompt-name\"
                :description \"Prompt description\"

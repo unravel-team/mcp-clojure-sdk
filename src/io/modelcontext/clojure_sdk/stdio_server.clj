@@ -8,11 +8,8 @@
 
 (defn- monitor-server-logs
   [log-ch]
-  ;; NOTE: if this were moved to `initialize`, after timbre has been
-  ;; configured, the server's startup logs and traces would appear in the
-  ;; regular log file instead of the temp log file. We don't do this though
-  ;; because if anything bad happened before `initialize`, we wouldn't get
-  ;; any logs.
+  ;; NOTE: We don't do this in `initialize`, because if anything bad
+  ;; happened before `initialize`, we wouldn't get any logs.
   (async/go-loop []
     (when-let [log-args (async/<! log-ch)]
       (log/trace :level (first log-args) :args (rest log-args))
