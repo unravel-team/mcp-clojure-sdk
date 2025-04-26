@@ -280,55 +280,20 @@
 
 ;;; Server Spec
 
-(defn- check-object-and-handler
-  [object-type object handler]
-  (when-not (ifn? handler)
-    (let [msg (str "Invalid handler for " object-type)]
-      (log/debug :msg msg object-type object)
-      (throw (ex-info msg {:handler handler, object-type object}))))
-  (case object-type
-    :tool (when-not (specs/valid-tool? object)
-            (let [msg "Invalid tool definition"]
-              (log/debug :msg msg object-type object)
-              (throw (ex-info msg (specs/explain-tool object)))))
-    :resource (when-not (specs/valid-resource? object)
-                (let [msg "Invalid resource definition"]
-                  (log/debug :msg msg object-type object)
-                  (throw (ex-info msg (specs/explain-resource object)))))
-    :prompt (when-not (specs/valid-prompt? object)
-              (let [msg "Invalid prompt definition"]
-                (log/debug :msg msg object-type object)
-                (throw (ex-info msg (specs/explain-prompt object)))))))
-
 (defn validate-spec!
-  [{:keys [tools prompts resources], :as spec}]
-  (let [msg "Invalid server name/version definition"
-        server-info (select-keys spec [:name :version])]
-    (when-not (specs/valid-implementation? server-info)
-      (log/debug :msg msg :server-info server-info)
-      (throw (ex-info msg (specs/explain-implementation server-info)))))
-  (doseq [tool tools]
-    (check-object-and-handler :tool (dissoc tool :handler) (:handler tool)))
-  (doseq [resource resources]
-    (check-object-and-handler :resource
-                              (dissoc resource :handler)
-                              (:handler resource)))
-  (doseq [prompt prompts]
-    (check-object-and-handler :prompt
-                              (dissoc prompt :handler)
-                              (:handler prompt))))
+  [server-spec]
+  (when-not (specs/valid-server-spec? server-spec)
+    (let [msg "Invalid server-spec definition"]
+      (log/debug :msg msg :spec server-spec)
+      (throw (ex-info msg (specs/explain-server-spec server-spec))))))
 
 (defn register-tool!
   [context tool handler]
-  (log/with-context {:fn :register-tool!}
-    (check-object-and-handler :tool tool handler))
   (swap! (:tools context) assoc (:name tool) {:tool tool, :handler handler})
   context)
 
 (defn register-resource!
   [context resource handler]
-  (log/with-context {:fn :register-resource!}
-    (check-object-and-handler :resource resource handler))
   (swap! (:resources context) assoc
     (:uri resource)
     {:resource resource, :handler handler})
@@ -336,8 +301,6 @@
 
 (defn register-prompt!
   [context prompt handler]
-  (log/with-context {:fn :register-prompt!}
-    (check-object-and-handler :prompt prompt handler))
   (swap! (:prompts context) assoc
     (:name prompt)
     {:prompt prompt, :handler handler})
@@ -368,7 +331,8 @@
     :resources [{:uri \"resource-uri\"
                  :type \"text\"
                  :handler (fn [uri] ...)}]}"
-  [{:keys [name version tools prompts resources]}]
+  [{:keys [name version tools prompts resources], :as spec}]
+  (validate-spec! spec)
   (log/with-context {:action :create-context!}
     (let [context (create-empty-context name version)]
       (when (> (count tools) 0)

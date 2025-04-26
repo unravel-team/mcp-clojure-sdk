@@ -124,14 +124,7 @@
          :inputSchema {:type "object", :properties {"arg" {:type "string"}}}}
         (fn [_] {:type "text", :text "success"}))
       (is (= 1 (count @(:tools context))))
-      (is (get @(:tools context) "test-tool"))
-      (testing "Tool validation"
-        (is (thrown? Exception
-                     (server/register-tool! context
-                                            {:name "invalid",
-                                             :description "desc",
-                                             :inputSchema {:invalid "schema"}}
-                                            identity)))))))
+      (is (get @(:tools context) "test-tool")))))
 
 (deftest initialization
   (testing "Connection initialization through initialize"

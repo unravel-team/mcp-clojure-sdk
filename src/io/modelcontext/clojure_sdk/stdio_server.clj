@@ -40,7 +40,8 @@
 (defn run!
   [spec]
   (log/with-context {:server-id (:server-id spec)}
-    (log/trace :fn run! :msg "Starting calculator server")
+    (log/trace :fn run! :msg "Starting server!")
+    (core/validate-spec! spec)
     (let [log-ch (async/chan (async/sliding-buffer 20))
           server (stdio-server {:log-ch log-ch})]
       (start! server spec))))

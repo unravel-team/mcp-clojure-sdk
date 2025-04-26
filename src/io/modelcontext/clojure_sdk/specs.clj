@@ -776,6 +776,21 @@
         :call-tool ::call-tool-response
         :list-tools ::list-tools-response))
 
+(s/def :server-spec/handler ifn?)
+(s/def :server-spec/tool
+  (s/merge ::tool (s/keys :req-un [:server-spec/handler])))
+(s/def :server-spec/tools (s/coll-of :server-spec/tool))
+(s/def :server-spec/prompt
+  (s/merge ::prompt (s/keys :req-un [:server-spec/handler])))
+(s/def :server-spec/prompts (s/coll-of :server-spec/prompt))
+(s/def :server-spec/resource
+  (s/merge ::resource (s/keys :req-un [:server-spec/handler])))
+(s/def :server-spec/resources (s/coll-of :server-spec/resource))
+(s/def ::server-spec
+  (s/keys :req-un [:implementation/name :implementation/version]
+          :opt-un [:server-spec/tools :server-spec/prompts
+                   :server-spec/resources]))
+
 ;; Helper functions for resource validation
 (defn valid-resource? [resource] (s/valid? ::resource resource))
 
@@ -830,3 +845,8 @@
 (defn valid-implementation? [impl] (s/valid? ::implementation impl))
 
 (defn explain-implementation [impl] (s/explain-data ::implementation impl))
+
+;; Helper functions for server-spec validation
+(defn valid-server-spec? [spec] (s/valid? ::server-spec spec))
+
+(defn explain-server-spec [spec] (s/explain-data ::server-spec spec))
