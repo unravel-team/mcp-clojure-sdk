@@ -1,6 +1,13 @@
 * DONE Create a Stdio-transport based server implementation
-* TODO Fix the clunky API for declaring tools, prompts and resources
-and clean up the code.
+* DONE Create a template project for easily creating MCP servers
+CLOSED: [2025-04-27 Sun 18:30]
+:LOGBOOK:
+- State "DONE"       from "TODO"       [2025-04-27 Sun 18:30]
+- State "TODO"       from              [2025-04-27 Sun 18:28]
+:END:
+See:
+1. [[https://github.com/unravel-team/mcp-clojure-server-deps-new][mcp-clojure-server-deps-new]] for a ~deps-new~ based template
+2. [[https://github.com/unravel-team/example-cool-mcp-server][example-cool-mcp-server]] for a Github template project
 * TODO Add an integration test for end-to-end testing the server
 See ~integration.client~ from ~lsp4clj~ for inspiration
 * TODO Checks and Balances in the mcp-cljc-sdk code

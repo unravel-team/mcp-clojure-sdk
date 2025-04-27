@@ -5,6 +5,8 @@ A `clojure-sdk` for creating Model Context Protocol servers!
 ## Table of Contents          :TOC_4:
 - [io.modelcontext/clojure-sdk](#iomodelcontextclojure-sdk)
   - [Usage](#usage)
+    - [Deps](#deps)
+    - [Templates for Quickstart](#templates-for-quickstart)
     - [Examples](#examples)
       - [Building the Examples Jar](#building-the-examples-jar)
       - [Calculator: `calculator_server`](#calculator-calculator_server)
@@ -27,6 +29,7 @@ examples contains a full working code for defining an MCP server.
 and running the various example servers are in [the examples/README.md
 file](examples/README.md) (also copied below this section)
 
+### Deps
 The deps for `clojure-sdk` are:
 
 ```clojure
@@ -34,6 +37,13 @@ The deps for `clojure-sdk` are:
  {:git/url "https://github.com/unravel-team/mcp-clojure-sdk.git"
   :git/sha "039cf220ac6bb3858f71e823016035e257a5380d"}}
 ```
+
+### Templates for Quickstart
+For your ease of use, there is also a `deps-new` template and a Github template. See:
+1. [[https://github.com/unravel-team/mcp-clojure-server-deps-new][mcp-clojure-server-deps-new]]
+   for a `deps-new` based template to quickly create new MCP servers.
+2. [[https://github.com/unravel-team/example-cool-mcp-server][example-cool-mcp-server]]
+   for a Github template project to quickly create new MCP servers.
 
 ### Examples
 
