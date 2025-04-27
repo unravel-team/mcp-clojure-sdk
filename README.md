@@ -40,9 +40,9 @@ The deps for `clojure-sdk` are:
 
 ### Templates for Quickstart
 For your ease of use, there is also a `deps-new` template and a Github template. See:
-1. [[https://github.com/unravel-team/mcp-clojure-server-deps-new][mcp-clojure-server-deps-new]]
+1. [mcp-clojure-server-deps-new](https://github.com/unravel-team/mcp-clojure-server-deps-new)
    for a `deps-new` based template to quickly create new MCP servers.
-2. [[https://github.com/unravel-team/example-cool-mcp-server][example-cool-mcp-server]]
+2. [example-cool-mcp-server](https://github.com/unravel-team/example-cool-mcp-server)
    for a Github template project to quickly create new MCP servers.
 
 ### Examples
