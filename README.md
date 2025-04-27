@@ -10,6 +10,8 @@ A `clojure-sdk` for creating Model Context Protocol servers!
       - [Calculator: `calculator_server`](#calculator-calculator_server)
       - [Vega-lite: `vegalite_server`](#vega-lite-vegalite_server)
       - [Code Analysis: `code_analysis_server`](#code-analysis-code_analysis_server)
+  - [Core Components](#core-components)
+  - [Communication Flow](#communication-flow)
   - [Pending Work](#pending-work)
   - [Development of the SDK](#development-of-the-sdk)
   - [Inspiration](#inspiration)
@@ -45,7 +47,8 @@ The examples jar contains the following servers:
 3. Code Analysis: `code_analysis_server`
 
 #### Calculator: `calculator_server`
-Provides basic arithmetic tools: `add`, `subtract`, `multiply`, `divide`, `power`, `square-root`, `average`, `factorial`
+Provides basic arithmetic tools: `add`, `subtract`, `multiply`,
+`divide`, `power`, `square-root`, `average`, `factorial`
 
 Some example commands you can try in Claude Desktop or Inspector:
 
@@ -84,9 +87,11 @@ npx @modelcontextprotocol/inspector java -Dclojure.tools.logging.factory=clojure
 ```
 
 #### Vega-lite: `vegalite_server`
-Provides tools for generating Vega-lite charts: `save-data`, `visualize-data`
+Provides tools for generating Vega-lite charts: `save-data`,
+`visualize-data`.
 
-PRE-REQUISITES: Needs [vl-convert CLI](https://github.com/vega/vl-convert) to be installed.
+PRE-REQUISITES: Needs [vl-convert
+CLI](https://github.com/vega/vl-convert) to be installed.
 
 Some example commands you can try in Claude Desktop or Inspector:
 
@@ -120,7 +125,8 @@ Visualize this data for me using vega-lite.
 
 ##### Before running the vegalite MCP server
 Remember:
-1. Replace the full-path to the examples JAR with the correct path on your system
+1. Replace the full-path to the examples JAR with the correct path on
+   your system
 2. Specify the full-path to `vl-convert` on your system
 
 ##### In Claude Desktop
@@ -144,20 +150,26 @@ Remember:
 ```
 
 ##### In MCP Inspector
-(Remember to use the full-path to the examples JAR on your system, or execute this command from the `mcp-clojure-sdk` repo)
+Remember to use the full-path to the examples JAR on your system, or
+execute this command from the `mcp-clojure-sdk` repo.
 
 ```shell
 npx @modelcontextprotocol/inspector java -Dclojure.tools.logging.factory=clojure.tools.logging.impl/log4j2-factory -Dorg.eclipse.jetty.util.log.class=org.eclipse.jetty.util.log.Slf4jLog -Dlog4j2.contextSelector=org.apache.logging.log4j.core.async.AsyncLoggerContextSelector -Dlog4j2.configurationFile=log4j2-mcp.xml -Dbabashka.json.provider=metosin/jsonista -Dlogging.level=INFO -Dmcp.vegalite.vl_convert_executable=/Users/vedang/.cargo/bin/vl-convert -cp examples/target/io.modelcontextprotocol.clojure-sdk/examples-1.2.0.jar vegalite_server
 ```
 
 #### Code Analysis: `code_analysis_server`
-This server is an example of a server which provides prompts and not tools. The following prompts are available: `analyse-code` and `poem-about-code`.
+This server is an example of a server which provides prompts and not
+tools. The following prompts are available: `analyse-code` and
+`poem-about-code`.
 
-You can try the prompts out in Claude Desktop or Inspector. While these prompts are very basic, this is a good way to see how you could expose powerful prompts through this technique.
+You can try the prompts out in Claude Desktop or Inspector. While
+these prompts are very basic, this is a good way to see how you could
+expose powerful prompts through this technique.
 
 ##### Before running the code-analysis MCP server
 Remember:
-1. Replace the full-path to the examples JAR with the correct path on your system
+1. Replace the full-path to the examples JAR with the correct path on
+   your system
 
 ##### In Claude Desktop
 
@@ -179,12 +191,112 @@ Remember:
 ```
 
 ##### In MCP Inspector
-(Remember to use the full-path to the examples JAR on your system, or execute this command from the `mcp-clojure-sdk` repo)
+(Remember to use the full-path to the examples JAR on your system, or
+execute this command from the `mcp-clojure-sdk` repo)
 
 ```shell
 npx @modelcontextprotocol/inspector java -Dclojure.tools.logging.factory=clojure.tools.logging.impl/log4j2-factory -Dorg.eclipse.jetty.util.log.class=org.eclipse.jetty.util.log.Slf4jLog -Dlog4j2.contextSelector=org.apache.logging.log4j.core.async.AsyncLoggerContextSelector -Dlog4j2.configurationFile=log4j2-mcp.xml -Dbabashka.json.provider=metosin/jsonista -Dlogging.level=INFO -cp examples/target/io.modelcontextprotocol.clojure-sdk/examples-1.2.0.jar code_analysis_server
 ```
 
+## Core Components
+
+1. **Server Implementation**: The core server functionality is
+   implemented in `server.clj`, which handles request/response cycles
+   for various MCP methods.
+
+2. **Transport Layer**: The SDK implements a STDIO transport in
+   `stdio_server.clj` using `io_chan.clj` to convert between IO
+   streams and core.async channels.
+
+3. **Error Handling**: Custom error handling is defined in
+   `mcp/errors.clj`.
+
+4. **Protocol Specifications**: All protocol specifications are
+   defined in `specs.clj`, which provides validation for requests,
+   responses, and server components.
+
+## Communication Flow
+
+The sequence diagram shows the typical lifecycle of an MCP
+client-server interaction:
+
+1. **Initialization Phase**:
+   - The client connects and sends an `initialize` request
+   - The server responds with its capabilities
+   - The client confirms with an `initialized` notification
+
+2. **Discovery Phase**:
+   - The client discovers available tools, resources, and prompts
+     using methods `tools/list`, `resources/list` and `prompts/list`
+   - These are registered in the server during context creation
+
+3. **Tool Interaction**:
+   - The client can call tools with arguments
+   - The server routes these to the appropriate handler function
+   - Results are returned to the client
+
+4. **Resource Interaction**:
+   - The client can read resources by URI
+   - The server retrieves the resource content
+
+5. **Prompt Interaction**:
+   - The client can request predefined prompts
+   - The server returns the appropriate messages
+
+6. **Optional Features**:
+   - Resource subscription for updates
+   - Health checks via ping/pong
+
+```mermaid
+sequenceDiagram
+    participant Client
+    participant MCPServer
+    participant Tool
+    participant Resource
+    participant Prompt
+
+    Note over Client,MCPServer: Initialization Phase
+    Client->>+MCPServer: initialize
+    MCPServer-->>-Client: initialize response (capabilities)
+    Client->>MCPServer: notifications/initialized
+
+    Note over Client,MCPServer: Discovery Phase
+    Client->>+MCPServer: tools/list
+    MCPServer-->>-Client: List of available tools
+
+    Client->>+MCPServer: resources/list
+    MCPServer-->>-Client: List of available resources
+
+    Client->>+MCPServer: prompts/list
+    MCPServer-->>-Client: List of available prompts
+
+    Note over Client,MCPServer: Tool Interaction
+    Client->>+MCPServer: tools/call (name, arguments)
+    MCPServer->>+Tool: handler(arguments)
+    Tool-->>-MCPServer: result
+    MCPServer-->>-Client: Tool response
+
+    Note over Client,MCPServer: Resource Interaction
+    Client->>+MCPServer: resources/read (uri)
+    MCPServer->>+Resource: handler(uri)
+    Resource-->>-MCPServer: contents
+    MCPServer-->>-Client: Resource contents
+
+    Note over Client,MCPServer: Prompt Interaction
+    Client->>+MCPServer: prompts/get (name, arguments)
+    MCPServer->>+Prompt: handler(arguments)
+    Prompt-->>-MCPServer: messages
+    MCPServer-->>-Client: Prompt messages
+
+    Note over Client,MCPServer: Optional Subscription
+    Client->>+MCPServer: resources/subscribe (uri)
+    MCPServer-->>-Client: Empty response
+    MCPServer-->>Client: notifications/resources/updated
+
+    Note over Client,MCPServer: Health Check
+    Client->>+MCPServer: ping
+    MCPServer-->>-Client: pong
+```
 ## Pending Work
 
 You can help dear reader! Head over to the [todo.org file](todo.org)
