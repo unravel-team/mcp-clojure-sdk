@@ -1,11 +1,27 @@
 /* JSON-RPC types */
+
+/**
+ * Refers to any valid JSON-RPC object that can be decoded off the wire, or encoded to be sent.
+ */
 export type JSONRPCMessage =
   | JSONRPCRequest
   | JSONRPCNotification
+  | JSONRPCBatchRequest
   | JSONRPCResponse
-  | JSONRPCError;
+  | JSONRPCError
+  | JSONRPCBatchResponse;
 
-export const LATEST_PROTOCOL_VERSION = "DRAFT-2025-v1";
+/**
+ * A JSON-RPC batch request, as described in https://www.jsonrpc.org/specification#batch.
+ */
+export type JSONRPCBatchRequest = (JSONRPCRequest | JSONRPCNotification)[];
+
+/**
+ * A JSON-RPC batch response, as described in https://www.jsonrpc.org/specification#batch.
+ */
+export type JSONRPCBatchResponse = (JSONRPCResponse | JSONRPCError)[];
+
+export const LATEST_PROTOCOL_VERSION = "2025-03-26";
 export const JSONRPC_VERSION = "2.0";
 
 /**
@@ -167,6 +183,7 @@ export interface InitializeResult extends Result {
   protocolVersion: string;
   capabilities: ServerCapabilities;
   serverInfo: Implementation;
+
   /**
    * Instructions describing how to use the server and its features.
    *
@@ -217,6 +234,10 @@ export interface ServerCapabilities {
    * Present if the server supports sending log messages to the client.
    */
   logging?: object;
+  /**
+   * Present if the server supports argument autocompletion suggestions.
+   */
+  completions?: object;
   /**
    * Present if the server offers any prompt templates.
    */
@@ -289,6 +310,10 @@ export interface ProgressNotification extends Notification {
      * @TJS-type number
      */
     total?: number;
+    /**
+     * An optional message describing the current progress.
+     */
+    message?: string;
   };
 }
 
@@ -417,7 +442,7 @@ export interface ResourceUpdatedNotification extends Notification {
 /**
  * A known resource that the server is capable of reading.
  */
-export interface Resource extends Annotated {
+export interface Resource {
   /**
    * The URI of this resource.
    *
@@ -443,12 +468,17 @@ export interface Resource extends Annotated {
    * The MIME type of this resource, if known.
    */
   mimeType?: string;
+
+  /**
+   * Optional annotations for the client.
+   */
+  annotations?: Annotations;
 }
 
 /**
  * A template description for resources available on the server.
  */
-export interface ResourceTemplate extends Annotated {
+export interface ResourceTemplate {
   /**
    * A URI template (according to RFC 6570) that can be used to construct resource URIs.
    *
@@ -474,6 +504,11 @@ export interface ResourceTemplate extends Annotated {
    * The MIME type for all resources that match this template. This should only be included if all resources matching this template have the same type.
    */
   mimeType?: string;
+
+  /**
+   * Optional annotations for the client.
+   */
+  annotations?: Annotations;
 }
 
 /**
@@ -609,9 +644,14 @@ export interface PromptMessage {
  * It is up to the client how best to render embedded resources for the benefit
  * of the LLM and/or the user.
  */
-export interface EmbeddedResource extends Annotated {
+export interface EmbeddedResource {
   type: "resource";
   resource: TextResourceContents | BlobResourceContents;
+
+  /**
+   * Optional annotations for the client.
+   */
+  annotations?: Annotations;
 }
 
 /**
@@ -678,6 +718,60 @@ export interface ToolListChangedNotification extends Notification {
 }
 
 /**
+ * Additional properties describing a Tool to clients.
+ * 
+ * NOTE: all properties in ToolAnnotations are **hints**. 
+ * They are not guaranteed to provide a faithful description of 
+ * tool behavior (including descriptive properties like `title`).
+ * 
+ * Clients should never make tool use decisions based on ToolAnnotations
+ * received from untrusted servers.
+ */
+export interface ToolAnnotations {
+  /**
+   * A human-readable title for the tool.
+   */
+  title?: string;
+
+  /**
+   * If true, the tool does not modify its environment.
+   * 
+   * Default: false
+   */
+  readOnlyHint?: boolean;
+
+  /**
+   * If true, the tool may perform destructive updates to its environment.
+   * If false, the tool performs only additive updates.
+   * 
+   * (This property is meaningful only when `readOnlyHint == false`)
+   * 
+   * Default: true
+   */
+  destructiveHint?: boolean;
+
+  /**
+   * If true, calling the tool repeatedly with the same arguments 
+   * will have no additional effect on the its environment.
+   * 
+   * (This property is meaningful only when `readOnlyHint == false`)
+   * 
+   * Default: false
+   */
+  idempotentHint?: boolean;
+
+  /**
+   * If true, this tool may interact with an "open world" of external
+   * entities. If false, the tool's domain of interaction is closed.
+   * For example, the world of a web search tool is open, whereas that
+   * of a memory tool is not.
+   * 
+   * Default: true
+   */
+  openWorldHint?: boolean;
+}
+
+/**
  * Definition for a tool the client can call.
  */
 export interface Tool {
@@ -685,10 +779,14 @@ export interface Tool {
    * The name of the tool.
    */
   name: string;
+
   /**
    * A human-readable description of the tool.
+   *
+   * This can be used by clients to improve the LLM's understanding of available tools. It can be thought of like a "hint" to the model.
    */
   description?: string;
+
   /**
    * A JSON Schema object defining the expected parameters for the tool.
    */
@@ -697,6 +795,11 @@ export interface Tool {
     properties?: { [key: string]: object };
     required?: string[];
   };
+
+  /**
+   * Optional additional tool information.
+   */
+  annotations?: ToolAnnotations;
 }
 
 /* Logging */
@@ -707,7 +810,7 @@ export interface SetLevelRequest extends Request {
   method: "logging/setLevel";
   params: {
     /**
-     * The level of logging that the client wants to receive from the server. The server should send all logs at this level and higher (i.e., more severe) to the client as notifications/logging/message.
+     * The level of logging that the client wants to receive from the server. The server should send all logs at this level and higher (i.e., more severe) to the client as notifications/message.
      */
     level: LoggingLevel;
   };
@@ -809,75 +912,93 @@ export interface SamplingMessage {
 }
 
 /**
- * Base for objects that include optional annotations for the client. The client can use annotations to inform how objects are used or displayed
+ * Optional annotations for the client. The client can use annotations to inform how objects are used or displayed
  */
-export interface Annotated {
-  annotations?: {
-    /**
-     * Describes who the intended customer of this object or data is.
-     *
-     * It can include multiple entries to indicate content useful for multiple audiences (e.g., `["user", "assistant"]`).
-     */
-    audience?: Role[];
+export interface Annotations {
+  /**
+   * Describes who the intended customer of this object or data is.
+   *
+   * It can include multiple entries to indicate content useful for multiple audiences (e.g., `["user", "assistant"]`).
+   */
+  audience?: Role[];
 
-    /**
-     * Describes how important this data is for operating the server.
-     *
-     * A value of 1 means "most important," and indicates that the data is
-     * effectively required, while 0 means "least important," and indicates that
-     * the data is entirely optional.
-     *
-     * @TJS-type number
-     * @minimum 0
-     * @maximum 1
-     */
-    priority?: number;
-  };
+  /**
+   * Describes how important this data is for operating the server.
+   *
+   * A value of 1 means "most important," and indicates that the data is
+   * effectively required, while 0 means "least important," and indicates that
+   * the data is entirely optional.
+   *
+   * @TJS-type number
+   * @minimum 0
+   * @maximum 1
+   */
+  priority?: number;
 }
 
 /**
  * Text provided to or from an LLM.
  */
-export interface TextContent extends Annotated {
+export interface TextContent {
   type: "text";
+
   /**
    * The text content of the message.
    */
   text: string;
+
+  /**
+   * Optional annotations for the client.
+   */
+  annotations?: Annotations;
 }
 
 /**
  * An image provided to or from an LLM.
  */
-export interface ImageContent extends Annotated {
+export interface ImageContent {
   type: "image";
+
   /**
    * The base64-encoded image data.
    *
    * @format byte
    */
   data: string;
+
   /**
    * The MIME type of the image. Different providers may support different image types.
    */
   mimeType: string;
+
+  /**
+   * Optional annotations for the client.
+   */
+  annotations?: Annotations;
 }
 
 /**
  * Audio provided to or from an LLM.
  */
-export interface AudioContent extends Annotated {
+export interface AudioContent {
   type: "audio";
+
   /**
    * The base64-encoded audio data.
    *
    * @format byte
    */
   data: string;
+
   /**
    * The MIME type of the audio. Different providers may support different audio types.
    */
   mimeType: string;
+
+  /**
+   * Optional annotations for the client.
+   */
+  annotations?: Annotations;
 }
 
 /**
