@@ -505,8 +505,13 @@
 ;; A JSON Schema object defining the expected parameters for the tool.
 (s/def :tool/inputSchema
   (s/keys :req-un [:schema/type] :opt-un [:tool/properties :tool/required]))
+(s/def :tool/outputSchema ;; This is any? right now, but I'm copying
+                          ;; over from inputSchema to keep it
+                          ;; consistent
+  (s/keys :req-un [:schema/type] :opt-un [:tool/properties]))
 (s/def ::tool
-  (s/keys :req-un [:tool/name :tool/inputSchema] :opt-un [:tool/description]))
+  (s/keys :req-un [:tool/name :tool/inputSchema]
+          :opt-un [:tool/description :tool/outputSchema]))
 
 ;;; Logging
 ;; [tag: set_logging_level_request]

@@ -848,6 +848,14 @@ export interface Tool {
   };
 
   /**
+   * An optional JSON Schema object defining the structure of the tool's output.
+   *
+   * If set, a CallToolResult for this Tool MUST contain a structuredContent field whose contents validate against this schema.
+   * If not set, a CallToolResult for this Tool MUST contain a content field.
+   */
+  outputSchema?: object;
+
+  /**
    * Optional additional tool information.
    */
   annotations?: ToolAnnotations;
