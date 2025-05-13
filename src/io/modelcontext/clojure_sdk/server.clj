@@ -50,6 +50,13 @@
   (log/debug :fn :handle-list-tools)
   {:tools (mapv :tool (vals @(:tools context)))})
 
+(defn- coerce-tool-response
+  [tool response]
+  (let [response (if (sequential? response) (vec response) [response])
+        base-map {:content response}]
+    ;; @TODO: [ref: structured-content-should-match-output-schema-exactly]
+    (cond-> base-map (:outputSchema tool) (assoc :structuredContent response))))
+
 (defn- handle-call-tool
   [context params]
   (log/debug :fn :handle-call-tool
@@ -58,8 +65,8 @@
   (let [tools @(:tools context)
         tool-name (:name params)
         arguments (:arguments params)]
-    (if-let [{:keys [handler]} (get tools tool-name)]
-      (try {:content [(handler arguments)]}
+    (if-let [{:keys [tool handler]} (get tools tool-name)]
+      (try (coerce-tool-response tool (handler arguments))
            (catch Exception e
              {:content [{:type "text", :text (str "Error: " (.getMessage e))}],
               :isError true}))

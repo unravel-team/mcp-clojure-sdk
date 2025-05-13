@@ -443,20 +443,44 @@
   (s/keys :req-un [:tool/name] :opt-un [:call-tool-request/arguments]))
 
 ;; The server's response to a tool call.
-(s/def :call-tool-response/content ;; yes, this is a collection, and the
-                                   ;; name is not
-  ;; `contents`. This looks like a mistake they
-  ;; made and kept for backwards compatibility.
+(s/def ::content-list
   (s/coll-of (s/and (s/or :text :content/text
                           :image :content/image
                           :audio :content/audio
                           :resource :resource/embedded)
                     (s/conformer second))))
+
+(s/def :call-tool-response/content ;; yes, this is a collection, and the
+                                   ;; name is not
+  ;; `contents`. This looks like a mistake they
+  ;; made and kept for backwards compatibility.
+  ::content-list)
+
 ;; If not set, this is assumed to be false (the call was successful).
 (s/def :call-tool-response/isError boolean?)
-(s/def :call-tool-response/result
+
+;; If the Tool does not define an outputSchema, `content` field MUST be present
+;; in the result.
+(s/def :call-tool-response/unstructured-result
   (s/keys :req-un [:call-tool-response/content]
           :opt-un [:call-tool-response/isError]))
+
+;; Tool result for tools that do declare an outputSchema.
+;; [tag: structured-content-should-match-output-schema-exactly]
+(s/def :call-tool-response/structuredContent (s/map-of string? any?))
+
+;; If the Tool defines an outputSchema, `structuredContent` field MUST be
+;; present in the result, and contain a JSON object that matches the schema.
+;; `content` is for backward compatibility with older clients.
+(s/def :call-tool-response/structured-result
+  (s/keys :req-un [:call-tool-response/structuredContent]
+          :opt-un [:call-tool-response/content :call-tool-response/isError]))
+
+(s/def :call-tool-response/result
+  (s/and (s/or :structured :call-tool-response/structured-result
+               :unstructured :call-tool-response/unstructured-result)
+         (s/conformer second)))
+
 (s/def ::call-tool-response
   (s/and (s/or :error ::coercer/response-error
                :call-tool :call-tool-response/result)
