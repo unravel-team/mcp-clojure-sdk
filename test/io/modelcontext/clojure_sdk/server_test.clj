@@ -421,27 +421,26 @@
           invalid-server-info-missing-version {:name "test-server"}
           invalid-server-info-bad-type {:name 123, :version "1.0.0"}]
       (testing "Valid specification"
-        (is (nil? (server/validate-spec! (merge valid-server-info
-                                                {:tools [valid-tool],
-                                                 :prompts [valid-prompt],
-                                                 :resources [valid-resource]})))
+        (is (server/validate-spec! (merge valid-server-info
+                                          {:tools [valid-tool],
+                                           :prompts [valid-prompt],
+                                           :resources [valid-resource]}))
             "A completely valid spec should not throw"))
       (testing "Empty specification (requires server info)"
-        (is (nil? (server/validate-spec! valid-server-info))
+        (is (server/validate-spec! valid-server-info)
             "A spec with only server info should be valid")
-        (is (nil? (server/validate-spec!
-                    (merge valid-server-info
-                           {:tools [], :prompts [], :resources []})))
+        (is (server/validate-spec!
+              (merge valid-server-info {:tools [], :prompts [], :resources []}))
             "A spec with server info and empty lists should be valid"))
       (testing "Partially valid specification (requires server info)"
-        (is (nil? (server/validate-spec! (merge valid-server-info
-                                                {:tools [valid-tool]})))
+        (is (server/validate-spec! (merge valid-server-info
+                                          {:tools [valid-tool]}))
             "A spec with only valid tools should be valid")
-        (is (nil? (server/validate-spec! (merge valid-server-info
-                                                {:prompts [valid-prompt]})))
+        (is (server/validate-spec! (merge valid-server-info
+                                          {:prompts [valid-prompt]}))
             "A spec with only valid prompts should be valid")
-        (is (nil? (server/validate-spec! (merge valid-server-info
-                                                {:resources [valid-resource]})))
+        (is (server/validate-spec! (merge valid-server-info
+                                          {:resources [valid-resource]}))
             "A spec with only valid resources should be valid"))
       (testing "Invalid server info - missing name"
         (is (thrown? Exception
