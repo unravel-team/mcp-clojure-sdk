@@ -13,7 +13,7 @@
 ;; in the JSON-RPC spec.
 
 ;; Protocol constants
-(def latest-protocol-version "DRAFT-2025-v1")
+(def latest-protocol-version "DRAFT-2025-v2")
 (def stable-protocol-version "2024-11-05")
 
 ;;; Base Interface: Request
@@ -284,10 +284,14 @@
 (s/def :resource/description string?)
 ;; The MIME type of this resource, if known.
 (s/def :resource/mimeType string?)
+;; The size of the raw resource content, in bytes (i.e., before base64 encoding
+;; or any tokenization), if known. This can be used by Hosts to display file
+;; sizes and estimate context window usage.
+(s/def :resource/size number?)
 (s/def ::resource
   (s/merge ::annotated (s/keys :req-un [:resource/uri :resource/name]
-                               :opt-un [:resource/description
-                                        :resource/mimeType])))
+                               :opt-un [:resource/description :resource/mimeType
+                                        :resource/size])))
 
 ;;; Resource Template
 ;; A template description for resources available on the server.

@@ -21,7 +21,7 @@ export type JSONRPCBatchRequest = (JSONRPCRequest | JSONRPCNotification)[];
  */
 export type JSONRPCBatchResponse = (JSONRPCResponse | JSONRPCError)[];
 
-export const LATEST_PROTOCOL_VERSION = "2025-03-26";
+export const LATEST_PROTOCOL_VERSION = "DRAFT-2025-v2";
 export const JSONRPC_VERSION = "2.0";
 
 /**
@@ -473,6 +473,13 @@ export interface Resource {
    * Optional annotations for the client.
    */
   annotations?: Annotations;
+
+  /**
+   * The size of the raw resource content, in bytes (i.e., before base64 encoding or any tokenization), if known.
+   *
+   * This can be used by Hosts to display file sizes and estimate context window usage.
+   */
+  size?: number;
 }
 
 /**
