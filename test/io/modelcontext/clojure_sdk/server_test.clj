@@ -354,42 +354,39 @@
 (deftest coerce-tool-response-test
   (testing "Coercing tool responses"
     (testing "Tool with sequential response"
-      (let [tool {:name "list-maker"
-                  :description "Creates a list of items"
-                  :inputSchema {:type "object"
+      (let [tool {:name "list-maker",
+                  :description "Creates a list of items",
+                  :inputSchema {:type "object",
                                 :properties {"count" {:type "number"}}}}
-            handler-response [{:type "text" :text "item 1"}
-                              {:type "text" :text "item 2"}]
+            handler-response [{:type "text", :text "item 1"}
+                              {:type "text", :text "item 2"}]
             coerced (server/coerce-tool-response tool handler-response)]
-        (is (= {:content [{:type "text" :text "item 1"}
-                          {:type "text" :text "item 2"}]}
+        (is (= {:content [{:type "text", :text "item 1"}
+                          {:type "text", :text "item 2"}]}
                coerced))
-        (is (not (contains? coerced :structuredContent))
-            "Should not include structuredContent when tool has no outputSchema")))
-    
+        (is
+          (not (contains? coerced :structuredContent))
+          "Should not include structuredContent when tool has no outputSchema")))
     (testing "Tool with non-sequential response"
-      (let [tool {:name "echo"
-                  :description "Echoes input"
-                  :inputSchema {:type "object"
+      (let [tool {:name "echo",
+                  :description "Echoes input",
+                  :inputSchema {:type "object",
                                 :properties {"message" {:type "string"}}}}
-            handler-response {:type "text" :text "single item"}
+            handler-response {:type "text", :text "single item"}
             coerced (server/coerce-tool-response tool handler-response)]
-        (is (= {:content [{:type "text" :text "single item"}]}
-               coerced))
+        (is (= {:content [{:type "text", :text "single item"}]} coerced))
         (is (vector? (:content coerced))
             "Response should be wrapped in a vector")))
-    
     (testing "Tool with outputSchema"
-      (let [tool {:name "calculator"
-                  :description "Performs calculations"
-                  :inputSchema {:type "object"
-                                :properties {"expression" {:type "string"}}}
-                  :outputSchema {:type "object"
+      (let [tool {:name "calculator",
+                  :description "Performs calculations",
+                  :inputSchema {:type "object",
+                                :properties {"expression" {:type "string"}}},
+                  :outputSchema {:type "object",
                                  :properties {"result" {:type "number"}}}}
             handler-response {:result 42}
             coerced (server/coerce-tool-response tool handler-response)]
-        (is (= {:content [{:result 42}]
-                :structuredContent [{:result 42}]}
+        (is (= {:content [{:result 42}], :structuredContent [{:result 42}]}
                coerced))
         (is (contains? coerced :structuredContent)
             "Should include structuredContent when tool has outputSchema")))))
