@@ -769,6 +769,7 @@
         :get-prompt ::get-prompt-request
         :list-prompts ::list-prompts-request
         :list-resources ::list-resources-request
+        :list-resource-templates ::list-resource-templates-request
         :read-resource ::read-resource-request
         :subscribe ::resource-subscribe-unsubscribe-request
         :unsubscribe ::resource-subscribe-unsubscribe-request
@@ -805,6 +806,7 @@
         :get-prompt ::get-prompt-response
         :list-prompts ::list-prompts-response
         :list-resources ::list-resources-response
+        :list-resource-templates ::list-resource-templates-response
         :read-resource ::read-resource-response
         :call-tool ::call-tool-response
         :list-tools ::list-tools-response))

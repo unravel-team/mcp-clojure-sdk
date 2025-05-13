@@ -1269,6 +1269,7 @@ export type ClientRequest =
   | GetPromptRequest
   | ListPromptsRequest
   | ListResourcesRequest
+  | ListResourceTemplatesRequest
   | ReadResourceRequest
   | SubscribeRequest
   | UnsubscribeRequest
@@ -1304,6 +1305,7 @@ export type ServerResult =
   | CompleteResult
   | GetPromptResult
   | ListPromptsResult
+  | ListResourceTemplatesResult
   | ListResourcesResult
   | ReadResourceResult
   | CallToolResult
