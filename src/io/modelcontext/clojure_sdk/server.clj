@@ -50,7 +50,10 @@
   (log/debug :fn :handle-list-tools)
   {:tools (mapv :tool (vals @(:tools context)))})
 
-(defn- coerce-tool-response
+(defn coerce-tool-response
+  "Coerces a tool response into the expected format.
+   If the response is not sequential, wraps it in a vector.
+   If the tool has an outputSchema, adds structuredContent."
   [tool response]
   (let [response (if (sequential? response) (vec response) [response])
         base-map {:content response}]
