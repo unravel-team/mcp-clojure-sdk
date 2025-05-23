@@ -30,15 +30,25 @@
 
 ;;; Helper functions for handling various requests
 
+(defn store-client-info!
+  [context client-info client-capabilities]
+  (let [client-id (random-uuid)]
+    (swap! (:connected-clients context) assoc
+      client-id
+      {:client-info client-info, :capabilities client-capabilities})
+    client-id))
+
 (defn- handle-initialize
   [context params]
   (let [client-info (:clientInfo params)
-        _client-capabilities (:capabilities params)
+        client-capabilities (:capabilities params)
         server-info (:server-info context)
-        server-capabilities @(:capabilities context)]
+        server-capabilities @(:capabilities context)
+        client-id (store-client-info! context client-info client-capabilities)]
     (log/trace :fn :handle-initialize
-               :msg "[Initialize] Client connected"
-               :client client-info)
+               :msg "[Initialize] Client connected!"
+               :client-info client-info
+               :client-id client-id)
     {:protocolVersion specs/stable-protocol-version,
      :capabilities server-capabilities,
      :serverInfo server-info}))
@@ -300,32 +310,39 @@
 
 (defn register-tool!
   [context tool handler]
-  (swap! (:tools context) assoc (:name tool) {:tool tool, :handler handler})
-  context)
+  (swap! (:tools context) assoc (:name tool) {:tool tool, :handler handler}))
 
 (defn register-resource!
   [context resource handler]
   (swap! (:resources context) assoc
     (:uri resource)
-    {:resource resource, :handler handler})
-  context)
+    {:resource resource, :handler handler}))
 
 (defn register-prompt!
   [context prompt handler]
   (swap! (:prompts context) assoc
     (:name prompt)
-    {:prompt prompt, :handler handler})
-  context)
+    {:prompt prompt, :handler handler}))
 
 (defn- create-empty-context
   [name version]
-  (log/debug :fn :create-empty-context)
+  (log/trace :fn :create-empty-context)
+  ;; [tag: context_must_be_a_map]
+  ;;
+  ;; Since so much of the state is "global" in nature, it's tempting to
+  ;; just make the entire context global instead of defining atoms at each
+  ;; key. However, do not do this!
+  ;;
+  ;; This context is passed to lsp4j, which expects the data-structure to
+  ;; be `associative?` in nature and uses it further for it's own temporary
+  ;; state.
   {:server-info {:name name, :version version},
    :tools (atom {}),
    :resources (atom {}),
    :prompts (atom {}),
    :protocol (atom nil),
-   :capabilities (atom {:tools {}, :resources {}, :prompts {}})})
+   :capabilities (atom {:tools {}, :resources {}, :prompts {}}),
+   :connected-clients (atom {})})
 
 (defn create-context!
   "Create and configure an MCP server from a configuration map.
