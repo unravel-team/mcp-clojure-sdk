@@ -13,8 +13,22 @@
 ;; in the JSON-RPC spec.
 
 ;; Protocol constants
-(def latest-protocol-version "DRAFT-2025-v2")
-(def stable-protocol-version "2024-11-05")
+(def supported-protocol-versions ["2025-03-26" "2024-11-05"])
+;; [tag: version_negotiation]
+;;
+;; (From [[/specification/draft/basic/lifecycle.mdx::Version Negotiation]])
+;;
+;; In the `initialize` request, the client **MUST** send a protocol
+;; version it supports. This **SHOULD** be the _latest_ version supported
+;; by the client.
+;;
+;; If the server supports the requested protocol version, it **MUST**
+;; respond with the same version. Otherwise, the server **MUST** respond
+;; with another protocol version it supports. This **SHOULD** be the
+;; _latest_ version supported by the server.
+;;
+;; If the client does not support the version in the server's response,
+;; it **SHOULD** disconnect.
 
 ;;; Base Interface: Request
 ;; A progress token, used to associate progress notifications with the original

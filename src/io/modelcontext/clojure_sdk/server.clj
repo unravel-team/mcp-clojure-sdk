@@ -38,6 +38,14 @@
       {:client-info client-info, :capabilities client-capabilities})
     client-id))
 
+(defn- supported-protocol-version
+  "Return the version of MCP protocol as part of connection initialization."
+  [version]
+  ;; [ref: version_negotiation]
+  (if ((set specs/supported-protocol-versions) version)
+    version
+    (first specs/supported-protocol-versions)))
+
 (defn- handle-initialize
   [context params]
   (let [client-info (:clientInfo params)
@@ -49,7 +57,7 @@
                :msg "[Initialize] Client connected!"
                :client-info client-info
                :client-id client-id)
-    {:protocolVersion specs/stable-protocol-version,
+    {:protocolVersion (supported-protocol-version (:protocolVersion params)),
      :capabilities server-capabilities,
      :serverInfo server-info}))
 

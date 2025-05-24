@@ -127,7 +127,7 @@
       (is (get @(:tools context) "test-tool")))))
 
 (deftest initialization
-  (testing "Connection initialization through initialize"
+  (testing "Connection initialization through initialize, 2024-11-05 version"
     (let [context (server/create-context!
                     {:name "test-server", :version "1.0.0", :tools [tool-echo]})
           server (server/chan-server)
@@ -142,7 +142,47 @@
                        :clientInfo {:name "ExampleClient", :version "1.0.0"}}))
         (is (= (lsp.responses/response
                  1
-                 {:protocolVersion specs/stable-protocol-version,
+                 {:protocolVersion "2024-11-05",
+                  :capabilities {:tools {}, :resources {}, :prompts {}},
+                  :serverInfo {:name "test-server", :version "1.0.0"}})
+               (h/take-or-timeout (:output-ch server) 200))))
+      (lsp.server/shutdown server)))
+  (testing "Connection initialization through initialize, 2025-03-26 version"
+    (let [context (server/create-context!
+                    {:name "test-server", :version "1.0.0", :tools [tool-echo]})
+          server (server/chan-server)
+          _join (server/start! server context)]
+      (testing "Client initialization"
+        (async/put! (:input-ch server)
+                    (lsp.requests/request
+                      1
+                      "initialize"
+                      {:protocolVersion "2025-03-26",
+                       :capabilities {:roots {:listChanged true}, :sampling {}},
+                       :clientInfo {:name "ExampleClient", :version "1.0.0"}}))
+        (is (= (lsp.responses/response
+                 1
+                 {:protocolVersion "2025-03-26",
+                  :capabilities {:tools {}, :resources {}, :prompts {}},
+                  :serverInfo {:name "test-server", :version "1.0.0"}})
+               (h/take-or-timeout (:output-ch server) 200))))
+      (lsp.server/shutdown server)))
+  (testing "Connection initialization through initialize, unknown version"
+    (let [context (server/create-context!
+                    {:name "test-server", :version "1.0.0", :tools [tool-echo]})
+          server (server/chan-server)
+          _join (server/start! server context)]
+      (testing "Client initialization"
+        (async/put! (:input-ch server)
+                    (lsp.requests/request
+                      1
+                      "initialize"
+                      {:protocolVersion "DRAFT-2025-v2",
+                       :capabilities {:roots {:listChanged true}, :sampling {}},
+                       :clientInfo {:name "ExampleClient", :version "1.0.0"}}))
+        (is (= (lsp.responses/response
+                 1
+                 {:protocolVersion "2025-03-26",
                   :capabilities {:tools {}, :resources {}, :prompts {}},
                   :serverInfo {:name "test-server", :version "1.0.0"}})
                (h/take-or-timeout (:output-ch server) 200))))
