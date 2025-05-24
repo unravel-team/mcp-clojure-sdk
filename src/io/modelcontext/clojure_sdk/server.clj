@@ -57,7 +57,7 @@
 
 (defn- handle-list-tools
   [context _params]
-  (log/debug :fn :handle-list-tools)
+  (log/trace :fn :handle-list-tools)
   {:tools (mapv :tool (vals @(:tools context)))})
 
 (defn coerce-tool-response
@@ -72,7 +72,7 @@
 
 (defn- handle-call-tool
   [context params]
-  (log/debug :fn :handle-call-tool
+  (log/trace :fn :handle-call-tool
              :tool (:name params)
              :args (:arguments params))
   (let [tools @(:tools context)
@@ -89,12 +89,12 @@
 
 (defn- handle-list-resources
   [context _params]
-  (log/debug :fn :handle-list-resources)
+  (log/trace :fn :handle-list-resources)
   {:resources (mapv :resource (vals @(:resources context)))})
 
 (defn- handle-read-resource
   [context params]
-  (log/debug :fn :handle-read-resource :resource (:uri params))
+  (log/trace :fn :handle-read-resource :resource (:uri params))
   (let [resources @(:resources context)
         uri (:uri params)]
     (if-let [{:keys [handler]} (get resources uri)]
@@ -106,7 +106,7 @@
 
 (defn- handle-list-prompts
   [context _params]
-  (log/debug :fn :handle-list-prompts)
+  (log/trace :fn :handle-list-prompts)
   {:prompts (mapv :prompt (vals @(:prompts context)))})
 
 (defn- handle-get-prompt
