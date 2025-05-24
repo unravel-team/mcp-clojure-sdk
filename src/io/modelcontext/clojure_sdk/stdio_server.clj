@@ -37,6 +37,7 @@
                               :input-ch input-ch
                               :output-ch output-ch))))
 
+#_{:clj-kondo/ignore [:clojure-lsp/unused-public-var]}
 (defn run!
   [spec]
   (log/with-context {:server-id (:server-id spec)}

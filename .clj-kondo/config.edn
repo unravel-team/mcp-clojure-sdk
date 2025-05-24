@@ -1,3 +1,4 @@
 {:config-in-ns {me.vedang.logger.interface {:linters {:unused-binding {:level
                                                                        :off}}}},
- :exclude-files ".clj-kondo/*|vendors/*|examples/*"}
+ :exclude-files ".clj-kondo/*|vendors/*|examples/*",
+ :linters {:redundant-ignore {:exclude [:clojure-lsp/unused-public-var]}}}
