@@ -1,5 +1,5 @@
-{:deps {com.github.clojure-lsp/lsp4clj {:mvn/version "2.0.1",
-                                        #_#_:local/root "vendors/lsp4clj"},
+{:deps {com.github.clojure-lsp/jsonrpc4clj
+        {:mvn/version "1.0.2", #_#_:local/root "vendors/jsonrpc4clj"},
         dev.weavejester/medley {:mvn/version "1.9.0"},
         nubank/matcher-combinators {:mvn/version "3.9.2"},
         org.babashka/spec.alpha

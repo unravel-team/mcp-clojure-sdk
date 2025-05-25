@@ -4,7 +4,7 @@
             [deps-deploy.deps-deploy :as dd]))
 
 (def lib 'io.modelcontext/clojure-sdk)
-(def version (format "1.0.%s" (b/git-count-revs nil)))
+(def version (format "1.1.%s" (b/git-count-revs nil)))
 (def class-dir "target/classes")
 
 (defn test
