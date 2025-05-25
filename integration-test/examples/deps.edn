@@ -44,6 +44,6 @@
                       org.clojure/test.check {:mvn/version "1.1.1"}},
          :extra-paths ["test"]}},
  :deps {babashka/process {:mvn/version "0.5.22"},
-        io.modelcontextprotocol/mcp-clojure-sdk {:local/root "../"},
+        io.modelcontextprotocol/mcp-clojure-sdk {:local/root "../../"},
         org.clojure/clojure {:mvn/version "1.12.0"}},
  :paths ["src" "resources"]}

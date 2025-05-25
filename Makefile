@@ -183,12 +183,12 @@ deploy: build  ## Deploy to Clojars. needs `CLOJARS_USERNAME` and `CLOJARS_PASSW
 	clojure -T:build deploy
 
 clean-examples:
-	rm -rf examples/target
+	rm -rf integration-test/examples/target
 
 clean-sdk:
 	rm -rf target/
 
 clean: clean-examples clean-sdk
 
-examples-jar: examples/Makefile
-	$(MAKE) -C examples build
+examples-jar: integration-test/examples/Makefile
+	$(MAKE) -C integration-test/examples build
