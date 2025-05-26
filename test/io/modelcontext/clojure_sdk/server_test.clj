@@ -25,6 +25,7 @@
                  :required ["message"]},
    :handler (fn [{:keys [message]}] {:type "text", :text message})})
 
+
 ;;; Prompts
 (def prompt-analyze-code
   {:name "analyze-code",
@@ -78,6 +79,14 @@
    :handler
    (fn read-resource [uri]
      {:uri uri, :mimeType "text/plain", :text "Hello from Test File"})})
+
+;;; Example Server Spec
+(def example-server-spec
+  {:name "test-server",
+   :version "1.0.0",
+   :tools [tool-greet],
+   :prompts [],
+   :resources [resource-test-file]})
 
 ;;; Tests
 

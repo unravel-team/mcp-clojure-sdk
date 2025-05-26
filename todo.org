@@ -8,6 +8,39 @@ CLOSED: [2025-04-27 Sun 18:30]
 See:
 1. [[https://github.com/unravel-team/mcp-clojure-server-deps-new][mcp-clojure-server-deps-new]] for a ~deps-new~ based template
 2. [[https://github.com/unravel-team/example-cool-mcp-server][example-cool-mcp-server]] for a Github template project
+* WORKING Add client support to mcp-clojure-sdk
+:LOGBOOK:
+- State "WORKING"    from "TODO"       [2025-05-24 Sat 14:38]
+:END:
+** WORKING Add basic client support for the stdio transport, based on what python-sdk and typescript-sdk do
+:LOGBOOK:
+- State "WORKING"    from "TODO"       [2025-05-24 Sat 14:38]
+:END:
+:CLOCK:
+CLOCK: [2025-05-25 Sun 11:07]--[2025-05-25 Sun 11:41] =>  0:34
+CLOCK: [2025-05-24 Sat 14:38]--[2025-05-25 Sun 08:29] => 17:51
+:END:
+** WORKING Create an integration test for the current server code using such a client, based on clojure-lsp integration tests
+:LOGBOOK:
+- State "WORKING"    from "TODO"       [2025-05-25 Sun 11:41]
+:END:
+:CLOCK:
+CLOCK: [2025-05-25 Sun 11:41]--[2025-05-25 Sun 12:32] =>  0:51
+:END:
+- See:
+
+* TODO Update the README of mcp-clojure-sdk.
+Refer to typescript-sdk as a reference
+
+* TODO Write an example mcp-client-tool to run mcp-servers locally and list what they do/don't provide
+** TODO Support servers launched using npx/node
+** TODO Support servers launched using uv/python
+** TODO Support servers launched using java
+* TODO Add support for dynamic server capability negotiation
+* TODO Add support for the SSE / Streaming HTTP transport to mcp-clojure-sdk
+** TODO Add support for SSE transport
+** TODO Add support for Streaming HTTP transport
+
 * WORKING Implement the entire roots section of the protocol
 :LOGBOOK:
 - State "WORKING"    from "TODO"       [2025-05-03 Sat 16:38]
@@ -16,7 +49,6 @@ See:
 
 * TODO Add an integration test for end-to-end testing the server
 See ~integration.client~ from ~lsp4clj~ for inspiration
-* TODO Implement a Stdio-transport based Client
 * TODO Implement the HTTP-SSE Transport
 ** TODO Implement the SSE-transport based server
 ** TODO Implement the SSE-transport based client
@@ -28,14 +60,6 @@ Read through the python decorator code to double-check if we are doing the right
 ** TODO Implement best practices for resources
 ** TODO Ensure that error handling is correctly done for transports
 ** TODO Implement best practices for transports
-* TODO Add dynamic capability negotiation to the SDK
-:LOGBOOK:
-- State "TODO"       from              [2025-05-01 Thu 14:15]
-:END:
-- Currently, the SDK determines the capabilities of the project at start time, based on the tools, prompts, resources defined by the developer.
-- To make it more LSP like, we need dynamic capability negotiation.
-- Note that this is a low-priority item because I cannot even find LSP projects which use too much of dynamic capability negotiation
-
 * TODO Implement the entire sampling section of the protocol
 * TODO Create a CLI tool for how tools, prompts, resources should be defined
 1. Easily create new projects, in ~deps-new~ style
