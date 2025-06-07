@@ -3,7 +3,32 @@
             [clojure.test :as t]
             [medley.core :as medley]))
 
-(def namespaces [])
+(def servers
+  {:code-analysis
+   {"command" "java",
+    "args"
+    ["-Dclojure.tools.logging.factory=clojure.tools.logging.impl/log4j2-factory"
+     "-Dorg.eclipse.jetty.util.log.class=org.eclipse.jetty.util.log.Slf4jLog"
+     "-Dlog4j2.contextSelector=org.apache.logging.log4j.core.async.AsyncLoggerContextSelector"
+     "-Dlog4j2.configurationFile=log4j2-mcp.xml"
+     "-Dbabashka.json.provider=metosin/jsonista" "-Dlogging.level=INFO" "-cp"
+     "examples/target/io.modelcontextprotocol.clojure-sdk/examples-1.2.0.jar"
+     "code_analysis_server"]},
+   :vegalite
+   {"command" "java",
+    "args"
+    ["-Dclojure.tools.logging.factory=clojure.tools.logging.impl/log4j2-factory"
+     "-Dorg.eclipse.jetty.util.log.class=org.eclipse.jetty.util.log.Slf4jLog"
+     "-Dlog4j2.contextSelector=org.apache.logging.log4j.core.async.AsyncLoggerContextSelector"
+     "-Dlog4j2.configurationFile=log4j2-mcp.xml"
+     "-Dbabashka.json.provider=metosin/jsonista" "-Dlogging.level=INFO"
+     "-Dmcp.vegalite.vl_convert_executable=/Users/nejo/.cargo/bin/vl-convert"
+     "-cp"
+     "examples/target/io.modelcontextprotocol.clojure-sdk/examples-1.2.0.jar"
+     "vegalite_server"]}})
+
+(def namespaces
+  '[integration.tools-test integration.prompts-test integration.resources-test])
 
 (defn timeout
   [timeout-ms callback]
