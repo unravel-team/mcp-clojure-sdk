@@ -12,7 +12,8 @@
                 refactor-nrepl/refactor-nrepl {:mvn/version "3.11.0"}},
    :jvm-opts ["-Djdk.attach.allowAttachSelf"],
    :main-opts
-   ["-m" "nrepl.cmdline" "--interactive" "--color" "--middleware"
+   ["-m" "nrepl.cmdline" "--port" "7888" "--interactive" "--color"
+    "--middleware"
     "[cider.nrepl/cider-middleware,refactor-nrepl.middleware/wrap-refactor,portal.nrepl/wrap-portal]"]},
   :cider-storm
   {:classpath-overrides {org.clojure/clojure nil},
@@ -27,9 +28,11 @@
    ["-Dflowstorm.startRecording=false" "-Dclojure.storm.instrumentEnable=true"
     "-Dflowstorm.jarEditorCommand=emacsclient --eval '(let ((b (cider-find-file \"jar:file:<<JAR>>!/<<FILE>>\"))) (with-current-buffer b (switch-to-buffer b) (goto-char (point-min)) (forward-line (1- <<LINE>>))))'"
     "-Dflowstorm.fileEditorCommand=emacsclient -n +<<LINE>>:0 <<FILE>>"
-    "-Dclojure.storm.instrumentOnlyPrefixes=me.vedang., io.modelcontext.cljc-sdk."],
+    "-Dclojure.storm.instrumentOnlyPrefixes=me.vedang., io.modelcontext.clojure-sdk."
+    "-Djdk.attach.allowAttachSelf"],
    :main-opts
-   ["-m" "nrepl.cmdline" "--interactive" "--color" "--middleware"
+   ["-m" "nrepl.cmdline" "--port" "7888" "--interactive" "--color"
+    "--middleware"
     "[cider.nrepl/cider-middleware,refactor-nrepl.middleware/wrap-refactor,portal.nrepl/wrap-portal]"]},
   :logs-dev
   {:jvm-opts
