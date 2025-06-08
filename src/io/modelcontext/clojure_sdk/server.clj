@@ -6,7 +6,7 @@
             [jsonrpc4clj.server :as jsonrpc.server]
             [me.vedang.logger.interface :as log]))
 
-;;; Helpers
+;;; Helper functions
 ;; Logging and Spec Checking
 (defmacro conform-or-log
   "Provides log function for conformation, while preserving line numbers."
@@ -28,7 +28,7 @@
        ~spec
        ~value)))
 
-;;; Helper functions for handling various requests
+;;; Request Handlers
 
 (defn store-client-info!
   [context client-info client-capabilities]
@@ -133,7 +133,7 @@
           {:error (mcp.errors/body :prompt-not-found
                                    {:prompt-name prompt-name})}))))
 
-;;; Requests and Notifications
+;;; Protocol: Requests and Notifications
 
 ;; [ref: initialize_request]
 (defmethod jsonrpc.server/receive-request "initialize"
@@ -306,7 +306,7 @@
 ;; @TODO: Implement [ref: logging_message_notification] for when server wants
 ;; to send a logging message to the client.
 
-;;; Server Spec
+;;; Server Spec Implementation
 
 (defn validate-spec!
   [server-spec]
@@ -317,16 +317,71 @@
   server-spec)
 
 (defn register-tool!
+  "Register a tool against the MCP server.
+
+  Args:
+
+  - context: Map containing all state for the current server. See:
+  `create-empty-context`
+
+  - tool: Map defining the actual tool definition as understood by the
+  MCP spec. It contains the following keys:
+    :name         - The name of the tool
+    :description  - A description of what the tool does
+    :inputSchema  - JSON schema for the tool's input parameters
+                    {:type \"object\" :properties {...} :required [...]}
+                    See: [ref: tool_schema_definition]
+
+  - handler: The function that implements the tool's logic. Signature:
+     (fn [args-map] ... )
+       * arg-map      - map with string keys representing the mcp tool call args"
   [context tool handler]
   (swap! (:tools context) assoc (:name tool) {:tool tool, :handler handler}))
 
 (defn register-resource!
+  "Register a resource against the MCP server.
+
+  Args:
+
+  - context: Map containing all state for the current server. See:
+  `create-empty-context`
+
+  - resource: Map defining the actual resource definition as understood by the
+  MCP spec. It contains the following keys:
+    :uri          - The URI of the resource
+    :name         - The name of the resource
+    :description  - A description of what the resource does
+    :mimeType     - JSON schema for the resource's input parameters
+                    {:type \"object\" :properties {...} :required [...]}
+                    See: [ref: resource_schema_definition]
+
+  - handler: The function that implements the resource's logic. Signature:
+     (fn [uri] ... )
+       * uri      - the same value as registered as the resource URI"
   [context resource handler]
   (swap! (:resources context) assoc
     (:uri resource)
     {:resource resource, :handler handler}))
 
 (defn register-prompt!
+  "Register a prompt against the MCP server.
+
+  Args:
+
+  - context: Map containing all state for the current server. See:
+  `create-empty-context`
+
+  - prompt: Map defining the actual prompt definition as understood by the
+  MCP spec. It contains the following keys:
+    :name         - The name of the prompt
+    :description  - A description of what the prompt does
+    :arguments    - A vector of maps, each defining an argument:
+                    {:name \"arg-name\" :description \"...\" :required? true/false}
+                    See: [ref: prompt_schema_definition]
+
+  - handler: The function that implements the prompt's logic. Signature:
+     (fn [args-map] ... )
+       * arg-map      - map with string keys representing the mcp prompt call args"
   [context prompt handler]
   (swap! (:prompts context) assoc
     (:name prompt)
@@ -366,7 +421,10 @@
                :handler (fn [args] ...)}]
     :resources [{:uri \"resource-uri\"
                  :type \"text\"
-                 :handler (fn [uri] ...)}]}"
+                 :handler (fn [uri] ...)}]}
+
+  For more details, see the doc-strings of `register-tool!`,
+  `register-prompt!` and `register-resource!`."
   [{:keys [name version tools prompts resources], :as spec}]
   (validate-spec! spec)
   (log/with-context {:action :create-context!}

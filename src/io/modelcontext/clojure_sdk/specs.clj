@@ -318,6 +318,8 @@
 ;; or any tokenization), if known. This can be used by Hosts to display file
 ;; sizes and estimate context window usage.
 (s/def :resource/size number?)
+
+;; [tag: resource_schema_definition]
 (s/def ::resource
   (s/merge ::annotated (s/keys :req-un [:resource/uri :resource/name]
                                :opt-un [:resource/description :resource/mimeType
@@ -385,6 +387,8 @@
 (s/def :prompt/name string?)
 (s/def :prompt/description string?)
 (s/def :prompt/arguments (s/coll-of ::prompt-argument))
+
+;; [tag: prompt_schema_definition]
 (s/def ::prompt
   (s/keys :req-un [:prompt/name]
           :opt-un [:prompt/description :prompt/arguments]))
@@ -539,6 +543,7 @@
                           ;; over from inputSchema to keep it
                           ;; consistent
   (s/keys :req-un [:schema/type] :opt-un [:tool/properties]))
+;; [tag: tool_schema_definition]
 (s/def ::tool
   (s/keys :req-un [:tool/name :tool/inputSchema]
           :opt-un [:tool/description :tool/outputSchema]))
