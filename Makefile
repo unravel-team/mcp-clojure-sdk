@@ -2,7 +2,7 @@
 
 HOME := $(shell echo $$HOME)
 HERE := $(shell echo $$PWD)
-CLOJURE_SOURCES := $(shell find . -name '**.clj' -not -path './.clj-kondo/*')
+CLOJURE_SOURCES := $(shell find . -name '**.clj' -not -path './.clj-kondo/*' -not -path './vendors/*')
 
 # Set bash instead of sh for the @if [[ conditions,
 # and use the usual safety flags:

@@ -3,7 +3,6 @@
             [clojure.test :refer [deftest is testing]]
             [io.modelcontext.clojure-sdk.mcp.errors :as mcp.errors]
             [io.modelcontext.clojure-sdk.server :as server]
-            [io.modelcontext.clojure-sdk.specs :as specs]
             [io.modelcontext.clojure-sdk.test-helper :as h]
             [lsp4clj.lsp.requests :as lsp.requests]
             [lsp4clj.lsp.responses :as lsp.responses]
