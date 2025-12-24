@@ -52,3 +52,4 @@ projects/**/pom.xml
 
 # Tempfiles for easy reference
 vendors/
+doc/plans/

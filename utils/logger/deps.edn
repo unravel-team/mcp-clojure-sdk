@@ -13,27 +13,27 @@
     "-Dlog4j2.configurationFile=log4j2-prod.xml" "-Dlogging.level=INFO"]},
   :test {:extra-deps {io.github.cognitect-labs/test-runner {:git/sha "dfb30dd",
                                                             :git/tag "v0.5.1"},
-                      org.clojure/test.check {:mvn/version "1.1.1"}},
+                      org.clojure/test.check {:mvn/version "1.1.2"}},
          :extra-paths ["test"]}},
  :deps {;;; Logging setup is a complex art. Here are the steps as I
         ;;; understand them at the moment, to set up Log4J2 as the logging
         ;;; backend with proper log library conflict resolution.
         ;; Use log4j2 as the primary logging library
-        org.apache.logging.log4j/log4j-api {:mvn/version "2.24.3"},
-        org.apache.logging.log4j/log4j-core {:mvn/version "2.24.3"},
+        org.apache.logging.log4j/log4j-api {:mvn/version "2.25.3"},
+        org.apache.logging.log4j/log4j-core {:mvn/version "2.25.3"},
         ;; Needed for logging from inside javax.servlet
-        org.apache.logging.log4j/log4j-web {:mvn/version "2.24.3"},
+        org.apache.logging.log4j/log4j-web {:mvn/version "2.25.3"},
         ;; Use pedestal.log as the primary clojure facade. On
         ;; Babashka, we use taoensso.timbre (which is built-in)
         ;; instead of pedestal.log. [tag: babashka_logging]
-        io.pedestal/pedestal.log {:mvn/version "0.7.2"},
+        io.pedestal/pedestal.log {:mvn/version "0.8.1"},
         ;; Use jsonista.core to format log as json. On Babashka, we
         ;; use Cheshire, which is built-in. babashka.json makes the
         ;; choice transparently. [tag: babashka_json]
         metosin/jsonista {:mvn/version "0.3.13"},
         org.babashka/json {:mvn/version "0.1.6"},
         ;; Use SLF4j as the primary facade for gathering all logs.
-        org.apache.logging.log4j/log4j-slf4j2-impl {:mvn/version "2.24.3"},
+        org.apache.logging.log4j/log4j-slf4j2-impl {:mvn/version "2.25.3"},
         org.slf4j/slf4j-api {:mvn/version "2.0.17"},
         ;; Use LMAX Disruptor to enable Async Logging
         com.lmax/disruptor {:mvn/version "4.0.0"},
