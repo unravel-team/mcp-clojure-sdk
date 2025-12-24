@@ -8,7 +8,7 @@ CLOJURE_SOURCES := $(shell find . -name '**.clj' -not -path './.clj-kondo/*')
 # and use the usual safety flags:
 SHELL = /bin/bash -Eeu
 
-.DEFAULT_GOAL := repl
+.DEFAULT_GOAL := help
 
 help:    ## A brief explanation of everything you can do
 	@awk '/^[a-zA-Z0-9_-]+:.*##/ { \
@@ -149,7 +149,7 @@ check-zprint:
 check: check-tagref check-cljkondo check-zprint    ## Check that the code is well linted and well formatted
 	@echo "All checks passed!"
 
-format:
+format:   ## Format the code using zprint
 	zprint -lfw $(CLOJURE_SOURCES)
 
 test-coverage:
