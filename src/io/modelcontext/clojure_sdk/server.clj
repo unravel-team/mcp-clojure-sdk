@@ -2,8 +2,8 @@
   (:require [clojure.core.async :as async]
             [io.modelcontext.clojure-sdk.mcp.errors :as mcp.errors]
             [io.modelcontext.clojure-sdk.specs :as specs]
-            [lsp4clj.coercer :as coercer]
-            [lsp4clj.server :as lsp.server]
+            [jsonrpc4clj.coercer :as coercer]
+            [jsonrpc4clj.server :as jsonrpc.server]
             [me.vedang.logger.interface :as log]))
 
 ;;; Helpers
@@ -136,7 +136,7 @@
 ;;; Requests and Notifications
 
 ;; [ref: initialize_request]
-(defmethod lsp.server/receive-request "initialize"
+(defmethod jsonrpc.server/receive-request "initialize"
   [_ context params]
   (log/trace :fn :receive-request :method "initialize" :params params)
   ;; [tag: log_bad_input_params]
@@ -150,12 +150,12 @@
        (conform-or-log ::specs/initialize-response)))
 
 ;; [ref: initialized_notification]
-(defmethod lsp.server/receive-notification "notifications/initialized"
+(defmethod jsonrpc.server/receive-notification "notifications/initialized"
   [_ _ params]
   (conform-or-log ::specs/initialized-notification params))
 
 ;; [ref: ping_request]
-(defmethod lsp.server/receive-request "ping"
+(defmethod jsonrpc.server/receive-request "ping"
   [_ context params]
   (log/trace :fn :receive-request :method "ping" :params params)
   ;; [ref: log_bad_input_params]
@@ -164,7 +164,7 @@
        (handle-ping context)))
 
 ;; [ref: list_tools_request]
-(defmethod lsp.server/receive-request "tools/list"
+(defmethod jsonrpc.server/receive-request "tools/list"
   [_ context params]
   (log/trace :fn :receive-request :method "tools/list" :params params)
   ;; [ref: log_bad_input_params]
@@ -174,7 +174,7 @@
        (conform-or-log ::specs/list-tools-response)))
 
 ;; [ref: call_tool_request]
-(defmethod lsp.server/receive-request "tools/call"
+(defmethod jsonrpc.server/receive-request "tools/call"
   [_ context params]
   (log/trace :fn :receive-request :method "tools/call" :params params)
   ;; [ref: log_bad_input_params]
@@ -184,7 +184,7 @@
        (conform-or-log ::specs/call-tool-response)))
 
 ;; [ref: list_resources_request]
-(defmethod lsp.server/receive-request "resources/list"
+(defmethod jsonrpc.server/receive-request "resources/list"
   [_ context params]
   (log/trace :fn :receive-request :method "resources/list" :params params)
   ;; [ref: log_bad_input_params]
@@ -194,7 +194,7 @@
        (conform-or-log ::specs/list-resources-response)))
 
 ;; [ref: read_resource_request]
-(defmethod lsp.server/receive-request "resources/read"
+(defmethod jsonrpc.server/receive-request "resources/read"
   [_ context params]
   (log/trace :fn :receive-request :method "resources/read" :params params)
   ;; [ref: log_bad_input_params]
@@ -204,7 +204,7 @@
        (conform-or-log ::specs/read-resource-response)))
 
 ;; [ref: list_prompts_request]
-(defmethod lsp.server/receive-request "prompts/list"
+(defmethod jsonrpc.server/receive-request "prompts/list"
   [_ context params]
   (log/trace :fn :receive-request :method "prompts/list" :params params)
   ;; [ref: log_bad_input_params]
@@ -214,7 +214,7 @@
        (conform-or-log ::specs/list-prompts-response)))
 
 ;; [ref: get_prompt_request]
-(defmethod lsp.server/receive-request "prompts/get"
+(defmethod jsonrpc.server/receive-request "prompts/get"
   [_ context params]
   (log/trace :fn :receive-request :method "prompts/get" :params params)
   ;; [ref: log_bad_input_params]
@@ -226,7 +226,7 @@
 ;;; @TODO: Requests to Implement
 
 ;; [ref: list_resource_templates_request]
-(defmethod lsp.server/receive-request "resources/templates/list"
+(defmethod jsonrpc.server/receive-request "resources/templates/list"
   [_ _context params]
   (log/trace :fn :receive-request
              :method "resources/templates/list"
@@ -234,59 +234,59 @@
   ;; [ref: log_bad_input_params]
   (conform-or-log ::specs/list-resource-templates-request params)
   (identity ::specs/list-resource-templates-response)
-  ::lsp.server/method-not-found)
+  ::jsonrpc.server/method-not-found)
 
 ;; [ref: resource_subscribe_unsubscribe_request]
-(defmethod lsp.server/receive-request "resources/subscribe"
+(defmethod jsonrpc.server/receive-request "resources/subscribe"
   [_ _context params]
   (log/trace :fn :receive-request :method "resources/subscribe" :params params)
   ;; [ref: log_bad_input_params]
   (conform-or-log ::specs/resource-subscribe-unsubscribe-request params)
-  ::lsp.server/method-not-found)
+  ::jsonrpc.server/method-not-found)
 
 ;; [ref: resource_subscribe_unsubscribe_request]
-(defmethod lsp.server/receive-request "resources/unsubscribe"
+(defmethod jsonrpc.server/receive-request "resources/unsubscribe"
   [_ _context params]
   (log/trace :fn :receive-request
              :method "resources/unsubscribe"
              :params params)
   ;; [ref: log_bad_input_params]
   (conform-or-log ::specs/resource-subscribe-unsubscribe-request params)
-  ::lsp.server/method-not-found)
+  ::jsonrpc.server/method-not-found)
 
 ;; [ref: set_logging_level_request]
-(defmethod lsp.server/receive-request "logging/setLevel"
+(defmethod jsonrpc.server/receive-request "logging/setLevel"
   [_ _context params]
   (log/trace :fn :receive-request :method "logging/setLevel" :params params)
   ;; [ref: log_bad_input_params]
   (conform-or-log ::specs/set-logging-level-request params)
-  ::lsp.server/method-not-found)
+  ::jsonrpc.server/method-not-found)
 
 ;; [ref: complete_request]
-(defmethod lsp.server/receive-request "completion/complete"
+(defmethod jsonrpc.server/receive-request "completion/complete"
   [_ _context params]
   (log/trace :fn :receive-request :method "completion/complete" :params params)
   ;; [ref: log_bad_input_params]
   (conform-or-log ::specs/complete-request params)
   (identity ::specs/complete-response)
-  ::lsp.server/method-not-found)
+  ::jsonrpc.server/method-not-found)
 
 ;;; @TODO: Notifications to Implement
 
 ;; [ref: cancelled_notification]
-(defmethod lsp.server/receive-notification "notifications/cancelled"
+(defmethod jsonrpc.server/receive-notification "notifications/cancelled"
   [_method _context _params]
   (identity ::specs/cancelled-notification)
-  ::lsp.server/method-not-found)
+  ::jsonrpc.server/method-not-found)
 
 ;; @TODO: Implement send-notification "notifications/cancelled" when request is
 ;; cancelled
 
 ;; [ref: progress_notification]
-(defmethod lsp.server/receive-notification "notifications/progress"
+(defmethod jsonrpc.server/receive-notification "notifications/progress"
   [_method _context _params]
   (identity ::specs/progress-notification)
-  ::lsp.server/method-not-found)
+  ::jsonrpc.server/method-not-found)
 
 ;; @TODO: Implement send-notification "notifications/progress" for long-lived
 ;; requests
@@ -396,10 +396,10 @@
 (defn start!
   [server context]
   (log/info :msg "[SERVER] Starting server...")
-  (lsp.server/start server context))
+  (jsonrpc.server/start server context))
 
 (defn chan-server
   []
   (let [input-ch (async/chan 3)
         output-ch (async/chan 3)]
-    (lsp.server/chan-server {:output-ch output-ch, :input-ch input-ch})))
+    (jsonrpc.server/chan-server {:output-ch output-ch, :input-ch input-ch})))

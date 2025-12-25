@@ -4,9 +4,9 @@
             [io.modelcontext.clojure-sdk.mcp.errors :as mcp.errors]
             [io.modelcontext.clojure-sdk.server :as server]
             [io.modelcontext.clojure-sdk.test-helper :as h]
-            [lsp4clj.lsp.requests :as lsp.requests]
-            [lsp4clj.lsp.responses :as lsp.responses]
-            [lsp4clj.server :as lsp.server]))
+            [jsonrpc4clj.requests :as jsonrpc.requests]
+            [jsonrpc4clj.responses :as jsonrpc.responses]
+            [jsonrpc4clj.server :as jsonrpc.server]))
 
 ;;; Tools
 (def tool-greet
@@ -142,19 +142,19 @@
           _join (server/start! server context)]
       (testing "Client initialization"
         (async/put! (:input-ch server)
-                    (lsp.requests/request
+                    (jsonrpc.requests/request
                       1
                       "initialize"
                       {:protocolVersion "2024-11-05",
                        :capabilities {:roots {:listChanged true}, :sampling {}},
                        :clientInfo {:name "ExampleClient", :version "1.0.0"}}))
-        (is (= (lsp.responses/response
+        (is (= (jsonrpc.responses/response
                  1
                  {:protocolVersion "2024-11-05",
                   :capabilities {:tools {}, :resources {}, :prompts {}},
                   :serverInfo {:name "test-server", :version "1.0.0"}})
                (h/take-or-timeout (:output-ch server) 200))))
-      (lsp.server/shutdown server)))
+      (jsonrpc.server/shutdown server)))
   (testing "Connection initialization through initialize, 2025-03-26 version"
     (let [context (server/create-context!
                     {:name "test-server", :version "1.0.0", :tools [tool-echo]})
@@ -162,19 +162,19 @@
           _join (server/start! server context)]
       (testing "Client initialization"
         (async/put! (:input-ch server)
-                    (lsp.requests/request
+                    (jsonrpc.requests/request
                       1
                       "initialize"
                       {:protocolVersion "2025-03-26",
                        :capabilities {:roots {:listChanged true}, :sampling {}},
                        :clientInfo {:name "ExampleClient", :version "1.0.0"}}))
-        (is (= (lsp.responses/response
+        (is (= (jsonrpc.responses/response
                  1
                  {:protocolVersion "2025-03-26",
                   :capabilities {:tools {}, :resources {}, :prompts {}},
                   :serverInfo {:name "test-server", :version "1.0.0"}})
                (h/take-or-timeout (:output-ch server) 200))))
-      (lsp.server/shutdown server)))
+      (jsonrpc.server/shutdown server)))
   (testing "Connection initialization through initialize, unknown version"
     (let [context (server/create-context!
                     {:name "test-server", :version "1.0.0", :tools [tool-echo]})
@@ -182,19 +182,19 @@
           _join (server/start! server context)]
       (testing "Client initialization"
         (async/put! (:input-ch server)
-                    (lsp.requests/request
+                    (jsonrpc.requests/request
                       1
                       "initialize"
                       {:protocolVersion "DRAFT-2025-v2",
                        :capabilities {:roots {:listChanged true}, :sampling {}},
                        :clientInfo {:name "ExampleClient", :version "1.0.0"}}))
-        (is (= (lsp.responses/response
+        (is (= (jsonrpc.responses/response
                  1
                  {:protocolVersion "2025-03-26",
                   :capabilities {:tools {}, :resources {}, :prompts {}},
                   :serverInfo {:name "test-server", :version "1.0.0"}})
                (h/take-or-timeout (:output-ch server) 200))))
-      (lsp.server/shutdown server))))
+      (jsonrpc.server/shutdown server))))
 
 (deftest tool-execution
   (testing "Tool execution through protocol"
@@ -203,34 +203,35 @@
           server (server/chan-server)
           _join (server/start! server context)]
       (testing "Tool list request"
-        (async/put! (:input-ch server) (lsp.requests/request 1 "tools/list" {}))
-        (is (= (lsp.responses/response 1
-                                       {:tools [{:name "echo",
-                                                 :description "Echo input",
-                                                 :inputSchema
-                                                 {:type "object",
-                                                  :properties
-                                                  {"message" {:type "string"}},
-                                                  :required ["message"]}}]})
+        (async/put! (:input-ch server)
+                    (jsonrpc.requests/request 1 "tools/list" {}))
+        (is (= (jsonrpc.responses/response
+                 1
+                 {:tools [{:name "echo",
+                           :description "Echo input",
+                           :inputSchema {:type "object",
+                                         :properties {"message" {:type
+                                                                 "string"}},
+                                         :required ["message"]}}]})
                (h/assert-take (:output-ch server)))))
       (testing "Tool execution request"
         (async/put! (:input-ch server)
-                    (lsp.requests/request 2
-                                          "tools/call"
-                                          {:name "echo",
-                                           :arguments {:message "test"}}))
-        (is (= (lsp.responses/response 2
-                                       {:content [{:type "text",
-                                                   :text "test"}]})
+                    (jsonrpc.requests/request 2
+                                              "tools/call"
+                                              {:name "echo",
+                                               :arguments {:message "test"}}))
+        (is (= (jsonrpc.responses/response 2
+                                           {:content [{:type "text",
+                                                       :text "test"}]})
                (h/assert-take (:output-ch server)))))
       (testing "Invalid tool request"
         (async/put! (:input-ch server)
-                    (lsp.requests/request 3 "tools/call" {:name "invalid"}))
-        (is (= (lsp.responses/error (lsp.responses/response 3)
-                                    (mcp.errors/body :tool-not-found
-                                                     {:tool-name "invalid"}))
+                    (jsonrpc.requests/request 3 "tools/call" {:name "invalid"}))
+        (is (= (jsonrpc.responses/error
+                 (jsonrpc.responses/response 3)
+                 (mcp.errors/body :tool-not-found {:tool-name "invalid"}))
                (h/assert-take (:output-ch server)))))
-      (lsp.server/shutdown server))))
+      (jsonrpc.server/shutdown server))))
 
 (deftest prompt-listing
   (testing "Listing available prompts"
@@ -243,7 +244,7 @@
           _join (server/start! server context)]
       (testing "Prompts list request"
         (async/put! (:input-ch server)
-                    (lsp.requests/request 1 "prompts/list" {}))
+                    (jsonrpc.requests/request 1 "prompts/list" {}))
         (let [response (h/assert-take (:output-ch server))]
           (is (= 2 (count (:prompts (:result response)))))
           (let [analyze (first (:prompts (:result response)))
@@ -271,7 +272,7 @@
                   :description "The code to write poetry about",
                   :required true}]
                 (:arguments poem))))))
-      (lsp.server/shutdown server))))
+      (jsonrpc.server/shutdown server))))
 
 (deftest prompt-getting
   (testing "Getting specific prompts"
@@ -284,11 +285,12 @@
           _join (server/start! server context)]
       (testing "Get analyze-code prompt"
         (async/put! (:input-ch server)
-                    (lsp.requests/request 1
-                                          "prompts/get"
-                                          {:name "analyze-code",
-                                           :arguments {:language "Clojure",
-                                                       :code "(defn foo [])"}}))
+                    (jsonrpc.requests/request 1
+                                              "prompts/get"
+                                              {:name "analyze-code",
+                                               :arguments {:language "Clojure",
+                                                           :code
+                                                           "(defn foo [])"}}))
         (let [response (h/assert-take (:output-ch server))
               result (:result response)]
           (is (= 1 (count (:messages result))))
@@ -302,11 +304,12 @@
                   :text)))))
       (testing "Get poem-about-code prompt"
         (async/put! (:input-ch server)
-                    (lsp.requests/request 2
-                                          "prompts/get"
-                                          {:name "poem-about-code",
-                                           :arguments {:poetry_type "haiku",
-                                                       :code "(defn foo [])"}}))
+                    (jsonrpc.requests/request 2
+                                              "prompts/get"
+                                              {:name "poem-about-code",
+                                               :arguments {:poetry_type "haiku",
+                                                           :code
+                                                           "(defn foo [])"}}))
         (let [response (h/assert-take (:output-ch server))
               result (:result response)]
           (is (= 1 (count (:messages result))))
@@ -319,13 +322,13 @@
       (testing "Invalid prompt request"
         (async/put!
           (:input-ch server)
-          (lsp.requests/request 3 "prompts/get" {:name "invalid-prompt"}))
-        (is (= (lsp.responses/error (lsp.responses/response 3)
-                                    (mcp.errors/body :prompt-not-found
-                                                     {:prompt-name
-                                                      "invalid-prompt"}))
+          (jsonrpc.requests/request 3 "prompts/get" {:name "invalid-prompt"}))
+        (is (= (jsonrpc.responses/error (jsonrpc.responses/response 3)
+                                        (mcp.errors/body :prompt-not-found
+                                                         {:prompt-name
+                                                          "invalid-prompt"}))
                (h/assert-take (:output-ch server)))))
-      (lsp.server/shutdown server))))
+      (jsonrpc.server/shutdown server))))
 
 (deftest resource-listing
   (testing "Listing available resources"
@@ -339,7 +342,7 @@
           _join (server/start! server context)]
       (testing "Resources list request"
         (async/put! (:input-ch server)
-                    (lsp.requests/request 1 "resources/list" {}))
+                    (jsonrpc.requests/request 1 "resources/list" {}))
         (let [response (h/assert-take (:output-ch server))
               result (:result response)]
           (is (= 2 (count (:resources result))))
@@ -353,7 +356,7 @@
             (is (= "Test Data" (:name json-resource)))
             (is (= "Test JSON data" (:description json-resource)))
             (is (= "application/json" (:mimeType json-resource)))))
-        (lsp.server/shutdown server)))))
+        (jsonrpc.server/shutdown server)))))
 
 (deftest resource-reading
   (testing "Reading resources"
@@ -366,9 +369,10 @@
                                                        resource-test-json]})
           _join (server/start! server context)]
       (testing "Read text file resource"
-        (async/put!
-          (:input-ch server)
-          (lsp.requests/request 2 "resources/read" {:uri "file:///test.txt"}))
+        (async/put! (:input-ch server)
+                    (jsonrpc.requests/request 2
+                                              "resources/read"
+                                              {:uri "file:///test.txt"}))
         (let [response (h/assert-take (:output-ch server))
               result (:result response)]
           (is (= 1 (count (:contents result))))
@@ -377,9 +381,10 @@
             (is (= "text/plain" (:mimeType content)))
             (is (contains? content :text)))))
       (testing "Read JSON resource"
-        (async/put!
-          (:input-ch server)
-          (lsp.requests/request 3 "resources/read" {:uri "file:///data.json"}))
+        (async/put! (:input-ch server)
+                    (jsonrpc.requests/request 3
+                                              "resources/read"
+                                              {:uri "file:///data.json"}))
         (let [response (h/assert-take (:output-ch server))
               result (:result response)]
           (is (= 1 (count (:contents result))))
@@ -389,15 +394,15 @@
             (is (contains? content :blob)))))
       (testing "Invalid resource request"
         (async/put! (:input-ch server)
-                    (lsp.requests/request 4
-                                          "resources/read"
+                    (jsonrpc.requests/request 4
+                                              "resources/read"
+                                              {:uri "file:///invalid.txt"}))
+        (is (= (jsonrpc.responses/error (jsonrpc.responses/response 4)
+                                        (mcp.errors/body
+                                          :resource-not-found
                                           {:uri "file:///invalid.txt"}))
-        (is (= (lsp.responses/error (lsp.responses/response 4)
-                                    (mcp.errors/body :resource-not-found
-                                                     {:uri
-                                                      "file:///invalid.txt"}))
                (h/assert-take (:output-ch server)))))
-      (lsp.server/shutdown server))))
+      (jsonrpc.server/shutdown server))))
 
 (deftest coerce-tool-response-test
   (testing "Coercing tool responses"

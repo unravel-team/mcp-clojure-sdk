@@ -1,11 +1,27 @@
 (ns io.modelcontext.clojure-sdk.specs
   (:require [clojure.spec.alpha :as s]
-            [lsp4clj.coercer :as coercer]))
+            #_{:clj-kondo/ignore [:unused-namespace]}
+            [jsonrpc4clj.coercer :as coercer]
+            [jsonrpc4clj.errors :as jsonrpc.errors]))
 
-;; [tag: reuse_lsp4clj_coercer]
+;; [tag: reuse_jsonrpc4clj_coercer]
 ;;
-;; This file heavily reuses specs defined in the `lsp4clj.coercer` namespace.
-;; If you don't find the definition of a spec in this ns, check the coercer ns.
+;; This file heavily reuses specs defined in the `jsonrpc4clj.coercer`
+;; namespace. If you don't find the definition of a spec in this ns,
+;; check the coercer ns.
+
+;; Error Response: copied over from lsp4clj, since jsonrpc4clj seems
+;; to have removed this.
+(s/def ::error
+  (s/keys :req-un [:error/code :error/message] :opt-un [:error/data]))
+
+(s/def ::response-error
+  (s/and (s/keys :req-un [::error])
+         (s/conformer
+           (fn [resp]
+             (update resp
+                     :error (fn [{:keys [code message data]}]
+                              (jsonrpc.errors/body code message data)))))))
 
 ;; JSON-RPC types
 ;; Refer to `::coercer/json-rpc.input` to see all the possible inputs as
@@ -49,10 +65,10 @@
 (s/def :json-rpc.message/params (s/keys :opt-un [:json-rpc.message/_meta]))
 
 ;;; Base interface: Notification
-;; [ref: reuse_lsp4clj_coercer]
+;; [ref: reuse_jsonrpc4clj_coercer]
 
 ;;; Base interface: Result
-;; [ref: reuse_lsp4clj_coercer]
+;; [ref: reuse_jsonrpc4clj_coercer]
 ;; _meta: This result property is reserved by the protocol to allow clients and
 ;; servers to attach additional metadata to their responses.
 (s/def :json-rpc.message/result (s/keys :opt-un [:json-rpc.message/_meta]))
@@ -118,7 +134,7 @@
           ;; to the system prompt.
           :opt-un [:initialize-response/instructions]))
 (s/def ::initialize-response
-  (s/and (s/or :error ::coercer/response-error
+  (s/and (s/or :error ::response-error
                :initialize :initialize-response/result)
          (s/conformer second)))
 
@@ -214,7 +230,7 @@
   (s/merge ::paginated-response
              (s/keys :req-un [:list-resources-response/resources])))
 (s/def ::list-resources-response
-  (s/and (s/or :error ::coercer/response-error
+  (s/and (s/or :error ::response-error
                :list-resources :list-resources-response/result)
          (s/conformer second)))
 
@@ -230,7 +246,7 @@
              (s/keys :req-un
                        [:list-resource-templates-response/resourceTemplates])))
 (s/def ::list-resource-templates-response
-  (s/and (s/or :error ::coercer/response-error
+  (s/and (s/or :error ::response-error
                :list-resource-templates
                  :list-resource-templates-response/result)
          (s/conformer second)))
@@ -249,7 +265,7 @@
 (s/def :read-resource-response/result
   (s/keys :req-un [:read-resource-response/contents]))
 (s/def ::read-resource-response
-  (s/and (s/or :error ::coercer/response-error
+  (s/and (s/or :error ::response-error
                :read-resource :read-resource-response/result)
          (s/conformer second)))
 
@@ -345,7 +361,7 @@
   (s/merge ::paginated-response (s/keys :req-un
                                           [:list-prompts-response/prompts])))
 (s/def ::list-prompts-response
-  (s/and (s/or :error ::coercer/response-error
+  (s/and (s/or :error ::response-error
                :list-prompts :list-prompts-response/result)
          (s/conformer second)))
 
@@ -361,7 +377,7 @@
   (s/keys :req-un [:get-prompt-response/messages]
           :opt-un [:prompt/description]))
 (s/def ::get-prompt-response
-  (s/and (s/or :error ::coercer/response-error
+  (s/and (s/or :error ::response-error
                :get-prompt :get-prompt-response/result)
          (s/conformer second)))
 
@@ -434,7 +450,7 @@
 (s/def :list-tools-response/result
   (s/merge ::paginated-response (s/keys :req-un [:list-tools-response/tools])))
 (s/def ::list-tools-response
-  (s/and (s/or :error ::coercer/response-error
+  (s/and (s/or :error ::response-error
                :list-tools :list-tools-response/result)
          (s/conformer second)))
 
@@ -496,7 +512,7 @@
          (s/conformer second)))
 
 (s/def ::call-tool-response
-  (s/and (s/or :error ::coercer/response-error
+  (s/and (s/or :error ::response-error
                :call-tool :call-tool-response/result)
          (s/conformer second)))
 
@@ -725,7 +741,7 @@
 (s/def :complete-response/result
   (s/keys :req-un [:complete-response/completion]))
 (s/def ::complete-response
-  (s/and (s/or :error ::coercer/response-error
+  (s/and (s/or :error ::response-error
                :complete :complete-response/result)
          (s/conformer second)))
 
@@ -755,7 +771,7 @@
   (s/keys :req-un [:list-roots-response/roots]))
 
 (s/def ::list-roots-response
-  (s/and (s/or :error ::coercer/response-error
+  (s/and (s/or :error ::response-error
                :list-roots :list-roots-response/result)
          (s/conformer second)))
 

@@ -2,7 +2,7 @@
   (:require [clojure.core.async :as async]
             [io.modelcontext.clojure-sdk.server :as core]
             [io.modelcontext.clojure-sdk.io-chan :as mcp.io-chan]
-            [lsp4clj.server :as lsp.server]
+            [jsonrpc4clj.server :as jsonrpc.server]
             [me.vedang.logger.interface :as log])
   (:refer-clojure :exclude [run!]))
 
@@ -20,7 +20,7 @@
   (let [context (assoc (core/create-context! spec) :server server)]
     (log/info :msg "[STDIO SERVER] Starting server...")
     (monitor-server-logs (:log-ch server))
-    (lsp.server/start server context)))
+    (jsonrpc.server/start server context)))
 
 ;;;; Create server
 
@@ -31,11 +31,11 @@
         out (or out System/out)
         input-ch (mcp.io-chan/input-stream->input-chan in)
         output-ch (mcp.io-chan/output-stream->output-chan out)]
-    (lsp.server/chan-server (assoc opts
-                              :in in
-                              :out out
-                              :input-ch input-ch
-                              :output-ch output-ch))))
+    (jsonrpc.server/chan-server (assoc opts
+                                  :in in
+                                  :out out
+                                  :input-ch input-ch
+                                  :output-ch output-ch))))
 
 #_{:clj-kondo/ignore [:clojure-lsp/unused-public-var]}
 (defn run!
