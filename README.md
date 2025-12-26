@@ -35,7 +35,7 @@ The deps for `clojure-sdk` are:
 ```clojure
 {io.modelcontextprotocol/mcp-clojure-sdk
  {:git/url "https://github.com/unravel-team/mcp-clojure-sdk.git"
-  :git/sha "039cf220ac6bb3858f71e823016035e257a5380d"}}
+  :git/sha "d42474c5f66b6f5ad1e4d6ce2a4e8972640fb831"}}
 ```
 
 ### Templates for Quickstart
@@ -347,11 +347,12 @@ clojars.org by default.
 ## Inspiration
 
 This SDK is built on top of
-[lsp4clj](https://github.com/clojure-lsp/lsp4clj), which solves the
-hard part of handling all the edge-cases of a JSON-RPC based server. I
-built this layer by hand and discovered all the edge-cases before
-realising that `lsp4clj` was the smarter approach. The code is super
-well written and easy to modify for my requirements.
+[jsonrpc4clj](https://github.com/clojure-lsp/jsonrpc4clj), which
+solves the hard part of handling all the edge-cases of a JSON-RPC
+based server. I built this layer by hand and discovered all the
+edge-cases before realising that `jsonrpc4clj` was the smarter
+approach. The code is super well written and easy to modify for my
+requirements.
 
 ## License
 
