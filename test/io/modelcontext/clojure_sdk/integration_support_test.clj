@@ -14,14 +14,12 @@
         uri (helper/file->uri file)
         roundtrip (helper/uri->file uri)]
     (is (.exists roundtrip))
-    (is (= (.getCanonicalPath file)
-           (.getCanonicalPath roundtrip)))))
+    (is (= (.getCanonicalPath file) (.getCanonicalPath roundtrip)))))
 
 (deftest fixture-initialize-request
   (let [[method params] (fixture/initialize-request)]
     (is (= "initialize" method))
-    (is (= (first specs/supported-protocol-versions)
-           (:protocolVersion params)))
+    (is (= (first specs/supported-protocol-versions) (:protocolVersion params)))
     (is (= "mcp-clojure-sdk-integration-test"
            (get-in params [:clientInfo :name])))))
 
