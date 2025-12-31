@@ -15,30 +15,27 @@
 (defn- initial-state
   "Create the initial state for a new client."
   [client-info opts]
-  {:client-info client-info
-   :server-info nil
-   :server-capabilities nil
-   :protocol-version nil
-   :initialized? false
-   :roots (or (:roots opts) [])
-   :subscriptions #{}
-   :on-progress (:on-progress opts)
-   :on-log (:on-log opts)
-   :on-resource-updated (:on-resource-updated opts)
-   :on-resource-list-changed (:on-resource-list-changed opts)
-   :on-tool-list-changed (:on-tool-list-changed opts)
-   :on-prompt-list-changed (:on-prompt-list-changed opts)
+  {:client-info client-info,
+   :server-info nil,
+   :server-capabilities nil,
+   :protocol-version nil,
+   :initialized? false,
+   :roots (or (:roots opts) []),
+   :subscriptions #{},
+   :on-progress (:on-progress opts),
+   :on-log (:on-log opts),
+   :on-resource-updated (:on-resource-updated opts),
+   :on-resource-list-changed (:on-resource-list-changed opts),
+   :on-tool-list-changed (:on-tool-list-changed opts),
+   :on-prompt-list-changed (:on-prompt-list-changed opts),
    :sampling-handler (:sampling-handler opts)})
 
 (defn- get-client-capabilities
   "Build the client capabilities map based on configured options."
   [state]
   (cond-> {}
-    (seq (:roots state))
-    (assoc :roots {:listChanged true})
-
-    (:sampling-handler state)
-    (assoc :sampling {})))
+    (seq (:roots state)) (assoc :roots {:listChanged true})
+    (:sampling-handler state) (assoc :sampling {})))
 
 ;;; ============================================================================
 ;;; Spec Validation Helpers
@@ -72,11 +69,11 @@
   "Create a new MCP client."
   [client-info & {:as opts}]
   (log/trace :fn :create-client :client-info client-info)
-  {:state (atom (initial-state client-info opts))
-   :endpoint nil
-   :process nil
-   :input-ch nil
-   :output-ch nil
+  {:state (atom (initial-state client-info opts)),
+   :endpoint nil,
+   :process nil,
+   :input-ch nil,
+   :output-ch nil,
    :log-ch nil})
 
 ;;; ============================================================================
@@ -88,14 +85,13 @@
   [client input-ch output-ch]
   (log/trace :fn :connect!)
   (let [log-ch (async/chan (async/sliding-buffer 20))
-        endpoint (jsonrpc.server/chan-server {:input-ch input-ch
-                                              :output-ch output-ch
-                                              :log-ch log-ch})]
+        endpoint (jsonrpc.server/chan-server
+                   {:input-ch input-ch, :output-ch output-ch, :log-ch log-ch})]
     (assoc client
-           :endpoint endpoint
-           :input-ch input-ch
-           :output-ch output-ch
-           :log-ch log-ch)))
+      :endpoint endpoint
+      :input-ch input-ch
+      :output-ch output-ch
+      :log-ch log-ch)))
 
 (defn- monitor-client-logs
   [log-ch]
@@ -115,10 +111,8 @@
   "Shutdown the client connection."
   [client]
   (log/trace :fn :shutdown!)
-  (when-let [process (:process client)]
-    (.destroy ^Process process))
-  (when-let [endpoint (:endpoint client)]
-    (jsonrpc.server/shutdown endpoint)))
+  (when-let [process (:process client)] (.destroy ^Process process))
+  (when-let [endpoint (:endpoint client)] (jsonrpc.server/shutdown endpoint)))
 
 ;;; ============================================================================
 ;;; MCP Protocol: Initialization
@@ -129,8 +123,8 @@
   [client]
   (log/trace :fn :initialize!)
   (let [state @(:state client)
-        params {:protocolVersion (first specs/supported-protocol-versions)
-                :capabilities (get-client-capabilities state)
+        params {:protocolVersion (first specs/supported-protocol-versions),
+                :capabilities (get-client-capabilities state),
                 :clientInfo (:client-info state)}]
     (conform-or-log ::specs/initialize-request params)
     (jsonrpc.server/send-request (:endpoint client) "initialize" params)))
@@ -139,17 +133,18 @@
   "Process the result of an initialize request, updating client state."
   [client result]
   (swap! (:state client) assoc
-         :server-info (:serverInfo result)
-         :server-capabilities (:capabilities result)
-         :protocol-version (:protocolVersion result))
+    :server-info (:serverInfo result)
+    :server-capabilities (:capabilities result)
+    :protocol-version (:protocolVersion result))
   result)
 
 (defn initialized!
   "Send the initialized notification to the server."
   [client]
   (log/trace :fn :initialized!)
-  (jsonrpc.server/send-notification
-    (:endpoint client) "notifications/initialized" {})
+  (jsonrpc.server/send-notification (:endpoint client)
+                                    "notifications/initialized"
+                                    {})
   (swap! (:state client) assoc :initialized? true)
   nil)
 
@@ -178,8 +173,7 @@
   "Call a tool on the server."
   [client name arguments]
   (log/trace :fn :call-tool! :name name :arguments arguments)
-  (let [params (cond-> {:name name}
-                 arguments (assoc :arguments arguments))]
+  (let [params (cond-> {:name name} arguments (assoc :arguments arguments))]
     (conform-or-log ::specs/call-tool-request params)
     (jsonrpc.server/send-request (:endpoint client) "tools/call" params)))
 
@@ -199,8 +193,9 @@
   [client & {:keys [cursor]}]
   (log/trace :fn :list-resource-templates! :cursor cursor)
   (let [params (cond-> {} cursor (assoc :cursor cursor))]
-    (jsonrpc.server/send-request
-      (:endpoint client) "resources/templates/list" params)))
+    (jsonrpc.server/send-request (:endpoint client)
+                                 "resources/templates/list"
+                                 params)))
 
 (defn read-resource!
   "Read a resource from the server."
@@ -213,16 +208,18 @@
   [client uri]
   (log/trace :fn :subscribe! :uri uri)
   (swap! (:state client) update :subscriptions conj uri)
-  (jsonrpc.server/send-request
-    (:endpoint client) "resources/subscribe" {:uri uri}))
+  (jsonrpc.server/send-request (:endpoint client)
+                               "resources/subscribe"
+                               {:uri uri}))
 
 (defn unsubscribe!
   "Unsubscribe from updates for a resource."
   [client uri]
   (log/trace :fn :unsubscribe! :uri uri)
   (swap! (:state client) update :subscriptions disj uri)
-  (jsonrpc.server/send-request
-    (:endpoint client) "resources/unsubscribe" {:uri uri}))
+  (jsonrpc.server/send-request (:endpoint client)
+                               "resources/unsubscribe"
+                               {:uri uri}))
 
 ;;; ============================================================================
 ;;; MCP Protocol: Prompts
@@ -239,8 +236,7 @@
   "Get a prompt from the server."
   [client name & {:keys [arguments]}]
   (log/trace :fn :get-prompt! :name name :arguments arguments)
-  (let [params (cond-> {:name name}
-                 arguments (assoc :arguments arguments))]
+  (let [params (cond-> {:name name} arguments (assoc :arguments arguments))]
     (conform-or-log ::specs/get-prompt-request params)
     (jsonrpc.server/send-request (:endpoint client) "prompts/get" params)))
 
@@ -252,17 +248,20 @@
   "Request completion suggestions from the server."
   [client ref argument-name argument-value]
   (log/trace :fn :complete! :ref ref :arg-name argument-name)
-  (let [params {:ref ref
-                :argument {:name argument-name :value argument-value}}]
+  (let [params {:ref ref,
+                :argument {:name argument-name, :value argument-value}}]
     (conform-or-log ::specs/complete-request params)
-    (jsonrpc.server/send-request (:endpoint client) "completion/complete" params)))
+    (jsonrpc.server/send-request (:endpoint client)
+                                 "completion/complete"
+                                 params)))
 
 (defn set-logging-level!
   "Set the logging level for server messages."
   [client level]
   (log/trace :fn :set-logging-level! :level level)
-  (jsonrpc.server/send-request
-    (:endpoint client) "logging/setLevel" {:level level}))
+  (jsonrpc.server/send-request (:endpoint client)
+                               "logging/setLevel"
+                               {:level level}))
 
 ;;; ============================================================================
 ;;; Client Notifications (Client -> Server)
@@ -272,17 +271,18 @@
   "Send a cancellation notification for a request."
   [client request-id & {:keys [reason]}]
   (log/trace :fn :notify-cancelled! :request-id request-id)
-  (let [params (cond-> {:requestId request-id}
-                 reason (assoc :reason reason))]
-    (jsonrpc.server/send-notification
-      (:endpoint client) "notifications/cancelled" params)))
+  (let [params (cond-> {:requestId request-id} reason (assoc :reason reason))]
+    (jsonrpc.server/send-notification (:endpoint client)
+                                      "notifications/cancelled"
+                                      params)))
 
 (defn notify-roots-list-changed!
   "Notify the server that the roots list has changed."
   [client]
   (log/trace :fn :notify-roots-list-changed!)
-  (jsonrpc.server/send-notification
-    (:endpoint client) "notifications/roots/list_changed" {}))
+  (jsonrpc.server/send-notification (:endpoint client)
+                                    "notifications/roots/list_changed"
+                                    {}))
 
 ;;; ============================================================================
 ;;; Server-Initiated Request Handlers
@@ -297,28 +297,24 @@
 (defmethod jsonrpc.server/receive-request "roots/list"
   [_method {:keys [client]} params]
   (if client
-    (do
-      (log/trace :fn :client-receive-request :method "roots/list")
-      (conform-or-log ::specs/list-roots-request params)
-      {:roots (:roots @(:state client))})
+    (do (log/trace :fn :client-receive-request :method "roots/list")
+        (conform-or-log ::specs/list-roots-request params)
+        {:roots (:roots @(:state client))})
     ::jsonrpc.server/method-not-found))
 
 (defmethod jsonrpc.server/receive-request "sampling/createMessage"
   [_method {:keys [client]} params]
   (if client
-    (do
-      (log/trace :fn :client-receive-request :method "sampling/createMessage")
-      (conform-or-log ::specs/sampling-create-message-request params)
-      (if-let [handler (:sampling-handler @(:state client))]
-        (try
-          (handler params)
-          (catch Exception e
-            (log/error :fn :sampling-handler :ex e)
-            {:error {:code -32603
-                     :message (str "Sampling handler error: "
-                                   (.getMessage e))}}))
-        {:error {:code -32601
-                 :message "Client does not support sampling"}}))
+    (do (log/trace :fn :client-receive-request :method "sampling/createMessage")
+        (conform-or-log ::specs/sampling-create-message-request params)
+        (if-let [handler (:sampling-handler @(:state client))]
+          (try (handler params)
+               (catch Exception e
+                 (log/error :fn :sampling-handler :ex e)
+                 {:error {:code -32603,
+                          :message (str "Sampling handler error: "
+                                        (.getMessage e))}}))
+          {:error {:code -32601, :message "Client does not support sampling"}}))
     ::jsonrpc.server/method-not-found))
 
 ;;; ============================================================================
@@ -328,76 +324,74 @@
 (defmethod jsonrpc.server/receive-notification "notifications/cancelled"
   [_method {:keys [client]} params]
   (if client
-    (do
-      (conform-or-log ::specs/cancelled-notification params)
-      (log/trace :fn :client-receive-notification
-                 :method "notifications/cancelled"
-                 :request-id (:requestId params)))
+    (do (conform-or-log ::specs/cancelled-notification params)
+        (log/trace :fn :client-receive-notification
+                   :method "notifications/cancelled"
+                   :request-id (:requestId params)))
     ::jsonrpc.server/method-not-found))
 
 (defmethod jsonrpc.server/receive-notification "notifications/progress"
   [_method {:keys [client]} params]
   (if client
-    (do
-      (conform-or-log ::specs/progress-notification params)
-      (log/trace :fn :client-receive-notification :method "notifications/progress")
-      (when-let [on-progress (:on-progress @(:state client))]
-        (on-progress (:progressToken params)
-                     (:progress params)
-                     (:total params)
-                     (:message params))))
+    (do (conform-or-log ::specs/progress-notification params)
+        (log/trace :fn :client-receive-notification
+                   :method "notifications/progress")
+        (when-let [on-progress (:on-progress @(:state client))]
+          (on-progress (:progressToken params)
+                       (:progress params)
+                       (:total params)
+                       (:message params))))
     ::jsonrpc.server/method-not-found))
 
 (defmethod jsonrpc.server/receive-notification "notifications/message"
   [_method {:keys [client]} params]
   (if client
-    (do
-      (conform-or-log ::specs/logging-message-notification params)
-      (log/trace :fn :client-receive-notification :method "notifications/message")
-      (when-let [on-log (:on-log @(:state client))]
-        (on-log (:level params) (:logger params) (:data params))))
+    (do (conform-or-log ::specs/logging-message-notification params)
+        (log/trace :fn :client-receive-notification
+                   :method "notifications/message")
+        (when-let [on-log (:on-log @(:state client))]
+          (on-log (:level params) (:logger params) (:data params))))
     ::jsonrpc.server/method-not-found))
 
 (defmethod jsonrpc.server/receive-notification "notifications/resources/updated"
   [_method {:keys [client]} params]
   (if client
-    (do
-      (conform-or-log ::specs/resource-updated-notification params)
-      (log/trace :fn :client-receive-notification
-                 :method "notifications/resources/updated"
-                 :uri (:uri params))
-      (when-let [on-resource-updated (:on-resource-updated @(:state client))]
-        (on-resource-updated (:uri params))))
+    (do (conform-or-log ::specs/resource-updated-notification params)
+        (log/trace :fn :client-receive-notification
+                   :method "notifications/resources/updated"
+                   :uri (:uri params))
+        (when-let [on-resource-updated (:on-resource-updated @(:state client))]
+          (on-resource-updated (:uri params))))
     ::jsonrpc.server/method-not-found))
 
-(defmethod jsonrpc.server/receive-notification "notifications/resources/list_changed"
+(defmethod jsonrpc.server/receive-notification
+  "notifications/resources/list_changed"
   [_method {:keys [client]} _params]
   (if client
-    (do
-      (log/trace :fn :client-receive-notification
-                 :method "notifications/resources/list_changed")
-      (when-let [callback (:on-resource-list-changed @(:state client))]
-        (callback)))
+    (do (log/trace :fn :client-receive-notification
+                   :method "notifications/resources/list_changed")
+        (when-let [callback (:on-resource-list-changed @(:state client))]
+          (callback)))
     ::jsonrpc.server/method-not-found))
 
-(defmethod jsonrpc.server/receive-notification "notifications/tools/list_changed"
+(defmethod jsonrpc.server/receive-notification
+  "notifications/tools/list_changed"
   [_method {:keys [client]} _params]
   (if client
-    (do
-      (log/trace :fn :client-receive-notification
-                 :method "notifications/tools/list_changed")
-      (when-let [callback (:on-tool-list-changed @(:state client))]
-        (callback)))
+    (do (log/trace :fn :client-receive-notification
+                   :method "notifications/tools/list_changed")
+        (when-let [callback (:on-tool-list-changed @(:state client))]
+          (callback)))
     ::jsonrpc.server/method-not-found))
 
-(defmethod jsonrpc.server/receive-notification "notifications/prompts/list_changed"
+(defmethod jsonrpc.server/receive-notification
+  "notifications/prompts/list_changed"
   [_method {:keys [client]} _params]
   (if client
-    (do
-      (log/trace :fn :client-receive-notification
-                 :method "notifications/prompts/list_changed")
-      (when-let [callback (:on-prompt-list-changed @(:state client))]
-        (callback)))
+    (do (log/trace :fn :client-receive-notification
+                   :method "notifications/prompts/list_changed")
+        (when-let [callback (:on-prompt-list-changed @(:state client))]
+          (callback)))
     ::jsonrpc.server/method-not-found))
 
 ;;; ============================================================================

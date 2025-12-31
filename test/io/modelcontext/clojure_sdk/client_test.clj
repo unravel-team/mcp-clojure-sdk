@@ -12,9 +12,7 @@
                  :required ["message"]},
    :handler (fn [{:keys [message]}] {:type "text", :text message})})
 
-(defn- await-result
-  [pending]
-  (client/deref-or-cancel pending 2000 ::timeout))
+(defn- await-result [pending] (client/deref-or-cancel pending 2000 ::timeout))
 
 (defn- connect-client-server
   [server-spec client-opts]
@@ -22,12 +20,11 @@
         context (server/create-context! server-spec)
         _server-join (server/start! server context)
         client (-> (apply client/create-client
-                          {:name "test-client" :version "1.0.0"}
+                          {:name "test-client", :version "1.0.0"}
                           (mapcat identity client-opts))
                    (client/connect! (:output-ch server) (:input-ch server)))
         _client-join (client/start! client)]
-    {:server server
-     :client client}))
+    {:server server, :client client}))
 
 (defn- initialize-client!
   [client]
@@ -39,10 +36,8 @@
 
 (defn- shutdown!
   [{:keys [client server]}]
-  (when client
-    (client/shutdown! client))
-  (when server
-    (jsonrpc.server/shutdown server)))
+  (when client (client/shutdown! client))
+  (when server (jsonrpc.server/shutdown server)))
 
 (deftest client-initialize-and-list-tools
   (testing "Client initialization and tool listing"
@@ -52,19 +47,17 @@
                        :prompts [],
                        :resources []}
           connection (connect-client-server server-spec {})]
-      (try
-        (let [init-result (initialize-client! (:client connection))]
-          (is (not= ::timeout init-result))
-          (is (= "test-server" (get-in init-result [:serverInfo :name])))
-          (is (= "test-server"
-                 (get-in (client/server-info (:client connection)) [:name])))
-          (is (true? (client/initialized? (:client connection)))))
-        (let [tools-result (await-result
-                             (client/list-tools! (:client connection)))]
-          (is (not= ::timeout tools-result))
-          (is (= ["echo"] (mapv :name (:tools tools-result)))))
-        (finally
-          (shutdown! connection))))))
+      (try (let [init-result (initialize-client! (:client connection))]
+             (is (not= ::timeout init-result))
+             (is (= "test-server" (get-in init-result [:serverInfo :name])))
+             (is (= "test-server"
+                    (get-in (client/server-info (:client connection)) [:name])))
+             (is (true? (client/initialized? (:client connection)))))
+           (let [tools-result (await-result (client/list-tools! (:client
+                                                                  connection)))]
+             (is (not= ::timeout tools-result))
+             (is (= ["echo"] (mapv :name (:tools tools-result)))))
+           (finally (shutdown! connection))))))
 
 (deftest client-responds-to-roots-list
   (testing "Server-initiated roots/list request"
@@ -75,16 +68,15 @@
                        :resources []}
           roots [{:uri "file:///tmp", :name "Temp"}]
           connection (connect-client-server server-spec {:roots roots})]
-      (try
-        (let [init-result (initialize-client! (:client connection))]
-          (is (not= ::timeout init-result)))
-        (let [pending (jsonrpc.server/send-request
-                        (:server connection) "roots/list" {})
-              result (await-result pending)]
-          (is (not= ::timeout result))
-          (is (= roots (:roots result))))
-        (finally
-          (shutdown! connection))))))
+      (try (let [init-result (initialize-client! (:client connection))]
+             (is (not= ::timeout init-result)))
+           (let [pending (jsonrpc.server/send-request (:server connection)
+                                                      "roots/list"
+                                                      {})
+                 result (await-result pending)]
+             (is (not= ::timeout result))
+             (is (= roots (:roots result))))
+           (finally (shutdown! connection))))))
 
 (deftest client-responds-to-sampling-request
   (testing "Server-initiated sampling request"
@@ -94,19 +86,18 @@
                        :prompts [],
                        :resources []}
           sampling-handler (fn [_params] {:model "test-model"})
-          connection (connect-client-server
-                       server-spec
-                       {:sampling-handler sampling-handler})]
-      (try
-        (let [init-result (initialize-client! (:client connection))]
-          (is (not= ::timeout init-result)))
-        (let [params {:messages [{:role "user"
-                                  :content {:type "text" :text "Hi"}}]
-                      :maxTokens 10}
-              pending (jsonrpc.server/send-request
-                        (:server connection) "sampling/createMessage" params)
-              result (await-result pending)]
-          (is (not= ::timeout result))
-          (is (= "test-model" (:model result))))
-        (finally
-          (shutdown! connection))))))
+          connection (connect-client-server server-spec
+                                            {:sampling-handler
+                                             sampling-handler})]
+      (try (let [init-result (initialize-client! (:client connection))]
+             (is (not= ::timeout init-result)))
+           (let [params {:messages [{:role "user",
+                                     :content {:type "text", :text "Hi"}}],
+                         :maxTokens 10}
+                 pending (jsonrpc.server/send-request (:server connection)
+                                                      "sampling/createMessage"
+                                                      params)
+                 result (await-result pending)]
+             (is (not= ::timeout result))
+             (is (= "test-model" (:model result))))
+           (finally (shutdown! connection))))))
