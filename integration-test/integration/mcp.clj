@@ -8,15 +8,29 @@
 (def ^:dynamic *mock-mcp-process* nil)
 (def ^:dynamic *mock-client* nil)
 
+(defn- resolve-command
+  [command]
+  (let [file (io/file command)]
+    (if (.exists file) (.getCanonicalPath file) command)))
+
+(defn- command-from-cli
+  []
+  (when (empty? *command-line-args*)
+    (throw (ex-info "Missing server command" {})))
+  {:command (first *command-line-args*)
+   :args (vec (rest *command-line-args*))})
+
 (defn start-server
-  ([binary] (start-server binary []))
-  ([binary args]
-   (p/process (into [(.getCanonicalPath (io/file binary))] args)
+  ([command] (start-server command []))
+  ([command args]
+   (p/process (into [(resolve-command command)] args)
               {:dir "integration-test/examples/"})))
 
 (defn start-process!
-  []
-  (let [server (start-server (first *command-line-args*))
+  ([] (let [{:keys [command args]} (command-from-cli)]
+        (start-process! command args)))
+  ([command args]
+   (let [server (start-server command args)
         client (client/client (:in server) (:out server))]
     (client/start client nil)
     (async/go-loop []
@@ -24,13 +38,15 @@
         (println log)
         (recur)))
     (alter-var-root #'*mock-mcp-process* (constantly server))
-    (alter-var-root #'*mock-client* (constantly client))))
+    (alter-var-root #'*mock-client* (constantly client)))))
 
 (defn cli!
-  [& args]
-  (let [server (start-server (first *command-line-args*) args)]
-    (alter-var-root #'*mock-mcp-process* (constantly server))
-    (io/reader (:out server))))
+  ([] (let [{:keys [command args]} (command-from-cli)]
+        (cli! command args)))
+  ([command args]
+   (let [server (start-server command args)]
+     (alter-var-root #'*mock-mcp-process* (constantly server))
+     (io/reader (:out server)))))
 
 (defn clean!
   []
