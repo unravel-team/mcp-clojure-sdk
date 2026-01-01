@@ -136,10 +136,9 @@
    :name "Math Constants",
    :description "Common math constants",
    :mimeType "application/json",
-   :handler (fn [uri]
-              {:uri uri,
-               :mimeType "application/json",
-               :text "{\"pi\":3.14159}"})})
+   :handler
+   (fn [uri]
+     {:uri uri, :mimeType "application/json", :text "{\"pi\":3.14159}"})})
 
 (def calculator-server-spec
   {:name "calculator",

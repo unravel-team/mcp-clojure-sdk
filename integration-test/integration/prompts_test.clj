@@ -1,9 +1,8 @@
 (ns integration.prompts-test
-  (:require
-   [clojure.string :as string]
-   [clojure.test :refer [deftest is testing]]
-   [integration.fixture :as fixture]
-   [integration.mcp :as mcp]))
+  (:require [clojure.string :as string]
+            [clojure.test :refer [deftest is testing]]
+            [integration.fixture :as fixture]
+            [integration.mcp :as mcp]))
 
 (mcp/clean-after-test)
 
@@ -22,11 +21,9 @@
         (let [prompts-response (mcp/request! (fixture/list-prompts-request))
               prompt-names (set (map :name (:prompts prompts-response)))]
           (is (= #{"analyze-code" "poem-about-code"} prompt-names)))
-        (let [prompt-response (mcp/request!
-                                (fixture/get-prompt-request
-                                  "analyze-code"
-                                  {:language "Clojure"
-                                   :code "(+ 1 2)"}))
-              text (get-in prompt-response
-                           [:messages 0 :content :text])]
+        (let [prompt-response (mcp/request! (fixture/get-prompt-request
+                                              "analyze-code"
+                                              {:language "Clojure",
+                                               :code "(+ 1 2)"}))
+              text (get-in prompt-response [:messages 0 :content :text])]
           (is (string/includes? text "Analysis of Clojure")))))))

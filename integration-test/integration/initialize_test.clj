@@ -1,8 +1,7 @@
 (ns integration.initialize-test
-  (:require
-   [clojure.test :refer [deftest is testing]]
-   [integration.fixture :as fixture]
-   [integration.mcp :as mcp]))
+  (:require [clojure.test :refer [deftest is testing]]
+            [integration.fixture :as fixture]
+            [integration.mcp :as mcp]))
 
 (mcp/clean-after-test)
 

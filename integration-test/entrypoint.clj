@@ -28,9 +28,7 @@
      "vegalite_server"]}})
 
 (def namespaces
-  '[integration.initialize-test
-    integration.tools-test
-    integration.prompts-test
+  '[integration.initialize-test integration.tools-test integration.prompts-test
     integration.resources-test])
 
 (defn timeout

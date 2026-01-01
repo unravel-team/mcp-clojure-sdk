@@ -1,8 +1,7 @@
 (ns integration.resources-test
-  (:require
-   [clojure.test :refer [deftest is testing]]
-   [integration.fixture :as fixture]
-   [integration.mcp :as mcp]))
+  (:require [clojure.test :refer [deftest is testing]]
+            [integration.fixture :as fixture]
+            [integration.mcp :as mcp]))
 
 (mcp/clean-after-test)
 
@@ -21,10 +20,11 @@
         (let [resources-response (mcp/request! (fixture/list-resources-request))
               resource-uris (set (map :uri (:resources resources-response)))]
           (is (contains? resource-uris "resource://constants")))
-        (let [read-response (mcp/request!
-                              (fixture/read-resource-request
-                                "resource://constants"))
-              content (-> read-response :contents first)]
+        (let [read-response (mcp/request! (fixture/read-resource-request
+                                            "resource://constants"))
+              content (-> read-response
+                          :contents
+                          first)]
           (is (= "resource://constants" (:uri content)))
           (is (= "application/json" (:mimeType content)))
           (is (= "{\"pi\":3.14159}" (:text content))))))))

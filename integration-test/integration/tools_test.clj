@@ -1,21 +1,13 @@
 (ns integration.tools-test
-  (:require
-   [clojure.test :refer [deftest is testing]]
-   [integration.fixture :as fixture]
-   [integration.mcp :as mcp]))
+  (:require [clojure.test :refer [deftest is testing]]
+            [integration.fixture :as fixture]
+            [integration.mcp :as mcp]))
 
 (mcp/clean-after-test)
 
 (def tools-by-server
-  {"calculator" #{"add"
-                  "subtract"
-                  "multiply"
-                  "divide"
-                  "power"
-                  "square-root"
-                  "sum-array"
-                  "average"
-                  "factorial"}
+  {"calculator" #{"add" "subtract" "multiply" "divide" "power" "square-root"
+                  "sum-array" "average" "factorial"},
    "vegalite" #{"save-data" "visualize-data"}})
 
 (defn- initialize!
@@ -35,16 +27,21 @@
               tool-names (set (map :name (:tools tools-response)))]
           (is (= expected-tools tool-names)))
         (case server-name
-          "calculator"
-          (let [result (mcp/request! (fixture/call-tool-request "add"
-                                                               {:a 1 :b 2}))]
-            (is (= "3" (-> result :content first :text))))
-
-          "vegalite"
-          (let [result (mcp/request! (fixture/call-tool-request
-                                       "save-data"
-                                       {:name "sample"
-                                        :data [{:x 1 :y 2}]}))]
-            (is (= "Data saved to table 'sample'"
-                   (-> result :content first :text))))
+          "calculator" (let [result (mcp/request! (fixture/call-tool-request
+                                                    "add"
+                                                    {:a 1, :b 2}))]
+                         (is (= "3"
+                                (-> result
+                                    :content
+                                    first
+                                    :text))))
+          "vegalite" (let [result (mcp/request! (fixture/call-tool-request
+                                                  "save-data"
+                                                  {:name "sample",
+                                                   :data [{:x 1, :y 2}]}))]
+                       (is (= "Data saved to table 'sample'"
+                              (-> result
+                                  :content
+                                  first
+                                  :text))))
           nil)))))
