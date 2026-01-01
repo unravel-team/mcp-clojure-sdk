@@ -13,18 +13,27 @@
   (let [file (io/file command)]
     (if (.exists file) (.getCanonicalPath file) command)))
 
+(defn- resolve-arg
+  [arg]
+  (let [file (io/file arg)]
+    (if (.exists file) (.getCanonicalPath file) arg)))
+
+(defn- resolve-args
+  [args]
+  (mapv resolve-arg args))
+
 (defn- command-from-cli
   []
   (when (empty? *command-line-args*)
     (throw (ex-info "Missing server command" {})))
   {:command (first *command-line-args*)
-   :args (vec (rest *command-line-args*))})
+   :args (resolve-args (rest *command-line-args*))})
 
 (defn start-server
   ([command] (start-server command []))
   ([command args]
-   (p/process (into [(resolve-command command)] args)
-              {:dir "integration-test/examples/"})))
+   (p/process (into [(resolve-command command)] (resolve-args args))
+              {:dir "integration-test/servers/"})))
 
 (defn start-process!
   ([] (let [{:keys [command args]} (command-from-cli)]

@@ -7,8 +7,8 @@ A `clojure-sdk` for creating Model Context Protocol servers!
   - [Usage](#usage)
     - [Deps](#deps)
     - [Templates for Quickstart](#templates-for-quickstart)
-    - [Examples](#examples)
-      - [Building the Examples Jar](#building-the-examples-jar)
+    - [Servers](#servers)
+      - [Building the Servers Jar](#building-the-servers-jar)
       - [Calculator: `calculator_server`](#calculator-calculator_server)
       - [Vega-lite: `vegalite_server`](#vega-lite-vegalite_server)
       - [Code Analysis: `code_analysis_server`](#code-analysis-code_analysis_server)
@@ -21,22 +21,22 @@ A `clojure-sdk` for creating Model Context Protocol servers!
 
 ## Usage
 
-The [calculator_server.clj file](integration-test/examples/src/calculator_server.clj)
-and [vegalite_server.clj file](integration-test/examples/src/vegalite_server.clj)
-examples contains a full working code for defining an MCP server.
+The [calculator_server.clj file](integration-test/servers/src/calculator_server.clj)
+and [vegalite_server.clj file](integration-test/servers/src/vegalite_server.clj)
+servers contain a full working code for defining an MCP server.
 
-`examples` is a `deps-new` app project, and instructions for compiling
-and running the various example servers are in [the examples/README.md
-file](integration-test/examples/README.md) (also copied below this section)
+`servers` is a `deps-new` app project, and instructions for compiling
+and running the various example servers are in [the servers/README.md
+file](integration-test/servers/README.md) (also copied below this section)
 
 ### Deps
 The deps for `clojure-sdk` are:
 
-```clojure
-{io.modelcontextprotocol/mcp-clojure-sdk
- {:git/url "https://github.com/unravel-team/mcp-clojure-sdk.git"
-  :git/sha "d42474c5f66b6f5ad1e4d6ce2a4e8972640fb831"}}
-```
+  ```clojure
+  {io.modelcontextprotocol/mcp-clojure-sdk
+   {:git/url "https://github.com/unravel-team/mcp-clojure-sdk.git"
+    :git/sha "d42474c5f66b6f5ad1e4d6ce2a4e8972640fb831"}}
+  ```
 
 ### Templates for Quickstart
 For your ease of use, there is also a `deps-new` template and a Github template. See:
@@ -45,13 +45,15 @@ For your ease of use, there is also a `deps-new` template and a Github template.
 2. [example-cool-mcp-server](https://github.com/unravel-team/example-cool-mcp-server)
    for a Github template project to quickly create new MCP servers.
 
-### Examples
+### Servers
 
-#### Building the Examples Jar
+#### Building the Servers Jar
 
-    $ make clean && make examples-jar
+  ```shell
+  $ make clean && make servers-jar
+  ```
 
-The examples jar contains the following servers:
+The servers jar (named `examples-1.2.0.jar`) contains the following servers:
 1. Calculator: `calculator_server`
 2. Vega-lite: `vegalite_server`
 3. Code Analysis: `code_analysis_server`
@@ -69,32 +71,32 @@ Some example commands you can try in Claude Desktop or Inspector:
 
 ##### Before running the calculator MCP server:
 Remember:
-1. Use the full-path to the examples JAR on your system
+1. Use the full-path to the servers JAR on your system
 
 ##### In Claude Desktop
 
-```json
-    "calculator": {
-      "command": "java",
-      "args": [
-        "-Dclojure.tools.logging.factory=clojure.tools.logging.impl/log4j2-factory",
-        "-Dorg.eclipse.jetty.util.log.class=org.eclipse.jetty.util.log.Slf4jLog",
-        "-Dlog4j2.contextSelector=org.apache.logging.log4j.core.async.AsyncLoggerContextSelector",
-        "-Dlog4j2.configurationFile=log4j2-mcp.xml",
-        "-Dbabashka.json.provider=metosin/jsonista",
-        "-Dlogging.level=INFO",
-        "-cp",
-        "/Users/vedang/mcp-clojure-sdk/integration-test/examples/target/io.modelcontextprotocol.clojure-sdk/examples-1.2.0.jar",
-        "calculator_server"
-      ]
-    }
-```
+  ```json
+      "calculator": {
+        "command": "java",
+        "args": [
+          "-Dclojure.tools.logging.factory=clojure.tools.logging.impl/log4j2-factory",
+          "-Dorg.eclipse.jetty.util.log.class=org.eclipse.jetty.util.log.Slf4jLog",
+          "-Dlog4j2.contextSelector=org.apache.logging.log4j.core.async.AsyncLoggerContextSelector",
+          "-Dlog4j2.configurationFile=log4j2-mcp.xml",
+          "-Dbabashka.json.provider=metosin/jsonista",
+          "-Dlogging.level=INFO",
+          "-cp",
+          "/Users/vedang/mcp-clojure-sdk/integration-test/servers/target/io.modelcontextprotocol.clojure-sdk/examples-1.2.0.jar",
+          "calculator_server"
+        ]
+      }
+  ```
 
 ##### In MCP Inspector
 
-```shell
-npx @modelcontextprotocol/inspector java -Dclojure.tools.logging.factory=clojure.tools.logging.impl/log4j2-factory -Dorg.eclipse.jetty.util.log.class=org.eclipse.jetty.util.log.Slf4jLog -Dlog4j2.contextSelector=org.apache.logging.log4j.core.async.AsyncLoggerContextSelector -Dlog4j2.configurationFile=log4j2-mcp.xml -Dbabashka.json.provider=metosin/jsonista -Dlogging.level=INFO -cp integration-test/examples/target/io.modelcontextprotocol.clojure-sdk/examples-1.2.0.jar calculator_server
-```
+  ```shell
+  npx @modelcontextprotocol/inspector java -Dclojure.tools.logging.factory=clojure.tools.logging.impl/log4j2-factory -Dorg.eclipse.jetty.util.log.class=org.eclipse.jetty.util.log.Slf4jLog -Dlog4j2.contextSelector=org.apache.logging.log4j.core.async.AsyncLoggerContextSelector -Dlog4j2.configurationFile=log4j2-mcp.xml -Dbabashka.json.provider=metosin/jsonista -Dlogging.level=INFO -cp integration-test/servers/target/io.modelcontextprotocol.clojure-sdk/examples-1.2.0.jar calculator_server
+  ```
 
 #### Vega-lite: `vegalite_server`
 Provides tools for generating Vega-lite charts: `save-data`,
@@ -106,66 +108,66 @@ CLI](https://github.com/vega/vl-convert) to be installed.
 Some example commands you can try in Claude Desktop or Inspector:
 
 Here is some example data for you:
-```json
-[
-    { "year": 2011, "value": 14.6, "growth_type": "Market Cap Growth" },
-    { "year": 2011, "value": 11.4, "growth_type": "Revenue Growth" },
-    { "year": 2011, "value": 26.6, "growth_type": "Net Income Growth" },
-    { "year": 2012, "value": 40.1, "growth_type": "Market Cap Growth" },
-    { "year": 2012, "value": 42.7, "growth_type": "Revenue Growth" },
-    { "year": 2012, "value": 36.9, "growth_type": "Net Income Growth" },
-    { "year": 2013, "value": 16.9, "growth_type": "Market Cap Growth" },
-    { "year": 2013, "value": 14.6, "growth_type": "Revenue Growth" },
-    { "year": 2013, "value": 15.3, "growth_type": "Net Income Growth" },
-    { "year": 2014, "value": 9.6, "growth_type": "Market Cap Growth" },
-    { "year": 2014, "value": 7.9, "growth_type": "Revenue Growth" },
-    { "year": 2014, "value": 10.9, "growth_type": "Net Income Growth" },
-    { "year": 2015, "value": 5.8, "growth_type": "Market Cap Growth" },
-    { "year": 2015, "value": 6.7, "growth_type": "Revenue Growth" },
-    { "year": 2015, "value": 6.2, "growth_type": "Net Income Growth" },
-    { "year": 2016, "value": -12.4, "growth_type": "Market Cap Growth" },
-    { "year": 2016, "value": -3.9, "growth_type": "Revenue Growth" },
-    { "year": 2016, "value": -32.2, "growth_type": "Net Income Growth" },
-    { "year": 2017, "value": 25.3, "growth_type": "Market Cap Growth" },
-    { "year": 2017, "value": 5.9, "growth_type": "Revenue Growth" },
-    { "year": 2017, "value": 43.9, "growth_type": "Net Income Growth" }
-]
-```
+  ```json
+  [
+      { "year": 2011, "value": 14.6, "growth_type": "Market Cap Growth" },
+      { "year": 2011, "value": 11.4, "growth_type": "Revenue Growth" },
+      { "year": 2011, "value": 26.6, "growth_type": "Net Income Growth" },
+      { "year": 2012, "value": 40.1, "growth_type": "Market Cap Growth" },
+      { "year": 2012, "value": 42.7, "growth_type": "Revenue Growth" },
+      { "year": 2012, "value": 36.9, "growth_type": "Net Income Growth" },
+      { "year": 2013, "value": 16.9, "growth_type": "Market Cap Growth" },
+      { "year": 2013, "value": 14.6, "growth_type": "Revenue Growth" },
+      { "year": 2013, "value": 15.3, "growth_type": "Net Income Growth" },
+      { "year": 2014, "value": 9.6, "growth_type": "Market Cap Growth" },
+      { "year": 2014, "value": 7.9, "growth_type": "Revenue Growth" },
+      { "year": 2014, "value": 10.9, "growth_type": "Net Income Growth" },
+      { "year": 2015, "value": 5.8, "growth_type": "Market Cap Growth" },
+      { "year": 2015, "value": 6.7, "growth_type": "Revenue Growth" },
+      { "year": 2015, "value": 6.2, "growth_type": "Net Income Growth" },
+      { "year": 2016, "value": -12.4, "growth_type": "Market Cap Growth" },
+      { "year": 2016, "value": -3.9, "growth_type": "Revenue Growth" },
+      { "year": 2016, "value": -32.2, "growth_type": "Net Income Growth" },
+      { "year": 2017, "value": 25.3, "growth_type": "Market Cap Growth" },
+      { "year": 2017, "value": 5.9, "growth_type": "Revenue Growth" },
+      { "year": 2017, "value": 43.9, "growth_type": "Net Income Growth" }
+  ]
+  ```
 Visualize this data for me using vega-lite.
 
 ##### Before running the vegalite MCP server
 Remember:
-1. Replace the full-path to the examples JAR with the correct path on
+1. Replace the full-path to the servers JAR with the correct path on
    your system
 2. Specify the full-path to `vl-convert` on your system
 
 ##### In Claude Desktop
 
-```json
-    "vegalite": {
-      "command": "java",
-      "args": [
-        "-Dclojure.tools.logging.factory=clojure.tools.logging.impl/log4j2-factory",
-        "-Dorg.eclipse.jetty.util.log.class=org.eclipse.jetty.util.log.Slf4jLog",
-        "-Dlog4j2.contextSelector=org.apache.logging.log4j.core.async.AsyncLoggerContextSelector",
-        "-Dlog4j2.configurationFile=log4j2-mcp.xml",
-        "-Dbabashka.json.provider=metosin/jsonista",
-        "-Dlogging.level=INFO",
-        "-Dmcp.vegalite.vl_convert_executable=/Users/vedang/.cargo/bin/vl-convert",
-        "-cp",
-        "/Users/vedang/mcp-clojure-sdk/integration-test/examples/target/io.modelcontextprotocol.clojure-sdk/examples-1.2.0.jar",
-        "vegalite_server"
-      ]
-    }
-```
+  ```json
+      "vegalite": {
+        "command": "java",
+        "args": [
+          "-Dclojure.tools.logging.factory=clojure.tools.logging.impl/log4j2-factory",
+          "-Dorg.eclipse.jetty.util.log.class=org.eclipse.jetty.util.log.Slf4jLog",
+          "-Dlog4j2.contextSelector=org.apache.logging.log4j.core.async.AsyncLoggerContextSelector",
+          "-Dlog4j2.configurationFile=log4j2-mcp.xml",
+          "-Dbabashka.json.provider=metosin/jsonista",
+          "-Dlogging.level=INFO",
+          "-Dmcp.vegalite.vl_convert_executable=/Users/vedang/.cargo/bin/vl-convert",
+          "-cp",
+          "/Users/vedang/mcp-clojure-sdk/integration-test/servers/target/io.modelcontextprotocol.clojure-sdk/examples-1.2.0.jar",
+          "vegalite_server"
+        ]
+      }
+  ```
 
 ##### In MCP Inspector
-Remember to use the full-path to the examples JAR on your system, or
+Remember to use the full-path to the servers JAR on your system, or
 execute this command from the `mcp-clojure-sdk` repo.
 
-```shell
-npx @modelcontextprotocol/inspector java -Dclojure.tools.logging.factory=clojure.tools.logging.impl/log4j2-factory -Dorg.eclipse.jetty.util.log.class=org.eclipse.jetty.util.log.Slf4jLog -Dlog4j2.contextSelector=org.apache.logging.log4j.core.async.AsyncLoggerContextSelector -Dlog4j2.configurationFile=log4j2-mcp.xml -Dbabashka.json.provider=metosin/jsonista -Dlogging.level=INFO -Dmcp.vegalite.vl_convert_executable=/Users/vedang/.cargo/bin/vl-convert -cp integration-test/examples/target/io.modelcontextprotocol.clojure-sdk/examples-1.2.0.jar vegalite_server
-```
+  ```shell
+  npx @modelcontextprotocol/inspector java -Dclojure.tools.logging.factory=clojure.tools.logging.impl/log4j2-factory -Dorg.eclipse.jetty.util.log.class=org.eclipse.jetty.util.log.Slf4jLog -Dlog4j2.contextSelector=org.apache.logging.log4j.core.async.AsyncLoggerContextSelector -Dlog4j2.configurationFile=log4j2-mcp.xml -Dbabashka.json.provider=metosin/jsonista -Dlogging.level=INFO -Dmcp.vegalite.vl_convert_executable=/Users/vedang/.cargo/bin/vl-convert -cp integration-test/servers/target/io.modelcontextprotocol.clojure-sdk/examples-1.2.0.jar vegalite_server
+  ```
 
 #### Code Analysis: `code_analysis_server`
 This server is an example of a server which provides prompts and not
@@ -178,35 +180,35 @@ expose powerful prompts through this technique.
 
 ##### Before running the code-analysis MCP server
 Remember:
-1. Replace the full-path to the examples JAR with the correct path on
+1. Replace the full-path to the servers JAR with the correct path on
    your system
 
 ##### In Claude Desktop
 
-```json
-    "code-anaylsis": {
-      "command": "java",
-      "args": [
-        "-Dclojure.tools.logging.factory=clojure.tools.logging.impl/log4j2-factory",
-        "-Dorg.eclipse.jetty.util.log.class=org.eclipse.jetty.util.log.Slf4jLog",
-        "-Dlog4j2.contextSelector=org.apache.logging.log4j.core.async.AsyncLoggerContextSelector",
-        "-Dlog4j2.configurationFile=log4j2-mcp.xml",
-        "-Dbabashka.json.provider=metosin/jsonista",
-        "-Dlogging.level=INFO",
-        "-cp",
-        "/Users/vedang/mcp-clojure-sdk/integration-test/examples/target/io.modelcontextprotocol.clojure-sdk/examples-1.2.0.jar",
-        "code_analysis_server"
-      ]
-    }
-```
+  ```json
+      "code-anaylsis": {
+        "command": "java",
+        "args": [
+          "-Dclojure.tools.logging.factory=clojure.tools.logging.impl/log4j2-factory",
+          "-Dorg.eclipse.jetty.util.log.class=org.eclipse.jetty.util.log.Slf4jLog",
+          "-Dlog4j2.contextSelector=org.apache.logging.log4j.core.async.AsyncLoggerContextSelector",
+          "-Dlog4j2.configurationFile=log4j2-mcp.xml",
+          "-Dbabashka.json.provider=metosin/jsonista",
+          "-Dlogging.level=INFO",
+          "-cp",
+          "/Users/vedang/mcp-clojure-sdk/integration-test/servers/target/io.modelcontextprotocol.clojure-sdk/examples-1.2.0.jar",
+          "code_analysis_server"
+        ]
+      }
+  ```
 
 ##### In MCP Inspector
-(Remember to use the full-path to the examples JAR on your system, or
+(Remember to use the full-path to the servers JAR on your system, or
 execute this command from the `mcp-clojure-sdk` repo)
 
-```shell
-npx @modelcontextprotocol/inspector java -Dclojure.tools.logging.factory=clojure.tools.logging.impl/log4j2-factory -Dorg.eclipse.jetty.util.log.class=org.eclipse.jetty.util.log.Slf4jLog -Dlog4j2.contextSelector=org.apache.logging.log4j.core.async.AsyncLoggerContextSelector -Dlog4j2.configurationFile=log4j2-mcp.xml -Dbabashka.json.provider=metosin/jsonista -Dlogging.level=INFO -cp integration-test/examples/target/io.modelcontextprotocol.clojure-sdk/examples-1.2.0.jar code_analysis_server
-```
+  ```shell
+  npx @modelcontextprotocol/inspector java -Dclojure.tools.logging.factory=clojure.tools.logging.impl/log4j2-factory -Dorg.eclipse.jetty.util.log.class=org.eclipse.jetty.util.log.Slf4jLog -Dlog4j2.contextSelector=org.apache.logging.log4j.core.async.AsyncLoggerContextSelector -Dlog4j2.configurationFile=log4j2-mcp.xml -Dbabashka.json.provider=metosin/jsonista -Dlogging.level=INFO -cp integration-test/servers/target/io.modelcontextprotocol.clojure-sdk/examples-1.2.0.jar code_analysis_server
+  ```
 
 ## Core Components
 
@@ -257,56 +259,56 @@ client-server interaction:
    - Resource subscription for updates
    - Health checks via ping/pong
 
-```mermaid
-sequenceDiagram
-    participant Client
-    participant MCPServer
-    participant Tool
-    participant Resource
-    participant Prompt
-
-    Note over Client,MCPServer: Initialization Phase
-    Client->>+MCPServer: initialize
-    MCPServer-->>-Client: initialize response (capabilities)
-    Client->>MCPServer: notifications/initialized
-
-    Note over Client,MCPServer: Discovery Phase
-    Client->>+MCPServer: tools/list
-    MCPServer-->>-Client: List of available tools
-
-    Client->>+MCPServer: resources/list
-    MCPServer-->>-Client: List of available resources
-
-    Client->>+MCPServer: prompts/list
-    MCPServer-->>-Client: List of available prompts
-
-    Note over Client,MCPServer: Tool Interaction
-    Client->>+MCPServer: tools/call (name, arguments)
-    MCPServer->>+Tool: handler(arguments)
-    Tool-->>-MCPServer: result
-    MCPServer-->>-Client: Tool response
-
-    Note over Client,MCPServer: Resource Interaction
-    Client->>+MCPServer: resources/read (uri)
-    MCPServer->>+Resource: handler(uri)
-    Resource-->>-MCPServer: contents
-    MCPServer-->>-Client: Resource contents
-
-    Note over Client,MCPServer: Prompt Interaction
-    Client->>+MCPServer: prompts/get (name, arguments)
-    MCPServer->>+Prompt: handler(arguments)
-    Prompt-->>-MCPServer: messages
-    MCPServer-->>-Client: Prompt messages
-
-    Note over Client,MCPServer: Optional Subscription
-    Client->>+MCPServer: resources/subscribe (uri)
-    MCPServer-->>-Client: Empty response
-    MCPServer-->>Client: notifications/resources/updated
-
-    Note over Client,MCPServer: Health Check
-    Client->>+MCPServer: ping
-    MCPServer-->>-Client: pong
-```
+  ```mermaid
+  sequenceDiagram
+      participant Client
+      participant MCPServer
+      participant Tool
+      participant Resource
+      participant Prompt
+  
+      Note over Client,MCPServer: Initialization Phase
+      Client->>+MCPServer: initialize
+      MCPServer-->>-Client: initialize response (capabilities)
+      Client->>MCPServer: notifications/initialized
+  
+      Note over Client,MCPServer: Discovery Phase
+      Client->>+MCPServer: tools/list
+      MCPServer-->>-Client: List of available tools
+  
+      Client->>+MCPServer: resources/list
+      MCPServer-->>-Client: List of available resources
+  
+      Client->>+MCPServer: prompts/list
+      MCPServer-->>-Client: List of available prompts
+  
+      Note over Client,MCPServer: Tool Interaction
+      Client->>+MCPServer: tools/call (name, arguments)
+      MCPServer->>+Tool: handler(arguments)
+      Tool-->>-MCPServer: result
+      MCPServer-->>-Client: Tool response
+  
+      Note over Client,MCPServer: Resource Interaction
+      Client->>+MCPServer: resources/read (uri)
+      MCPServer->>+Resource: handler(uri)
+      Resource-->>-MCPServer: contents
+      MCPServer-->>-Client: Resource contents
+  
+      Note over Client,MCPServer: Prompt Interaction
+      Client->>+MCPServer: prompts/get (name, arguments)
+      MCPServer->>+Prompt: handler(arguments)
+      Prompt-->>-MCPServer: messages
+      MCPServer-->>-Client: Prompt messages
+  
+      Note over Client,MCPServer: Optional Subscription
+      Client->>+MCPServer: resources/subscribe (uri)
+      MCPServer-->>-Client: Empty response
+      MCPServer-->>Client: notifications/resources/updated
+  
+      Note over Client,MCPServer: Health Check
+      Client->>+MCPServer: ping
+      MCPServer-->>-Client: pong
+  ```
 ## Pending Work
 
 You can help dear reader! Head over to the [todo.org file](todo.org)
@@ -320,11 +322,15 @@ expect all the `deps-new` commands to work as expected. Even so:
 
 Run the project's tests:
 
-    $ make test ## or clojure -T:build test
+  ```shell
+  $ make test ## or clojure -T:build test
+  ```
 
 Run the project's CI pipeline and build a JAR:
 
-    $ make build ## or clojure -T:build ci
+  ```shell
+  $ make build ## or clojure -T:build ci
+  ```
 
 This will produce an updated `pom.xml` file with synchronized
 dependencies inside the `META-INF` directory inside `target/classes`

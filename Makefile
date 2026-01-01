@@ -1,4 +1,4 @@
-.PHONY: install-antq install-kondo-configs install-zprint-config install-gitignore repl-enrich repl check-cljkondo check-tagref check-zprint-config check-zprint check test test-all test-coverage upgrade-libs build serve deploy clean-projects clean examples-jar
+.PHONY: install-antq install-kondo-configs install-zprint-config install-gitignore repl-enrich repl check-cljkondo check-tagref check-zprint-config check-zprint check test test-all test-coverage upgrade-libs build serve deploy clean-projects clean examples-jar servers-jar clean-examples clean-servers
 
 HOME := $(shell echo $$HOME)
 HERE := $(shell echo $$PWD)
@@ -182,13 +182,17 @@ install: build    ## Install the artifact locally
 deploy: build  ## Deploy to Clojars. needs `CLOJARS_USERNAME` and `CLOJARS_PASSWORD` env vars
 	clojure -T:build deploy
 
-clean-examples:
-	rm -rf integration-test/examples/target
+clean-servers:
+	rm -rf integration-test/servers/target
+
+clean-examples: clean-servers
 
 clean-sdk:
 	rm -rf target/
 
-clean: clean-examples clean-sdk
+clean: clean-servers clean-sdk
 
-examples-jar: integration-test/examples/Makefile
-	$(MAKE) -C integration-test/examples build
+servers-jar: integration-test/servers/Makefile
+	$(MAKE) -C integration-test/servers build
+
+examples-jar: servers-jar

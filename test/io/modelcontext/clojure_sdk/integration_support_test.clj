@@ -5,9 +5,12 @@
 
 (load-file "integration-test/integration/helper.clj")
 (load-file "integration-test/integration/fixture.clj")
+(load-file "integration-test/integration/client.clj")
+(load-file "integration-test/integration/mcp.clj")
 
 (require '[integration.fixture :as fixture])
 (require '[integration.helper :as helper])
+(require '[integration.mcp :as mcp])
 
 (deftest helper-file-uri-roundtrip
   (let [file (io/file "deps.edn")
@@ -28,3 +31,9 @@
     (is (= "tools/call" method))
     (is (= "echo" (:name params)))
     (is (= {:message "hi"} (:arguments params)))))
+
+(deftest mcp-resolve-arg
+  (let [file (io/file "integration-test/entrypoint.clj")
+        resolved (#'mcp/resolve-arg (.getPath file))]
+    (is (= (.getCanonicalPath file) resolved))
+    (is (= "not-a-file" (#'mcp/resolve-arg "not-a-file")))))

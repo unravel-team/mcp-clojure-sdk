@@ -12,7 +12,7 @@
      "-Dlog4j2.contextSelector=org.apache.logging.log4j.core.async.AsyncLoggerContextSelector"
      "-Dlog4j2.configurationFile=log4j2-mcp.xml"
      "-Dbabashka.json.provider=metosin/jsonista" "-Dlogging.level=INFO" "-cp"
-     "examples/target/io.modelcontextprotocol.clojure-sdk/examples-1.2.0.jar"
+     "servers/target/io.modelcontextprotocol.clojure-sdk/examples-1.2.0.jar"
      "code_analysis_server"]},
    :vegalite
    {"command" "java",
@@ -24,7 +24,7 @@
      "-Dbabashka.json.provider=metosin/jsonista" "-Dlogging.level=INFO"
      "-Dmcp.vegalite.vl_convert_executable=/Users/nejo/.cargo/bin/vl-convert"
      "-cp"
-     "examples/target/io.modelcontextprotocol.clojure-sdk/examples-1.2.0.jar"
+     "servers/target/io.modelcontextprotocol.clojure-sdk/examples-1.2.0.jar"
      "vegalite_server"]}})
 
 (def namespaces
@@ -42,7 +42,7 @@
 
 (defn log-tail
   [file lines]
-  (:out (sh/sh "tail" "-n" (str lines) file :dir "integration-test/examples/")))
+  (:out (sh/sh "tail" "-n" (str lines) file :dir "integration-test/servers/")))
 
 (def first-print-log-tail?* (atom true))
 
@@ -69,9 +69,11 @@
 #_{:clj-kondo/ignore [:clojure-lsp/unused-public-var]}
 (defn run-all
   [& args]
-  (when (and args (not (#{"java" "uv" "npx" "go"} (first args))))
+  (when (and args
+             (not (#{"java" "uv" "npx" "go" "python" "python3" "node"}
+                   (first args))))
     (println
-      "First arg must one of java, uv, npx : recognised runners for mcp-servers")
+      "First arg must be one of java, uv, npx, go, python, python3, node")
     (System/exit 0))
   (apply require namespaces)
   (let [timeout-minutes (if (re-find #"(?i)win|mac"
