@@ -529,7 +529,7 @@
 ;; Definition for a tool the client can call.
 (s/def :tool/name string?)
 (s/def :tool/description string?)
-(s/def :tool/properties (s/map-of string? any?))
+(s/def :tool/properties (s/map-of (s/or :str string? :kw keyword?) any?))
 (s/def :tool/required (s/coll-of string?))
 (s/def :schema/type #{"object"})
 ;; A JSON Schema object defining the expected parameters for the tool.
