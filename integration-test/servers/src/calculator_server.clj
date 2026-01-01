@@ -139,7 +139,7 @@
    :handler (fn [uri]
               {:uri uri,
                :mimeType "application/json",
-               :text "{\"pi\":3.14159}"}))
+               :text "{\"pi\":3.14159}"})})
 
 (def calculator-server-spec
   {:name "calculator",
