@@ -7,7 +7,9 @@
 
 (def tools-by-server
   {"calculator" #{"add" "subtract" "multiply" "divide" "power" "square-root"
-                  "sum-array" "average" "factorial"},
+                  "sum-array" "average" "factorial"}
+   "python-echo-server" #{"echo" "add" "fail"}
+   "typescript-echo-server" #{"echo" "add" "fail"}
    "vegalite" #{"save-data" "visualize-data"}})
 
 (defn- initialize!
@@ -35,6 +37,23 @@
                                     :content
                                     first
                                     :text))))
+          ("python-echo-server" "typescript-echo-server")
+          (let [echo-result (mcp/request! (fixture/call-tool-request
+                                            "echo"
+                                            {:message "Hello from Clojure!"}))
+                add-result (mcp/request! (fixture/call-tool-request
+                                           "add"
+                                           {:a 10, :b 20}))]
+            (is (= "Hello from Clojure!"
+                   (-> echo-result
+                       :content
+                       first
+                       :text)))
+            (is (= "30"
+                   (-> add-result
+                       :content
+                       first
+                       :text))))
           "vegalite" (let [result (mcp/request! (fixture/call-tool-request
                                                   "save-data"
                                                   {:name "sample",

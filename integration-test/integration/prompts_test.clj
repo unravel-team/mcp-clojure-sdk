@@ -17,13 +17,25 @@
   (testing "prompts/list and prompts/get"
     (let [init-response (initialize!)
           server-name (get-in init-response [:serverInfo :name])]
-      (when (= "code-analysis" server-name)
-        (let [prompts-response (mcp/request! (fixture/list-prompts-request))
-              prompt-names (set (map :name (:prompts prompts-response)))]
-          (is (= #{"analyze-code" "poem-about-code"} prompt-names)))
-        (let [prompt-response (mcp/request! (fixture/get-prompt-request
-                                              "analyze-code"
-                                              {:language "Clojure",
-                                               :code "(+ 1 2)"}))
-              text (get-in prompt-response [:messages 0 :content :text])]
-          (is (string/includes? text "Analysis of Clojure")))))))
+      (cond
+        (= "code-analysis" server-name)
+        (do
+          (let [prompts-response (mcp/request! (fixture/list-prompts-request))
+                prompt-names (set (map :name (:prompts prompts-response)))]
+            (is (= #{"analyze-code" "poem-about-code"} prompt-names)))
+          (let [prompt-response (mcp/request! (fixture/get-prompt-request
+                                                "analyze-code"
+                                                {:language "Clojure",
+                                                 :code "(+ 1 2)"}))
+                text (get-in prompt-response [:messages 0 :content :text])]
+            (is (string/includes? text "Analysis of Clojure"))))
+        (#{"python-echo-server" "typescript-echo-server"} server-name)
+        (do
+          (let [prompts-response (mcp/request! (fixture/list-prompts-request))
+                prompt-names (set (map :name (:prompts prompts-response)))]
+            (is (= #{"greeting" "summarize"} prompt-names)))
+          (let [prompt-response (mcp/request! (fixture/get-prompt-request
+                                                "greeting"
+                                                {:name "Claude"}))
+                text (get-in prompt-response [:messages 0 :content :text])]
+            (is (string/includes? text "Please greet Claude warmly."))))))))

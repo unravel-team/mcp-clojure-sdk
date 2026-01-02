@@ -16,4 +16,5 @@
   (testing "initialized notification"
     (mcp/notify! (fixture/initialized-notification)))
   (testing "ping request"
-    (is (= "pong" (mcp/request! (fixture/ping-request))))))
+    (let [response (mcp/request! (fixture/ping-request))]
+      (is (or (= "pong" response) (= {} response))))))
