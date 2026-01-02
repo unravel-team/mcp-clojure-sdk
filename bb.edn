@@ -2,6 +2,7 @@
         {:mvn/version "1.0.2", #_#_:local/root "vendors/jsonrpc4clj"},
         dev.weavejester/medley {:mvn/version "1.9.0"},
         nubank/matcher-combinators {:mvn/version "3.9.2"},
+        org.babashka/json {:mvn/version "0.1.6"},
         org.babashka/spec.alpha
         {:git/sha "b6eb0f2208ab036c0a5d0e7235cb0b09d2feabb7",
          :git/url "https://github.com/babashka/spec.alpha"}},
