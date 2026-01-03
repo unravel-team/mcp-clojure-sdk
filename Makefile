@@ -1,4 +1,4 @@
-.PHONY: install-antq install-kondo-configs install-zprint-config install-gitignore repl-enrich repl check-cljkondo check-tagref check-zprint-config check-zprint check test test-all test-coverage upgrade-libs build serve deploy clean-projects clean examples-jar servers-jar clean-examples clean-servers
+.PHONY: install-antq install-kondo-configs install-zprint-config install-gitignore repl-enrich repl check-cljkondo check-tagref check-zprint-config check-zprint check test test-integration test-all test-coverage upgrade-libs build serve deploy clean-projects clean examples-jar servers-jar clean-examples clean-servers
 
 HOME := $(shell echo $$HOME)
 HERE := $(shell echo $$PWD)
@@ -157,6 +157,9 @@ test-coverage:
 
 test:    ## Run all the tests for the code
 	clojure -T:build test
+
+test-integration: examples-jar    ## Run integration tests (requires server command)
+	clojure -M:integration-test -m entrypoint $(COMMAND)
 
 install-antq:
 	@if [ -f .antqtool.lastupdated ] && find .antqtool.lastupdated -mtime +15 -print | grep -q .; then \

@@ -47,7 +47,12 @@
                       io.github.cognitect-labs/test-runner {:git/sha "dfb30dd",
                                                             :git/tag "v0.5.1"},
                       org.clojure/test.check {:mvn/version "1.1.2"}},
-         :extra-paths ["test"]}},
+         :extra-paths ["test"]},
+  :integration-test {:extra-deps {babashka/process {:mvn/version "0.6.25"},
+                                  dev.weavejester/medley {:mvn/version "1.9.0"},
+                                  org.babashka/json {:mvn/version "0.1.6"}},
+                     :extra-paths ["integration-test" "utils/logger/src"
+                                   "utils/logger/resources"]}},
  ;; [tag: deps_rules_of_thumb]
  ;;
  ;; 1. Arrange deps alphabetically
