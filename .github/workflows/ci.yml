@@ -22,6 +22,7 @@ jobs:
         uses: DeLaGuardo/setup-clojure@12.5
         with:
           cli: latest
+          zprint: latest
 
       - name: Run formatter
         run: make format
