@@ -184,6 +184,26 @@
                                                          :version "1.0.0"}})
                (h/take-or-timeout (:output-ch server) 200))))
       (jsonrpc.server/shutdown server)))
+  (testing "Connection initialization through initialize, 2025-06-18 version"
+    (let [context (server/create-context!
+                    {:name "test-server", :version "1.0.0", :tools [tool-echo]})
+          server (server/chan-server)
+          _join (server/start! server context)]
+      (testing "Client initialization"
+        (async/put! (:input-ch server)
+                    (jsonrpc.requests/request
+                      1
+                      "initialize"
+                      {:protocolVersion "2025-06-18",
+                       :capabilities {:roots {:listChanged true}, :sampling {}},
+                       :clientInfo {:name "ExampleClient", :version "1.0.0"}}))
+        (is (= (jsonrpc.responses/response 1
+                                           {:protocolVersion "2025-06-18",
+                                            :capabilities default-capabilities,
+                                            :serverInfo {:name "test-server",
+                                                         :version "1.0.0"}})
+               (h/take-or-timeout (:output-ch server) 200))))
+      (jsonrpc.server/shutdown server)))
   (testing "Connection initialization through initialize, unknown version"
     (let [context (server/create-context!
                     {:name "test-server", :version "1.0.0", :tools [tool-echo]})
@@ -198,11 +218,30 @@
                        :capabilities {:roots {:listChanged true}, :sampling {}},
                        :clientInfo {:name "ExampleClient", :version "1.0.0"}}))
         (is (= (jsonrpc.responses/response 1
-                                           {:protocolVersion "2025-03-26",
+                                           {:protocolVersion "2025-06-18",
                                             :capabilities default-capabilities,
                                             :serverInfo {:name "test-server",
                                                          :version "1.0.0"}})
                (h/take-or-timeout (:output-ch server) 200))))
+      (jsonrpc.server/shutdown server)))
+  (testing "Capabilities can be overridden through the server spec"
+    (let [context (server/create-context! {:name "test-server",
+                                           :version "1.0.0",
+                                           :tools [tool-echo],
+                                           :capabilities {:tools {},
+                                                          :prompts {}}})
+          server (server/chan-server)
+          _join (server/start! server context)]
+      (async/put! (:input-ch server)
+                  (jsonrpc.requests/request 1
+                                            "initialize"
+                                            {:protocolVersion "2025-06-18",
+                                             :capabilities {},
+                                             :clientInfo {:name "ExampleClient",
+                                                          :version "1.0.0"}}))
+      (is (= {:tools {}, :prompts {}}
+             (get-in (h/take-or-timeout (:output-ch server) 200)
+                     [:result :capabilities])))
       (jsonrpc.server/shutdown server))))
 
 (deftest tool-execution

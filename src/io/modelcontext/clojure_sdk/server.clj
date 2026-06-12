@@ -716,7 +716,7 @@
   (swap! (:completions context) assoc ref handler))
 
 (defn- create-empty-context
-  [name version]
+  [name version capabilities]
   (log/trace :fn :create-empty-context)
   ;; [tag: context_must_be_a_map]
   ;;
@@ -750,12 +750,15 @@
    ;; [tag: default_server_capabilities]
    ;;
    ;; The capabilities the server advertises by default, covering the
-   ;; full protocol surface implemented in this namespace.
-   :capabilities (atom {:tools {:listChanged true},
-                        :resources {:subscribe true, :listChanged true},
-                        :prompts {:listChanged true},
-                        :logging {},
-                        :completions {}}),
+   ;; full protocol surface implemented in this namespace. Servers can
+   ;; advertise a different set through the :capabilities key of the
+   ;; server spec.
+   :capabilities (atom (or capabilities
+                           {:tools {:listChanged true},
+                            :resources {:subscribe true, :listChanged true},
+                            :prompts {:listChanged true},
+                            :logging {},
+                            :completions {}})),
    :connected-clients (atom {})})
 
 (defn create-context!
@@ -779,10 +782,12 @@
   For more details, see the doc-strings of `register-tool!`,
   `register-prompt!`, `register-resource!` and
   `register-resource-template!`."
-  [{:keys [name version tools prompts resources resource-templates], :as spec}]
+  [{:keys [name version tools prompts resources resource-templates
+           capabilities],
+    :as spec}]
   (validate-spec! spec)
   (log/with-context {:action :create-context!}
-    (let [context (create-empty-context name version)]
+    (let [context (create-empty-context name version capabilities)]
       (when (> (count tools) 0)
         (log/debug :num-tools (count tools)
                    :msg "Registering tools"

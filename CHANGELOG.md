@@ -4,6 +4,18 @@ All notable changes to this project will be documented in this file. This change
 ## Unreleased
 ### Added
 - Add `mcp-thoughtful-prompts` as an example prompt server in the README.
+- Request handlers that invoke user code (`tools/call`, `prompts/get`,
+  `resources/read`, `completion/complete`) now run asynchronously on
+  promesa threads: slow handlers no longer block the message loop, and
+  requests are served concurrently (mcp-java-sdk async parity).
+- Live registration lifecycle: `unregister-tool!`/`unregister-resource!`/
+  `unregister-prompt!`, and automatic `list_changed` notifications from
+  `register-*!`/`unregister-*!` while the server is running.
+- Tool `:annotations` are validated by the `::tool` spec (title +
+  readOnly/destructive/idempotent/openWorld hints).
+- Server capabilities can be overridden via the `:capabilities` key of
+  the server spec.
+- Protocol version `2025-06-18` is now negotiated (latest preferred).
 - Complete the server-side MCP protocol surface: `resources/templates/list`,
   `resources/subscribe`/`unsubscribe`, `logging/setLevel`,
   `completion/complete`, and the `notifications/cancelled`/`progress`

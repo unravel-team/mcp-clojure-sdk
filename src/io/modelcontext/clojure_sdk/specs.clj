@@ -29,7 +29,7 @@
 ;; in the JSON-RPC spec.
 
 ;; Protocol constants
-(def supported-protocol-versions ["2025-03-26" "2024-11-05"])
+(def supported-protocol-versions ["2025-06-18" "2025-03-26" "2024-11-05"])
 ;; [tag: version_negotiation]
 ;;
 ;; (From [[/specification/draft/basic/lifecycle.mdx::Version Negotiation]])
@@ -543,10 +543,27 @@
                           ;; over from inputSchema to keep it
                           ;; consistent
   (s/keys :req-un [:schema/type] :opt-un [:tool/properties]))
+;; [tag: tool_annotations]
+;;
+;; Additional properties describing a Tool to clients. All properties
+;; are HINTS: they are not guaranteed to faithfully describe tool
+;; behavior. Clients should never make tool-use decisions based on
+;; annotations from untrusted servers.
+(s/def :tool-annotations/title string?)
+(s/def :tool-annotations/readOnlyHint boolean?)
+(s/def :tool-annotations/destructiveHint boolean?)
+(s/def :tool-annotations/idempotentHint boolean?)
+(s/def :tool-annotations/openWorldHint boolean?)
+(s/def :tool/annotations
+  (s/keys :opt-un [:tool-annotations/title :tool-annotations/readOnlyHint
+                   :tool-annotations/destructiveHint
+                   :tool-annotations/idempotentHint
+                   :tool-annotations/openWorldHint]))
+
 ;; [tag: tool_schema_definition]
 (s/def ::tool
   (s/keys :req-un [:tool/name :tool/inputSchema]
-          :opt-un [:tool/description :tool/outputSchema]))
+          :opt-un [:tool/description :tool/outputSchema :tool/annotations]))
 
 ;;; Logging
 ;; [tag: set_logging_level_request]
