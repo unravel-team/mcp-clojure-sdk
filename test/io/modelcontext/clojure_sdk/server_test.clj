@@ -478,6 +478,15 @@
         (is (= {:content [{:type "text", :text "single item"}]} coerced))
         (is (vector? (:content coerced))
             "Response should be wrapped in a vector")))
+    (testing "Tool returning a full CallToolResult map"
+      (let [tool {:name "failing-tool",
+                  :description "Reports tool-level errors",
+                  :inputSchema {:type "object"}}
+            handler-response {:content [{:type "text", :text "tool blew up"}],
+                              :isError true}
+            coerced (server/coerce-tool-response tool handler-response)]
+        (is (= handler-response coerced)
+            "A map with :content passes through untouched, keeping :isError")))
     (testing "Tool with outputSchema"
       (let [tool {:name "calculator",
                   :description "Performs calculations",

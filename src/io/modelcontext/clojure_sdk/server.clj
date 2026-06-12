@@ -86,13 +86,20 @@
 
 (defn coerce-tool-response
   "Coerces a tool response into the expected format.
-   If the response is not sequential, wraps it in a vector.
+   A map containing :content is treated as a complete CallToolResult and
+   passed through untouched, so handlers can set :isError (tool-level
+   failures the LLM should see) or :structuredContent themselves.
+   Otherwise: if the response is not sequential, wraps it in a vector.
    If the tool has an outputSchema, adds structuredContent."
   [tool response]
-  (let [response (if (sequential? response) (vec response) [response])
-        base-map {:content response}]
-    ;; @TODO: [ref: structured-content-should-match-output-schema-exactly]
-    (cond-> base-map (:outputSchema tool) (assoc :structuredContent response))))
+  (if (and (map? response) (contains? response :content))
+    response
+    (let [response (if (sequential? response) (vec response) [response])
+          base-map {:content response}]
+      ;; @TODO: [ref:
+      ;; structured-content-should-match-output-schema-exactly]
+      (cond-> base-map
+        (:outputSchema tool) (assoc :structuredContent response)))))
 
 (defn- handle-call-tool
   [context params]
