@@ -3,6 +3,7 @@
 HOME := $(shell echo $$HOME)
 HERE := $(shell echo $$PWD)
 CLOJURE_SOURCES := $(shell find . -name '**.clj' -not -path './.clj-kondo/*')
+ZPRINT_CONFIG := $(shell cat $(HERE)/../../.zprint.edn)
 
 # Set bash instead of sh for the @if [[ conditions,
 # and use the usual safety flags:
@@ -144,13 +145,13 @@ check-cljkondo:
 	clj-kondo --lint .
 
 check-zprint:
-	zprint -c $(CLOJURE_SOURCES)
+	zprint '$(ZPRINT_CONFIG)' -c $(CLOJURE_SOURCES)
 
 check: check-tagref check-cljkondo check-zprint    ## Check that the code is well linted and well formatted
 	@echo "All checks passed!"
 
 format:
-	zprint -lfw $(CLOJURE_SOURCES)
+	zprint '$(ZPRINT_CONFIG)' -lfw $(CLOJURE_SOURCES)
 
 test-coverage:
 	clojure -X:dev:test:clofidence
