@@ -58,3 +58,4 @@ doc/plans/
 bench/results/
 bench/classes/
 bench/.cpcache/
+.agents/plans/
