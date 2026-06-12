@@ -16,24 +16,39 @@
 
 ;; https://modelcontextprotocol.io/specification
 
-(defn ^:private read-message
-  [^java.io.BufferedReader input]
-  (try (let [content (.readLine input)]
-         (log/trace :fn :read-message :line content)
-         (json/read-str content))
-       (catch Exception ex (log/error :fn :read-message :ex ex) :parse-error)))
-
 (defn ^:private kw->camelCaseString
   "Convert keywords to camelCase strings, but preserve capitalization of things
   that are already strings."
   [k]
   (cond-> k (keyword? k) csk/->camelCaseString))
 
+(defn message->json-str
+  "Serialize an MCP message map to a JSON string, converting keyword keys
+  to camelCase strings as required by the wire format."
+  [msg]
+  (json/write-str (cske/transform-keys kw->camelCaseString msg)))
+
+(defn json-str->message
+  "Parse a JSON string into an MCP message map with keyword keys. Returns
+  `:parse-error` if the string cannot be parsed."
+  [s]
+  (try (json/read-str s)
+       (catch Exception ex
+         (log/error :fn :json-str->message :ex ex)
+         :parse-error)))
+
+(defn ^:private read-message
+  [^java.io.BufferedReader input]
+  (try (let [content (.readLine input)]
+         (log/trace :fn :read-message :line content)
+         (json-str->message content))
+       (catch Exception ex (log/error :fn :read-message :ex ex) :parse-error)))
+
 (def ^:private write-lock (Object.))
 
 (defn ^:private write-message
   [^java.io.BufferedWriter output msg]
-  (let [content (json/write-str (cske/transform-keys kw->camelCaseString msg))]
+  (let [content (message->json-str msg)]
     (locking write-lock
       (doto output (.write ^String content) (.newLine) (.flush)))))
 
