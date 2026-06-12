@@ -314,11 +314,16 @@
   [server-spec]
   (when-not (specs/valid-server-spec? server-spec)
     (let [msg "Invalid server-spec definition"
-          ;; Strip handlers before logging to avoid JSON serialization errors
-          loggable-spec (-> server-spec
-                            (update :tools (fn [tools] (mapv #(dissoc % :handler) tools)))
-                            (update :prompts (fn [prompts] (mapv #(dissoc % :handler) prompts)))
-                            (update :resources (fn [resources] (mapv #(dissoc % :handler) resources))))]
+          ;; Strip handlers before logging to avoid JSON serialization
+          ;; errors
+          loggable-spec
+            (-> server-spec
+                (update :tools (fn [tools] (mapv #(dissoc % :handler) tools)))
+                (update :prompts
+                        (fn [prompts] (mapv #(dissoc % :handler) prompts)))
+                (update :resources
+                        (fn [resources]
+                          (mapv #(dissoc % :handler) resources))))]
       (log/debug :msg msg :spec loggable-spec)
       (throw (ex-info msg (specs/explain-server-spec server-spec)))))
   server-spec)
