@@ -292,7 +292,9 @@
   [_method _context params]
   (log/trace :fn :receive-request :method "ping" :params params)
   (conform-or-log ::specs/ping-request params)
-  "pong")
+  ;; The schema requires a Result object, so return an empty map rather
+  ;; than a bare string.
+  {})
 
 (defmethod jsonrpc.server/receive-request "roots/list"
   [_method {:keys [client]} params]

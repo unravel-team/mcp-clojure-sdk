@@ -61,7 +61,12 @@
      :capabilities server-capabilities,
      :serverInfo server-info}))
 
-(defn- handle-ping [_context _params] (log/trace :fn :handle-ping) "pong")
+(defn- handle-ping
+  [_context _params]
+  (log/trace :fn :handle-ping)
+  ;; The schema requires a Result object, so return an empty map rather
+  ;; than a bare string.
+  {})
 
 (defn- handle-list-tools
   [context _params]
@@ -132,6 +137,42 @@
                      :error :prompt-not-found)
           {:error (mcp.errors/body :prompt-not-found
                                    {:prompt-name prompt-name})}))))
+
+(defn- handle-list-resource-templates
+  [context _params]
+  (log/trace :fn :handle-list-resource-templates)
+  {:resourceTemplates (mapv identity (vals @(:resource-templates context)))})
+
+(defn- handle-subscribe-resource
+  [context params]
+  (log/trace :fn :handle-subscribe-resource :resource (:uri params))
+  (swap! (:subscriptions context) conj (:uri params))
+  {})
+
+(defn- handle-unsubscribe-resource
+  [context params]
+  (log/trace :fn :handle-unsubscribe-resource :resource (:uri params))
+  (swap! (:subscriptions context) disj (:uri params))
+  {})
+
+(defn- handle-set-logging-level
+  [context params]
+  (log/trace :fn :handle-set-logging-level :level (:level params))
+  (reset! (:log-level context) (:level params))
+  {})
+
+(defn- handle-complete
+  [context params]
+  (log/trace :fn :handle-complete
+             :ref (:ref params)
+             :argument (:argument params))
+  (let [completions @(:completions context)]
+    (if-let [handler (get completions (:ref params))]
+      {:completion (handler (:argument params))}
+      (do (log/debug :fn :handle-complete
+                     :ref (:ref params)
+                     :msg "No completion handler registered for ref")
+          {:completion {:values [], :total 0, :hasMore false}}))))
 
 ;;; Protocol: Requests and Notifications
 
@@ -223,88 +264,254 @@
        (handle-get-prompt context)
        (conform-or-log ::specs/get-prompt-response)))
 
-;;; @TODO: Requests to Implement
-
 ;; [ref: list_resource_templates_request]
 (defmethod jsonrpc.server/receive-request "resources/templates/list"
-  [_ _context params]
+  [_ context params]
   (log/trace :fn :receive-request
              :method "resources/templates/list"
              :params params)
   ;; [ref: log_bad_input_params]
   (conform-or-log ::specs/list-resource-templates-request params)
-  (identity ::specs/list-resource-templates-response)
-  ::jsonrpc.server/method-not-found)
+  (->> params
+       (handle-list-resource-templates context)
+       (conform-or-log ::specs/list-resource-templates-response)))
 
 ;; [ref: resource_subscribe_unsubscribe_request]
 (defmethod jsonrpc.server/receive-request "resources/subscribe"
-  [_ _context params]
+  [_ context params]
   (log/trace :fn :receive-request :method "resources/subscribe" :params params)
   ;; [ref: log_bad_input_params]
   (conform-or-log ::specs/resource-subscribe-unsubscribe-request params)
-  ::jsonrpc.server/method-not-found)
+  (handle-subscribe-resource context params))
 
 ;; [ref: resource_subscribe_unsubscribe_request]
 (defmethod jsonrpc.server/receive-request "resources/unsubscribe"
-  [_ _context params]
+  [_ context params]
   (log/trace :fn :receive-request
              :method "resources/unsubscribe"
              :params params)
   ;; [ref: log_bad_input_params]
   (conform-or-log ::specs/resource-subscribe-unsubscribe-request params)
-  ::jsonrpc.server/method-not-found)
+  (handle-unsubscribe-resource context params))
 
 ;; [ref: set_logging_level_request]
 (defmethod jsonrpc.server/receive-request "logging/setLevel"
-  [_ _context params]
+  [_ context params]
   (log/trace :fn :receive-request :method "logging/setLevel" :params params)
   ;; [ref: log_bad_input_params]
   (conform-or-log ::specs/set-logging-level-request params)
-  ::jsonrpc.server/method-not-found)
+  (handle-set-logging-level context params))
 
 ;; [ref: complete_request]
 (defmethod jsonrpc.server/receive-request "completion/complete"
-  [_ _context params]
+  [_ context params]
   (log/trace :fn :receive-request :method "completion/complete" :params params)
   ;; [ref: log_bad_input_params]
   (conform-or-log ::specs/complete-request params)
-  (identity ::specs/complete-response)
-  ::jsonrpc.server/method-not-found)
-
-;;; @TODO: Notifications to Implement
+  (->> params
+       (handle-complete context)
+       (conform-or-log ::specs/complete-response)))
 
 ;; [ref: cancelled_notification]
 (defmethod jsonrpc.server/receive-notification "notifications/cancelled"
-  [_method _context _params]
-  (identity ::specs/cancelled-notification)
-  ::jsonrpc.server/method-not-found)
+  [_method _context params]
+  ;; [ref: log_bad_input_params]
+  (conform-or-log ::specs/cancelled-notification params)
+  ;; This notification indicates that the result of the request will be
+  ;; unused. We log the cancellation; any associated processing SHOULD
+  ;; cease.
+  (log/debug :fn :receive-notification
+             :method "notifications/cancelled"
+             :request-id (:requestId params)
+             :reason (:reason params))
+  nil)
 
 ;; @TODO: Implement send-notification "notifications/cancelled" when request is
 ;; cancelled
 
 ;; [ref: progress_notification]
 (defmethod jsonrpc.server/receive-notification "notifications/progress"
-  [_method _context _params]
-  (identity ::specs/progress-notification)
-  ::jsonrpc.server/method-not-found)
+  [_method context params]
+  ;; [ref: log_bad_input_params]
+  (conform-or-log ::specs/progress-notification params)
+  (log/trace :fn :receive-notification
+             :method "notifications/progress"
+             :params params)
+  (when (fn? (:on-progress context)) ((:on-progress context) params))
+  nil)
 
-;; @TODO: Implement send-notification "notifications/progress" for long-lived
-;; requests
+;;; Server -> Client Notifications and Requests
 
-;; @TODO: Implement [ref: resource_list_changed_notification] for when list of
-;; resources available to the client changes.
+;; [ref: tool_list_changed_notification]
+(defn notify-tools-list-changed!
+  "Notify the client that the list of tools available on the server has
+  changed.
 
-;; @TODO: Implement [ref: resource_updated_notification] for when a resource is
-;; updated at the server
+  Args:
 
-;; @TODO: Implement [ref: prompt_list_changed_notification] for when list of
-;; prompts available to the client changes.
+  - server: The jsonrpc server endpoint (see `chan-server`,
+  `stdio-server`)."
+  [server]
+  (log/trace :fn :notify-tools-list-changed!)
+  (jsonrpc.server/send-notification server
+                                    "notifications/tools/list_changed"
+                                    {}))
 
-;; @TODO: Implement [ref: tool_list_changed_notification] for when list of
-;; tools available to the client changes.
+;; [ref: resource_list_changed_notification]
+(defn notify-resources-list-changed!
+  "Notify the client that the list of resources available on the server
+  has changed.
 
-;; @TODO: Implement [ref: logging_message_notification] for when server wants
-;; to send a logging message to the client.
+  Args:
+
+  - server: The jsonrpc server endpoint (see `chan-server`,
+  `stdio-server`)."
+  [server]
+  (log/trace :fn :notify-resources-list-changed!)
+  (jsonrpc.server/send-notification server
+                                    "notifications/resources/list_changed"
+                                    {}))
+
+;; [ref: prompt_list_changed_notification]
+(defn notify-prompts-list-changed!
+  "Notify the client that the list of prompts available on the server has
+  changed.
+
+  Args:
+
+  - server: The jsonrpc server endpoint (see `chan-server`,
+  `stdio-server`)."
+  [server]
+  (log/trace :fn :notify-prompts-list-changed!)
+  (jsonrpc.server/send-notification server
+                                    "notifications/prompts/list_changed"
+                                    {}))
+
+;; [ref: resource_updated_notification]
+(defn notify-resource-updated!
+  "Notify the client that a resource it subscribed to has been updated.
+
+  Only sends the notification when the client previously subscribed to
+  the URI through resources/subscribe. Returns nil otherwise.
+
+  Args:
+
+  - server: The jsonrpc server endpoint (see `chan-server`,
+  `stdio-server`)
+
+  - context: Map containing all state for the current server. See:
+  `create-empty-context`
+
+  - uri: The URI of the updated resource."
+  [server context uri]
+  (log/trace :fn :notify-resource-updated! :resource uri)
+  (when (contains? @(:subscriptions context) uri)
+    (jsonrpc.server/send-notification server
+                                      "notifications/resources/updated"
+                                      {:uri uri})))
+
+;; The severity of a log message. These map to syslog message severities,
+;; as specified in RFC-5424. [ref: logging_message_notification]
+(def ^:private log-level->severity
+  (zipmap ["debug" "info" "notice" "warning" "error" "critical" "alert"
+           "emergency"]
+          (range)))
+
+;; [ref: logging_message_notification]
+(defn notify-log-message!
+  "Send a log message notification to the client.
+
+  Respects the minimum log level set by the client through
+  logging/setLevel: messages with a severity lower than the configured
+  level are suppressed. If no level has been set, the message is sent.
+
+  Args:
+
+  - server: The jsonrpc server endpoint (see `chan-server`,
+  `stdio-server`)
+
+  - context: Map containing all state for the current server. See:
+  `create-empty-context`
+
+  - level: The severity of the message, one of the RFC-5424 levels
+  (\"debug\", \"info\", \"notice\", \"warning\", \"error\", \"critical\",
+  \"alert\", \"emergency\")
+
+  - data: The data to be logged. Any JSON-serializable value.
+
+  - opts: Optional map of:
+    :logger - An optional name of the logger issuing this message."
+  ([server context level data]
+   (notify-log-message! server context level data {}))
+  ([server context level data {:keys [logger]}]
+   (log/trace :fn :notify-log-message! :level level :logger logger)
+   (let [min-level @(:log-level context)]
+     (when (or (nil? min-level)
+               (>= (log-level->severity level -1)
+                   (log-level->severity min-level -1)))
+       (jsonrpc.server/send-notification server
+                                         "notifications/message"
+                                         (cond-> {:level level, :data data}
+                                           logger (assoc :logger logger)))))))
+
+;; [ref: progress_notification]
+(defn notify-progress!
+  "Send a progress notification to the client for a long-running request.
+
+  Args:
+
+  - server: The jsonrpc server endpoint (see `chan-server`,
+  `stdio-server`)
+
+  - token: The progress token of the original request
+
+  - progress: The progress thus far. This should increase every time
+  progress is made, even if the total is unknown.
+
+  - opts: Optional map of:
+    :total   - Total number of items to process, if known
+    :message - An optional message describing the current progress."
+  ([server token progress] (notify-progress! server token progress {}))
+  ([server token progress {:keys [total message]}]
+   (log/trace :fn :notify-progress! :token token :progress progress)
+   (jsonrpc.server/send-notification server
+                                     "notifications/progress"
+                                     (cond-> {:progressToken token,
+                                              :progress progress}
+                                       total (assoc :total total)
+                                       message (assoc :message message)))))
+
+;; method: "roots/list"
+(defn request-roots!
+  "Request the list of root URIs from the client.
+
+  Returns the pending request, which can be deref-ed for the response.
+
+  Args:
+
+  - server: The jsonrpc server endpoint (see `chan-server`,
+  `stdio-server`)."
+  [server]
+  (log/trace :fn :request-roots!)
+  (jsonrpc.server/send-request server "roots/list" {}))
+
+;; method: "sampling/createMessage"
+(defn request-sampling!
+  "Request the client to sample an LLM on the server's behalf.
+
+  Returns the pending request, which can be deref-ed for the response.
+
+  Args:
+
+  - server: The jsonrpc server endpoint (see `chan-server`,
+  `stdio-server`)
+
+  - params: The sampling request params, containing :messages,
+  :maxTokens and other optional keys. See:
+  `::specs/sampling-create-message-request`."
+  [server params]
+  (log/trace :fn :request-sampling! :params params)
+  (jsonrpc.server/send-request server "sampling/createMessage" params))
 
 ;;; Server Spec Implementation
 
@@ -387,6 +594,49 @@
     (:name prompt)
     {:prompt prompt, :handler handler}))
 
+(defn register-resource-template!
+  "Register a resource template against the MCP server.
+
+  Args:
+
+  - context: Map containing all state for the current server. See:
+  `create-empty-context`
+
+  - template: Map defining the actual resource template definition as
+  understood by the MCP spec. It contains the following keys:
+    :uriTemplate  - A URI template (RFC 6570) that can be used to
+                    construct resource URIs
+    :name         - The name of the resource template
+    :description  - A description of what the resource template is for
+    :mimeType     - The MIME type for all resources that match this
+                    template, if uniform.
+                    See: [ref: list_resource_templates_request]"
+  [context template]
+  (swap! (:resource-templates context) assoc (:uriTemplate template) template))
+
+(defn register-completion!
+  "Register a completion handler against the MCP server.
+
+  Args:
+
+  - context: Map containing all state for the current server. See:
+  `create-empty-context`
+
+  - ref: Map identifying what the completion is for, as understood by
+  the MCP spec. Either:
+    {:type \"ref/prompt\" :name \"prompt-name\"}
+    {:type \"ref/resource\" :uri \"resource-uri\"}
+    See: [ref: complete_request]
+
+  - handler: The function that implements the completion logic. Signature:
+     (fn [argument] ... )
+       * argument - map with :name and :value keys, representing the
+         argument being completed and the value entered so far. The
+         handler must return a map of the shape
+         {:values [...] :total n :hasMore bool}"
+  [context ref handler]
+  (swap! (:completions context) assoc ref handler))
+
 (defn- create-empty-context
   [name version]
   (log/trace :fn :create-empty-context)
@@ -402,9 +652,21 @@
   {:server-info {:name name, :version version},
    :tools (atom {}),
    :resources (atom {}),
+   :resource-templates (atom {}),
    :prompts (atom {}),
+   :subscriptions (atom #{}),
+   :log-level (atom nil),
+   :completions (atom {}),
    :protocol (atom nil),
-   :capabilities (atom {:tools {}, :resources {}, :prompts {}}),
+   ;; [tag: default_server_capabilities]
+   ;;
+   ;; The capabilities the server advertises by default, covering the
+   ;; full protocol surface implemented in this namespace.
+   :capabilities (atom {:tools {:listChanged true},
+                        :resources {:subscribe true, :listChanged true},
+                        :prompts {:listChanged true},
+                        :logging {},
+                        :completions {}}),
    :connected-clients (atom {})})
 
 (defn create-context!
@@ -421,11 +683,14 @@
                :handler (fn [args] ...)}]
     :resources [{:uri \"resource-uri\"
                  :type \"text\"
-                 :handler (fn [uri] ...)}]}
+                 :handler (fn [uri] ...)}]
+    :resource-templates [{:uriTemplate \"file:///{path}\"
+                          :name \"Template name\"}]}
 
   For more details, see the doc-strings of `register-tool!`,
-  `register-prompt!` and `register-resource!`."
-  [{:keys [name version tools prompts resources], :as spec}]
+  `register-prompt!`, `register-resource!` and
+  `register-resource-template!`."
+  [{:keys [name version tools prompts resources resource-templates], :as spec}]
   (validate-spec! spec)
   (log/with-context {:action :create-context!}
     (let [context (create-empty-context name version)]
@@ -443,6 +708,12 @@
         (register-resource! context
                             (dissoc resource :handler)
                             (:handler resource)))
+      (when (> (count resource-templates) 0)
+        (log/debug :num-resource-templates (count resource-templates)
+                   :msg "Registering resource templates"
+                   :server-info {:name name, :version version}))
+      (doseq [template resource-templates]
+        (register-resource-template! context template))
       (when (> (count prompts) 0)
         (log/debug :num-prompts (count prompts)
                    :msg "Registering prompts"
