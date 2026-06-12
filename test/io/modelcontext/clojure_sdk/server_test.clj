@@ -440,6 +440,28 @@
             (is (= "file:///data.json" (:uri content)))
             (is (= "application/json" (:mimeType content)))
             (is (contains? content :blob)))))
+      (testing "Resource handler returning multiple contents"
+        (let [multi
+                {:uri "file:///multi.txt",
+                 :name "Multi",
+                 :handler (fn [uri]
+                            [{:uri uri, :mimeType "text/plain", :text "a"}
+                             {:uri uri, :mimeType "text/plain", :text "b"}])}]
+          (server/register-resource! context
+                                     (dissoc multi :handler)
+                                     (:handler multi))
+          ;; Live registration auto-notifies; consume the notification
+          ;; so the next take sees the read response.
+          (is (= (jsonrpc.requests/notification
+                   "notifications/resources/list_changed"
+                   {})
+                 (h/assert-take (:output-ch server))))
+          (async/put! (:input-ch server)
+                      (jsonrpc.requests/request 5
+                                                "resources/read"
+                                                {:uri "file:///multi.txt"}))
+          (let [response (h/assert-take (:output-ch server))]
+            (is (= 2 (count (get-in response [:result :contents])))))))
       (testing "Invalid resource request"
         (async/put! (:input-ch server)
                     (jsonrpc.requests/request 4

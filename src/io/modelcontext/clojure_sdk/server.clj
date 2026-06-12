@@ -129,7 +129,10 @@
   (let [resources @(:resources context)
         uri (:uri params)]
     (if-let [{:keys [handler]} (get resources uri)]
-      {:contents [(handler uri)]}
+      ;; A handler may return a single contents map or a sequence of
+      ;; them (a resource can have multiple contents per the schema).
+      (let [result (handler uri)]
+        {:contents (if (sequential? result) (vec result) [result])})
       (do (log/debug :fn :handle-read-resource
                      :resource uri
                      :error :resource-not-found)
