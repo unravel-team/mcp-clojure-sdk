@@ -4,9 +4,41 @@ All notable changes to this project will be documented in this file. This change
 ## Unreleased
 ### Added
 - Add `mcp-thoughtful-prompts` as an example prompt server in the README.
+- Complete the server-side MCP protocol surface: `resources/templates/list`,
+  `resources/subscribe`/`unsubscribe`, `logging/setLevel`,
+  `completion/complete`, and the `notifications/cancelled`/`progress`
+  receivers. New registration fns: `register-resource-template!`,
+  `register-completion!`.
+- Server -> client senders: `notify-tools-list-changed!`,
+  `notify-resources-list-changed!`, `notify-prompts-list-changed!`,
+  `notify-resource-updated!` (subscription-gated), `notify-log-message!`
+  (respects the level set via `logging/setLevel`), `notify-progress!`,
+  `request-roots!` and `request-sampling!`.
+- Client additions: `notify-progress!`, `add-root!`/`remove-root!` (send
+  `notifications/roots/list_changed` automatically).
+- Streamable HTTP transport (spec revision 2025-03-26): `http_server.clj`
+  (Pedestal + Jetty, single `/mcp` endpoint, `Mcp-Session-Id` sessions,
+  SSE stream for server-initiated messages) and `http_client.clj`
+  (clj-http based, mirrors the stdio client API). JSON-RPC batching is
+  intentionally unsupported (removed in the 2025-06-18 spec revision).
+- Public JSON helpers in `io-chan`: `message->json-str` /
+  `json-str->message`, shared by the stdio and HTTP transports.
 
 ### Changed
 - Update all the examples to use the new API.
+- Servers now advertise their full default capabilities (tools/prompts
+  `listChanged`, resources `subscribe`+`listChanged`, `logging`,
+  `completions`).
+- `ping` now returns `{}` instead of `"pong"` (the schema requires a
+  Result object).
+- New dependencies: `io.pedestal/pedestal.service` + `pedestal.jetty`
+  (0.8.1, kept in sync with the logger's `pedestal.log`) and
+  `clj-http/clj-http`.
+
+### Fixed
+- `io-chan` no longer crashes the reader thread at stream EOF when the
+  JSON provider returns nil instead of throwing (this also prevented
+  stdio servers from shutting down when their client closed stdin).
 
 ## [1.1.147] - 2025-06-07
 ### Added

@@ -1,6 +1,9 @@
 # io.modelcontext/clojure-sdk
 
-A `clojure-sdk` for creating Model Context Protocol servers!
+A `clojure-sdk` for creating Model Context Protocol servers and clients!
+
+Supported transports: STDIO and Streamable HTTP (single `/mcp`
+endpoint with POST + SSE, `Mcp-Session-Id` session management).
 
 ## Table of Contents          :TOC_4:
 - [io.modelcontext/clojure-sdk](#iomodelcontextclojure-sdk)
@@ -12,6 +15,10 @@ A `clojure-sdk` for creating Model Context Protocol servers!
       - [Calculator: `calculator_server`](#calculator-calculator_server)
       - [Vega-lite: `vegalite_server`](#vega-lite-vegalite_server)
       - [Code Analysis: `code_analysis_server`](#code-analysis-code_analysis_server)
+  - [Client Usage](#client-usage)
+    - [Quick Start (STDIO)](#quick-start-stdio)
+    - [Handling Server Callbacks](#handling-server-callbacks)
+  - [Streamable HTTP Transport](#streamable-http-transport)
   - [Core Components](#core-components)
   - [Communication Flow](#communication-flow)
   - [Pending Work](#pending-work)
@@ -210,20 +217,114 @@ execute this command from the `mcp-clojure-sdk` repo)
   npx @modelcontextprotocol/inspector java -Dclojure.tools.logging.factory=clojure.tools.logging.impl/log4j2-factory -Dorg.eclipse.jetty.util.log.class=org.eclipse.jetty.util.log.Slf4jLog -Dlog4j2.contextSelector=org.apache.logging.log4j.core.async.AsyncLoggerContextSelector -Dlog4j2.configurationFile=log4j2-mcp.xml -Dbabashka.json.provider=metosin/jsonista -Dlogging.level=INFO -cp integration-test/servers/target/io.modelcontextprotocol.clojure-sdk/examples-1.2.0.jar code_analysis_server
   ```
 
+## Client Usage
+
+The SDK also provides client functionality for connecting to MCP
+servers (any language, not just Clojure ones).
+
+### Quick Start (STDIO)
+
+  ```clojure
+  (require '[io.modelcontext.clojure-sdk.client :as client]
+           '[io.modelcontext.clojure-sdk.stdio-client :as stdio-client])
+
+  (let [result (stdio-client/run!
+                 {:name "my-client" :version "1.0.0"}
+                 "java"
+                 ["-cp" "servers.jar" "calculator_server"])]
+    (if (:error result)
+      (println "Failed to connect:" (:error result))
+      (let [c (:client result)]
+        (try
+          ;; List available tools
+          (println "Tools:" (map :name (:tools @(client/list-tools! c))))
+          ;; Call a tool
+          (println "2 + 3 =" (-> @(client/call-tool! c "add" {:a 2 :b 3})
+                                 :content first :text))
+          (finally
+            (stdio-client/shutdown! c))))))
+  ```
+
+All request functions (`list-tools!`, `call-tool!`, `read-resource!`,
+`get-prompt!`, `ping!`, ...) return deref-able pending requests. Use
+`client/deref-or-cancel` to deref with a timeout.
+
+### Handling Server Callbacks
+
+  ```clojure
+  (stdio-client/run!
+    {:name "my-client" :version "1.0.0"}
+    "node" ["server.js"]
+    :on-progress (fn [token progress total msg] ...)
+    :on-log (fn [level logger data] ...)
+    :on-resource-updated (fn [uri] ...)
+    :on-tool-list-changed (fn [] ...)
+    :sampling-handler (fn [params] {:model "..." :role "assistant" ...})
+    :roots [{:uri "file:///home/user/project" :name "My Project"}])
+  ```
+
+The client answers server-initiated `ping`, `roots/list` and
+`sampling/createMessage` requests automatically (the latter through
+your `:sampling-handler`). `client/add-root!` and `client/remove-root!`
+update the roots list and notify the server.
+
+## Streamable HTTP Transport
+
+Both halves of the Streamable HTTP transport (spec revision
+2025-03-26) are provided:
+
+  ```clojure
+  (require '[io.modelcontext.clojure-sdk.http-server :as http-server]
+           '[io.modelcontext.clojure-sdk.http-client :as http-client])
+
+  ;; Server: Pedestal + Jetty, single /mcp endpoint
+  (def handle (http-server/start! my-server-spec {:host "127.0.0.1" :port 8080}))
+  ;; ... (http-server/stop! handle) when done
+
+  ;; Client
+  (let [{:keys [client error]} (http-client/run!
+                                 {:name "my-client" :version "1.0.0"}
+                                 "http://127.0.0.1:8080/mcp"
+                                 {})]
+    ...
+    (http-client/shutdown! client))
+  ```
+
+Details:
+- The server assigns an `Mcp-Session-Id` header on the `initialize`
+  response; each session gets its own jsonrpc endpoint while sharing
+  the registered tools/resources/prompts.
+- Server-initiated messages (e.g. `notifications/tools/list_changed`)
+  are pushed over an SSE stream opened by the client with GET.
+- `DELETE` terminates the session.
+- JSON-RPC batching is intentionally not supported (it was removed in
+  the 2025-06-18 spec revision).
+- Known v1 limitation: the client expects POST responses as
+  `application/json` (as this server sends them); servers that answer
+  POSTs with an SSE stream are not yet supported.
+
 ## Core Components
 
 1. **Server Implementation**: The core server functionality is
    implemented in `server.clj`, which handles request/response cycles
-   for various MCP methods.
+   for various MCP methods, plus server-initiated notifications
+   (`notify-*!`) and requests (`request-roots!`, `request-sampling!`).
 
-2. **Transport Layer**: The SDK implements a STDIO transport in
-   `stdio_server.clj` using `io_chan.clj` to convert between IO
-   streams and core.async channels.
+2. **Client Implementation**: The core client functionality is in
+   `client.clj`: lifecycle (`initialize!`/`initialized!`), requests
+   for all client->server methods, and handlers for server-initiated
+   requests and notifications.
 
-3. **Error Handling**: Custom error handling is defined in
+3. **Transport Layer**: The SDK implements a STDIO transport in
+   `stdio_server.clj`/`stdio_client.clj` using `io_chan.clj` to
+   convert between IO streams and core.async channels, and a
+   Streamable HTTP transport in `http_server.clj` (Pedestal + Jetty)
+   and `http_client.clj` (clj-http).
+
+4. **Error Handling**: Custom error handling is defined in
    `mcp/errors.clj`.
 
-4. **Protocol Specifications**: All protocol specifications are
+5. **Protocol Specifications**: All protocol specifications are
    defined in `specs.clj`, which provides validation for requests,
    responses, and server components.
 
