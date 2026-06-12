@@ -284,6 +284,62 @@
                                     "notifications/roots/list_changed"
                                     {}))
 
+;; [ref: progress_notification]
+(defn notify-progress!
+  "Send a progress notification to the server for a long-running request.
+
+  Args:
+
+  - client: The MCP client
+
+  - token: The progress token of the original request
+
+  - progress: The progress thus far. This should increase every time
+  progress is made, even if the total is unknown.
+
+  - opts: Optional map of:
+    :total   - Total number of items to process, if known
+    :message - An optional message describing the current progress."
+  ([client token progress] (notify-progress! client token progress {}))
+  ([client token progress {:keys [total message]}]
+   (log/trace :fn :notify-progress! :token token :progress progress)
+   (jsonrpc.server/send-notification (:endpoint client)
+                                     "notifications/progress"
+                                     (cond-> {:progressToken token,
+                                              :progress progress}
+                                       total (assoc :total total)
+                                       message (assoc :message message)))))
+
+(defn add-root!
+  "Add a root to the client's roots list and notify the server.
+
+  Args:
+
+  - client: The MCP client
+
+  - root: Map with :uri (must start with file:// for now) and an
+  optional :name."
+  [client root]
+  (log/trace :fn :add-root! :root root)
+  (swap! (:state client) update :roots (fnil conj []) root)
+  (notify-roots-list-changed! client))
+
+(defn remove-root!
+  "Remove the root identified by `uri` from the client's roots list and
+  notify the server.
+
+  Args:
+
+  - client: The MCP client
+
+  - uri: The URI of the root to remove."
+  [client uri]
+  (log/trace :fn :remove-root! :uri uri)
+  (swap! (:state client) update
+    :roots
+    (fn [roots] (vec (remove #(= uri (:uri %)) roots))))
+  (notify-roots-list-changed! client))
+
 ;;; ============================================================================
 ;;; Server-Initiated Request Handlers
 ;;; ============================================================================

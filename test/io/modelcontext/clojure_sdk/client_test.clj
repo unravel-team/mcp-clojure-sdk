@@ -1,7 +1,10 @@
 (ns io.modelcontext.clojure-sdk.client-test
-  (:require [clojure.test :refer [deftest is testing]]
+  (:require [clojure.core.async :as async]
+            [clojure.test :refer [deftest is testing]]
             [io.modelcontext.clojure-sdk.client :as client]
             [io.modelcontext.clojure-sdk.server :as server]
+            [io.modelcontext.clojure-sdk.test-helper :as h]
+            [jsonrpc4clj.requests :as jsonrpc.requests]
             [jsonrpc4clj.server :as jsonrpc.server]))
 
 (def tool-echo
@@ -101,3 +104,51 @@
              (is (not= ::timeout result))
              (is (= "test-model" (:model result))))
            (finally (shutdown! connection))))))
+
+;;; Client -> Server notifications: progress and roots management.
+
+(defn- raw-connected-client
+  "Connect a client to raw channels so tests can observe its outbound
+  messages directly. Returns {:client ... :out ...}."
+  [client-opts]
+  (let [in (async/chan 3)
+        out (async/chan 3)
+        client (-> (apply client/create-client
+                          {:name "test-client", :version "1.0.0"}
+                          (mapcat identity client-opts))
+                   (client/connect! in out))]
+    (client/start! client)
+    {:client client, :out out, :in in}))
+
+(deftest client-sends-progress-notifications
+  (testing "notify-progress! sends a progress notification"
+    (let [{:keys [client out]} (raw-connected-client {})]
+      (try (client/notify-progress! client "tok-1" 25 {:total 50, :message "Q"})
+           (is (= (jsonrpc.requests/notification "notifications/progress"
+                                                 {:progressToken "tok-1",
+                                                  :progress 25,
+                                                  :total 50,
+                                                  :message "Q"})
+                  (h/assert-take out)))
+           (finally (client/shutdown! client))))))
+
+(deftest client-roots-management
+  (testing "add-root! updates state and notifies the server"
+    (let [{:keys [client out]} (raw-connected-client {:roots [{:uri "file:///a",
+                                                               :name "A"}]})
+          new-root {:uri "file:///b", :name "B"}]
+      (try (client/add-root! client new-root)
+           (is (= [{:uri "file:///a", :name "A"} new-root]
+                  (:roots @(:state client))))
+           (is (= (jsonrpc.requests/notification
+                    "notifications/roots/list_changed"
+                    {})
+                  (h/assert-take out)))
+           (testing "remove-root! removes by uri and notifies"
+             (client/remove-root! client "file:///a")
+             (is (= [new-root] (:roots @(:state client))))
+             (is (= (jsonrpc.requests/notification
+                      "notifications/roots/list_changed"
+                      {})
+                    (h/assert-take out))))
+           (finally (client/shutdown! client))))))
