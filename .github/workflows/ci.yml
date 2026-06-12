@@ -1,0 +1,50 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: ["main"]
+
+jobs:
+  lint-test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Set up Clojure
+        uses: DeLaGuardo/setup-clojure@12.5
+        with:
+          cli: latest
+          zprint: latest
+
+      - name: Run formatter
+        run: make format
+
+      - name: Ensure formatting clean
+        run: |
+          if ! git diff --exit-code; then
+            echo "::error::Formatting changes detected after 'make format'. Please run 'make format' and commit the changes."
+            git --no-pager diff
+            exit 1
+          fi
+
+      - name: Run checks
+        run: |
+          if ! make check; then
+            echo "::error::'make check' failed. Please run it locally and resolve the reported issues."
+            exit 1
+          fi
+
+      - name: Run tests
+        run: |
+          if ! make test; then
+            echo "::error::'make test' failed. Please run it locally and resolve the reported issues."
+            exit 1
+          fi

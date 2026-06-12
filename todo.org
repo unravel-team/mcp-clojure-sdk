@@ -8,26 +8,32 @@ CLOSED: [2025-04-27 Sun 18:30]
 See:
 1. [[https://github.com/unravel-team/mcp-clojure-server-deps-new][mcp-clojure-server-deps-new]] for a ~deps-new~ based template
 2. [[https://github.com/unravel-team/example-cool-mcp-server][example-cool-mcp-server]] for a Github template project
-* WORKING Add client support to mcp-clojure-sdk
+* DONE Add client support to mcp-clojure-sdk
+CLOSED: [2026-06-12 Fri]
 :LOGBOOK:
+- State "DONE"       from "WORKING"    [2026-06-12 Fri]
 - State "WORKING"    from "TODO"       [2025-05-24 Sat 14:38]
 :END:
-** WORKING Add basic client support for the stdio transport, based on what python-sdk and typescript-sdk do
+** DONE Add basic client support for the stdio transport, based on what python-sdk and typescript-sdk do
+CLOSED: [2026-06-12 Fri]
 :LOGBOOK:
+- State "DONE"       from "WORKING"    [2026-06-12 Fri]
 - State "WORKING"    from "TODO"       [2025-05-24 Sat 14:38]
 :END:
 :CLOCK:
 CLOCK: [2025-05-25 Sun 11:07]--[2025-05-25 Sun 11:41] =>  0:34
 CLOCK: [2025-05-24 Sat 14:38]--[2025-05-25 Sun 08:29] => 17:51
 :END:
-** WORKING Create an integration test for the current server code using such a client, based on clojure-lsp integration tests
+** DONE Create an integration test for the current server code using such a client, based on clojure-lsp integration tests
+CLOSED: [2026-06-12 Fri]
 :LOGBOOK:
+- State "DONE"       from "WORKING"    [2026-06-12 Fri]
 - State "WORKING"    from "TODO"       [2025-05-25 Sun 11:41]
 :END:
 :CLOCK:
 CLOCK: [2025-05-25 Sun 11:41]--[2025-05-25 Sun 12:32] =>  0:51
 :END:
-- See:
+- See: ~integration-test/~ (run with ~bb integration-test <server command>~)
 
 * TODO Update the README of mcp-clojure-sdk.
 Refer to typescript-sdk as a reference
@@ -37,21 +43,41 @@ Refer to typescript-sdk as a reference
 ** TODO Support servers launched using uv/python
 ** TODO Support servers launched using java
 * TODO Add support for dynamic server capability negotiation
-* TODO Add support for the SSE / Streaming HTTP transport to mcp-clojure-sdk
-** TODO Add support for SSE transport
-** TODO Add support for Streaming HTTP transport
-
-* WORKING Implement the entire roots section of the protocol
+* DONE Add support for the SSE / Streaming HTTP transport to mcp-clojure-sdk
+CLOSED: [2026-06-12 Fri]
 :LOGBOOK:
+- State "DONE"       from "TODO"       [2026-06-12 Fri]
+:END:
+Implemented the Streamable HTTP transport (spec revision 2025-03-26),
+which replaced the deprecated two-endpoint HTTP+SSE transport. See
+~http_server.clj~ (Pedestal + Jetty) and ~http_client.clj~ (clj-http).
+** CANCELLED Add support for SSE transport
+The legacy HTTP+SSE transport was deprecated by the spec in favor of
+Streamable HTTP; not implementing it.
+** DONE Add support for Streaming HTTP transport
+CLOSED: [2026-06-12 Fri]
+
+* DONE Implement the entire roots section of the protocol
+CLOSED: [2026-06-12 Fri]
+:LOGBOOK:
+- State "DONE"       from "WORKING"    [2026-06-12 Fri]
 - State "WORKING"    from "TODO"       [2025-05-03 Sat 16:38]
 :END:
+Client: ~:roots~ option, ~add-root!~/~remove-root!~ (auto
+list_changed), answers ~roots/list~. Server: ~request-roots!~.
 * WORKING Bring the spec up-to-date and track the differences
 
-* TODO Add an integration test for end-to-end testing the server
+* DONE Add an integration test for end-to-end testing the server
+CLOSED: [2026-06-12 Fri]
 See ~integration.client~ from ~lsp4clj~ for inspiration
-* TODO Implement the HTTP-SSE Transport
-** TODO Implement the SSE-transport based server
-** TODO Implement the SSE-transport based client
+Done in ~integration-test/~; run with ~bb integration-test <server command>~.
+* DONE Implement the HTTP-SSE Transport
+CLOSED: [2026-06-12 Fri]
+Superseded by the Streamable HTTP transport (see above).
+** DONE Implement the SSE-transport based server
+CLOSED: [2026-06-12 Fri]
+** DONE Implement the SSE-transport based client
+CLOSED: [2026-06-12 Fri]
 * TODO Checks and Balances in the mcp-cljc-sdk code
 ** TODO Make sure that handle-* functions are implement proper checks
 Read through the python decorator code to double-check if we are doing the right thing here.
@@ -60,7 +86,11 @@ Read through the python decorator code to double-check if we are doing the right
 ** TODO Implement best practices for resources
 ** TODO Ensure that error handling is correctly done for transports
 ** TODO Implement best practices for transports
-* TODO Implement the entire sampling section of the protocol
+* DONE Implement the entire sampling section of the protocol
+CLOSED: [2026-06-12 Fri]
+Server: ~request-sampling!~ sends ~sampling/createMessage~. Client:
+~:sampling-handler~ option answers it (advertises the sampling
+capability when provided).
 * TODO Create a CLI tool for how tools, prompts, resources should be defined
 1. Easily create new projects, in ~deps-new~ style
 2. Organize them properly, making it possible to build servers fast.

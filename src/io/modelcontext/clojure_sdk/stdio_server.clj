@@ -20,7 +20,10 @@
   (let [context (assoc (core/create-context! spec) :server server)]
     (log/info :msg "[STDIO SERVER] Starting server...")
     (monitor-server-logs (:log-ch server))
-    (jsonrpc.server/start server context)))
+    ;; core/start! attaches the server to the context's :server* atom,
+    ;; enabling auto list_changed notifications on live registration.
+    ;; [ref: auto_list_changed_notifications]
+    (core/start! server context)))
 
 ;;;; Create server
 

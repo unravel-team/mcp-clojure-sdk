@@ -6,7 +6,6 @@ watch-files: true
 
 ## Specify a read-only file (can be used multiple times)
 read:
-  - CONVENTIONS.md
   - src/io/modelcontext/clojure_sdk/specs.clj
 
 ## Specify a custom prompt for generating commit messages
@@ -35,9 +34,9 @@ commit-prompt: |
   Reply only with the commit message, without any additional text or explanations.
 
 ## Main model (Architect) and editor model (Editor)
-model: gemini-exp
+model: sonnet
 architect: true
-editor-model: gemini-exp
+editor-model: sonnet
 
 ## Testing and Linting of my code
 lint-cmd: make format

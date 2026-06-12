@@ -1,0 +1,29 @@
+;;; Benchmark harness comparing MCP stdio servers built on the Java MCP
+;;; SDK (the interop baseline used by clojure-mcp) against this repo's
+;;; mcp-clojure-sdk. Run with `clojure -M:run` from this directory.
+{:aliases {:cljc-server {:extra-deps {io.modelcontextprotocol/mcp-clojure-sdk
+                                      {:local/root "../"}},
+                         :jvm-opts ["-Dlogging.level=ERROR"],
+                         :main-opts ["-m" "bench-cljc-server"]},
+           ;; Same server, loaded from AOT-compiled classes (run
+           ;; `clojure -M:compile` first). Removes the ~1.9s of
+           ;; core.async/SDK compile-at-load time from startup.
+           :cljc-server-aot {:extra-deps
+                             {io.modelcontextprotocol/mcp-clojure-sdk
+                              {:local/root "../"}},
+                             :extra-paths ["classes"],
+                             :jvm-opts ["-Dlogging.level=ERROR"],
+                             :main-opts ["-m" "bench-cljc-server"]},
+           :compile {:extra-deps {io.modelcontextprotocol/mcp-clojure-sdk
+                                  {:local/root "../"}},
+                     :extra-paths ["classes"],
+                     :main-opts ["-e"
+                                 "(binding [*compile-path* \"classes\"] (compile 'bench-cljc-server))"]},
+           :java-server
+           {:extra-deps {io.modelcontextprotocol.sdk/mcp {:mvn/version "1.1.3"},
+                         org.clojure/data.json {:mvn/version "2.5.1"}},
+            :main-opts ["-m" "bench-java-server"]},
+           :run {:extra-deps {metosin/jsonista {:mvn/version "0.3.13"}},
+                 :main-opts ["-m" "bench-runner"]}},
+ :deps {org.clojure/clojure {:mvn/version "1.12.4"}},
+ :paths ["src"]}

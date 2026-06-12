@@ -131,6 +131,15 @@
                     {:type "text",
                      :text (str (reduce * (range 1 (inc number))))})))})
 
+(def resource-constants
+  {:uri "resource://constants",
+   :name "Math Constants",
+   :description "Common math constants",
+   :mimeType "application/json",
+   :handler
+   (fn [uri]
+     {:uri uri, :mimeType "application/json", :text "{\"pi\":3.14159}"})})
+
 (def calculator-server-spec
   {:name "calculator",
    :version "1.0.0",
@@ -141,7 +150,8 @@
            ;; Array operations to test complex inputs
            tool-sum-array tool-average
            ;; Test long-running operation
-           tool-factorial]})
+           tool-factorial],
+   :resources [resource-constants]})
 
 (defn -main
   [& _args]

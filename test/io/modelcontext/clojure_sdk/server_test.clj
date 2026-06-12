@@ -87,6 +87,15 @@
    :prompts [],
    :resources [resource-test-file]})
 
+;;; Capabilities advertised by default once the full protocol surface is
+;;; implemented. [ref: default_server_capabilities]
+(def default-capabilities
+  {:tools {:listChanged true},
+   :resources {:subscribe true, :listChanged true},
+   :prompts {:listChanged true},
+   :logging {},
+   :completions {}})
+
 ;;; Tests
 
 (deftest server-basic-functionality
@@ -148,11 +157,11 @@
                       {:protocolVersion "2024-11-05",
                        :capabilities {:roots {:listChanged true}, :sampling {}},
                        :clientInfo {:name "ExampleClient", :version "1.0.0"}}))
-        (is (= (jsonrpc.responses/response
-                 1
-                 {:protocolVersion "2024-11-05",
-                  :capabilities {:tools {}, :resources {}, :prompts {}},
-                  :serverInfo {:name "test-server", :version "1.0.0"}})
+        (is (= (jsonrpc.responses/response 1
+                                           {:protocolVersion "2024-11-05",
+                                            :capabilities default-capabilities,
+                                            :serverInfo {:name "test-server",
+                                                         :version "1.0.0"}})
                (h/take-or-timeout (:output-ch server) 200))))
       (jsonrpc.server/shutdown server)))
   (testing "Connection initialization through initialize, 2025-03-26 version"
@@ -168,11 +177,31 @@
                       {:protocolVersion "2025-03-26",
                        :capabilities {:roots {:listChanged true}, :sampling {}},
                        :clientInfo {:name "ExampleClient", :version "1.0.0"}}))
-        (is (= (jsonrpc.responses/response
-                 1
-                 {:protocolVersion "2025-03-26",
-                  :capabilities {:tools {}, :resources {}, :prompts {}},
-                  :serverInfo {:name "test-server", :version "1.0.0"}})
+        (is (= (jsonrpc.responses/response 1
+                                           {:protocolVersion "2025-03-26",
+                                            :capabilities default-capabilities,
+                                            :serverInfo {:name "test-server",
+                                                         :version "1.0.0"}})
+               (h/take-or-timeout (:output-ch server) 200))))
+      (jsonrpc.server/shutdown server)))
+  (testing "Connection initialization through initialize, 2025-06-18 version"
+    (let [context (server/create-context!
+                    {:name "test-server", :version "1.0.0", :tools [tool-echo]})
+          server (server/chan-server)
+          _join (server/start! server context)]
+      (testing "Client initialization"
+        (async/put! (:input-ch server)
+                    (jsonrpc.requests/request
+                      1
+                      "initialize"
+                      {:protocolVersion "2025-06-18",
+                       :capabilities {:roots {:listChanged true}, :sampling {}},
+                       :clientInfo {:name "ExampleClient", :version "1.0.0"}}))
+        (is (= (jsonrpc.responses/response 1
+                                           {:protocolVersion "2025-06-18",
+                                            :capabilities default-capabilities,
+                                            :serverInfo {:name "test-server",
+                                                         :version "1.0.0"}})
                (h/take-or-timeout (:output-ch server) 200))))
       (jsonrpc.server/shutdown server)))
   (testing "Connection initialization through initialize, unknown version"
@@ -188,12 +217,31 @@
                       {:protocolVersion "DRAFT-2025-v2",
                        :capabilities {:roots {:listChanged true}, :sampling {}},
                        :clientInfo {:name "ExampleClient", :version "1.0.0"}}))
-        (is (= (jsonrpc.responses/response
-                 1
-                 {:protocolVersion "2025-03-26",
-                  :capabilities {:tools {}, :resources {}, :prompts {}},
-                  :serverInfo {:name "test-server", :version "1.0.0"}})
+        (is (= (jsonrpc.responses/response 1
+                                           {:protocolVersion "2025-06-18",
+                                            :capabilities default-capabilities,
+                                            :serverInfo {:name "test-server",
+                                                         :version "1.0.0"}})
                (h/take-or-timeout (:output-ch server) 200))))
+      (jsonrpc.server/shutdown server)))
+  (testing "Capabilities can be overridden through the server spec"
+    (let [context (server/create-context! {:name "test-server",
+                                           :version "1.0.0",
+                                           :tools [tool-echo],
+                                           :capabilities {:tools {},
+                                                          :prompts {}}})
+          server (server/chan-server)
+          _join (server/start! server context)]
+      (async/put! (:input-ch server)
+                  (jsonrpc.requests/request 1
+                                            "initialize"
+                                            {:protocolVersion "2025-06-18",
+                                             :capabilities {},
+                                             :clientInfo {:name "ExampleClient",
+                                                          :version "1.0.0"}}))
+      (is (= {:tools {}, :prompts {}}
+             (get-in (h/take-or-timeout (:output-ch server) 200)
+                     [:result :capabilities])))
       (jsonrpc.server/shutdown server))))
 
 (deftest tool-execution
@@ -392,6 +440,28 @@
             (is (= "file:///data.json" (:uri content)))
             (is (= "application/json" (:mimeType content)))
             (is (contains? content :blob)))))
+      (testing "Resource handler returning multiple contents"
+        (let [multi
+                {:uri "file:///multi.txt",
+                 :name "Multi",
+                 :handler (fn [uri]
+                            [{:uri uri, :mimeType "text/plain", :text "a"}
+                             {:uri uri, :mimeType "text/plain", :text "b"}])}]
+          (server/register-resource! context
+                                     (dissoc multi :handler)
+                                     (:handler multi))
+          ;; Live registration auto-notifies; consume the notification
+          ;; so the next take sees the read response.
+          (is (= (jsonrpc.requests/notification
+                   "notifications/resources/list_changed"
+                   {})
+                 (h/assert-take (:output-ch server))))
+          (async/put! (:input-ch server)
+                      (jsonrpc.requests/request 5
+                                                "resources/read"
+                                                {:uri "file:///multi.txt"}))
+          (let [response (h/assert-take (:output-ch server))]
+            (is (= 2 (count (get-in response [:result :contents])))))))
       (testing "Invalid resource request"
         (async/put! (:input-ch server)
                     (jsonrpc.requests/request 4
@@ -430,6 +500,15 @@
         (is (= {:content [{:type "text", :text "single item"}]} coerced))
         (is (vector? (:content coerced))
             "Response should be wrapped in a vector")))
+    (testing "Tool returning a full CallToolResult map"
+      (let [tool {:name "failing-tool",
+                  :description "Reports tool-level errors",
+                  :inputSchema {:type "object"}}
+            handler-response {:content [{:type "text", :text "tool blew up"}],
+                              :isError true}
+            coerced (server/coerce-tool-response tool handler-response)]
+        (is (= handler-response coerced)
+            "A map with :content passes through untouched, keeping :isError")))
     (testing "Tool with outputSchema"
       (let [tool {:name "calculator",
                   :description "Performs calculations",
@@ -532,3 +611,292 @@
                                                    {:tools
                                                     [invalid-handler-tool]})))
             "Spec with a non-function handler should throw")))))
+
+;;; Full protocol surface: templates, subscriptions, logging, completion,
+;;; list_changed + progress notifications, sampling and roots requests.
+
+(def resource-template-project-files
+  {:uriTemplate "file:///project/{path}",
+   :name "Project Files",
+   :description "Files in the project directory",
+   :mimeType "application/octet-stream"})
+
+(defn- started-server
+  [spec]
+  (let [context (server/create-context! spec)
+        server (server/chan-server)
+        _join (server/start! server context)]
+    {:server server, :context context}))
+
+(def empty-spec
+  {:name "test-server",
+   :version "1.0.0",
+   :tools [],
+   :prompts [],
+   :resources []})
+
+(deftest ping-returns-empty-result
+  (testing "ping returns an empty object result, per the schema"
+    (let [{:keys [server]} (started-server empty-spec)]
+      (async/put! (:input-ch server) (jsonrpc.requests/request 1 "ping" {}))
+      (is (= (jsonrpc.responses/response 1 {})
+             (h/assert-take (:output-ch server))))
+      (jsonrpc.server/shutdown server))))
+
+(deftest resource-templates-listing
+  (testing "resources/templates/list returns registered templates"
+    (let [{:keys [server context]} (started-server empty-spec)]
+      (server/register-resource-template! context
+                                          resource-template-project-files)
+      (async/put! (:input-ch server)
+                  (jsonrpc.requests/request 1 "resources/templates/list" {}))
+      (is (= (jsonrpc.responses/response 1
+                                         {:resourceTemplates
+                                          [resource-template-project-files]})
+             (h/assert-take (:output-ch server))))
+      (jsonrpc.server/shutdown server))))
+
+(deftest resource-subscriptions
+  (testing "subscribe, notify on update, unsubscribe"
+    (let [{:keys [server context]}
+            (started-server (assoc empty-spec :resources [resource-test-file]))]
+      (testing "resources/subscribe returns empty result"
+        (async/put! (:input-ch server)
+                    (jsonrpc.requests/request 1
+                                              "resources/subscribe"
+                                              {:uri "file:///test.txt"}))
+        (is (= (jsonrpc.responses/response 1 {})
+               (h/assert-take (:output-ch server)))))
+      (testing "notify-resource-updated! sends notification for subscribed uri"
+        (server/notify-resource-updated! server context "file:///test.txt")
+        (is (= (jsonrpc.requests/notification "notifications/resources/updated"
+                                              {:uri "file:///test.txt"})
+               (h/assert-take (:output-ch server)))))
+      (testing "notify-resource-updated! is a no-op for unsubscribed uris"
+        (server/notify-resource-updated! server context "file:///other.txt")
+        (h/assert-no-take (:output-ch server)))
+      (testing "resources/unsubscribe stops notifications"
+        (async/put! (:input-ch server)
+                    (jsonrpc.requests/request 2
+                                              "resources/unsubscribe"
+                                              {:uri "file:///test.txt"}))
+        (is (= (jsonrpc.responses/response 2 {})
+               (h/assert-take (:output-ch server))))
+        (server/notify-resource-updated! server context "file:///test.txt")
+        (h/assert-no-take (:output-ch server)))
+      (jsonrpc.server/shutdown server))))
+
+(deftest logging-level-handling
+  (testing "logging/setLevel filters notify-log-message!"
+    (let [{:keys [server context]} (started-server empty-spec)]
+      (testing "logging/setLevel returns empty result"
+        (async/put!
+          (:input-ch server)
+          (jsonrpc.requests/request 1 "logging/setLevel" {:level "warning"}))
+        (is (= (jsonrpc.responses/response 1 {})
+               (h/assert-take (:output-ch server)))))
+      (testing "messages below the level are suppressed"
+        (server/notify-log-message! server context "info" "too quiet")
+        (h/assert-no-take (:output-ch server)))
+      (testing "messages at or above the level are sent"
+        (server/notify-log-message! server context "error" "oh no")
+        (is (= (jsonrpc.requests/notification "notifications/message"
+                                              {:level "error", :data "oh no"})
+               (h/assert-take (:output-ch server)))))
+      (testing "logger name is included when given"
+        (server/notify-log-message! server
+                                    context
+                                    "error"
+                                    "oh no"
+                                    {:logger "my.logger"})
+        (is (= (jsonrpc.requests/notification
+                 "notifications/message"
+                 {:level "error", :logger "my.logger", :data "oh no"})
+               (h/assert-take (:output-ch server)))))
+      (jsonrpc.server/shutdown server))))
+
+(deftest completion-handling
+  (testing "completion/complete dispatches to registered completion handlers"
+    (let [{:keys [server context]} (started-server empty-spec)
+          ref {:type "ref/prompt", :name "analyze-code"}]
+      (server/register-completion!
+        context
+        ref
+        (fn [{:keys [value]}]
+          {:values [(str value "lojure")], :total 1, :hasMore false}))
+      (testing "registered ref returns handler values"
+        (async/put! (:input-ch server)
+                    (jsonrpc.requests/request 1
+                                              "completion/complete"
+                                              {:ref ref,
+                                               :argument {:name "language",
+                                                          :value "C"}}))
+        (is (= (jsonrpc.responses/response
+                 1
+                 {:completion {:values ["Clojure"], :total 1, :hasMore false}})
+               (h/assert-take (:output-ch server)))))
+      (testing "unregistered ref returns empty completion"
+        (async/put! (:input-ch server)
+                    (jsonrpc.requests/request
+                      2
+                      "completion/complete"
+                      {:ref {:type "ref/resource", :uri "file:///nope"},
+                       :argument {:name "path", :value "x"}}))
+        (is (= (jsonrpc.responses/response
+                 2
+                 {:completion {:values [], :total 0, :hasMore false}})
+               (h/assert-take (:output-ch server)))))
+      (jsonrpc.server/shutdown server))))
+
+(deftest list-changed-notifications
+  (testing "list_changed notification senders"
+    (let [{:keys [server]} (started-server empty-spec)]
+      (server/notify-tools-list-changed! server)
+      (is (= (jsonrpc.requests/notification "notifications/tools/list_changed"
+                                            {})
+             (h/assert-take (:output-ch server))))
+      (server/notify-resources-list-changed! server)
+      (is (= (jsonrpc.requests/notification
+               "notifications/resources/list_changed"
+               {})
+             (h/assert-take (:output-ch server))))
+      (server/notify-prompts-list-changed! server)
+      (is (= (jsonrpc.requests/notification "notifications/prompts/list_changed"
+                                            {})
+             (h/assert-take (:output-ch server))))
+      (jsonrpc.server/shutdown server))))
+
+(deftest progress-notifications
+  (testing "notify-progress! sends a progress notification"
+    (let [{:keys [server]} (started-server empty-spec)]
+      (server/notify-progress! server
+                               "token-1"
+                               50
+                               {:total 100, :message "Half"})
+      (is (= (jsonrpc.requests/notification "notifications/progress"
+                                            {:progressToken "token-1",
+                                             :progress 50,
+                                             :total 100,
+                                             :message "Half"})
+             (h/assert-take (:output-ch server))))
+      (jsonrpc.server/shutdown server)))
+  (testing "received progress notifications invoke the context callback"
+    (let [seen (atom nil)
+          context (assoc (server/create-context! empty-spec)
+                    :on-progress #(reset! seen %))
+          params {:progressToken "token-2", :progress 10}]
+      (is (not= ::jsonrpc.server/method-not-found
+                (jsonrpc.server/receive-notification "notifications/progress"
+                                                     context
+                                                     params)))
+      (is (= params @seen)))))
+
+(deftest cancelled-notification-handling
+  (testing "notifications/cancelled is accepted (not method-not-found)"
+    (let [context (server/create-context! empty-spec)]
+      (is (not= ::jsonrpc.server/method-not-found
+                (jsonrpc.server/receive-notification
+                  "notifications/cancelled"
+                  context
+                  {:requestId 42, :reason "user cancelled"}))))))
+
+(deftest dynamic-registration-lifecycle
+  (testing "registering on a running server notifies list_changed"
+    (let [{:keys [server context]} (started-server empty-spec)]
+      (server/register-tool! context
+                             (dissoc tool-echo :handler)
+                             (:handler tool-echo))
+      (is (= (jsonrpc.requests/notification "notifications/tools/list_changed"
+                                            {})
+             (h/assert-take (:output-ch server))))
+      (testing "the new tool is listed"
+        (async/put! (:input-ch server)
+                    (jsonrpc.requests/request 1 "tools/list" {}))
+        (let [response (h/assert-take (:output-ch server))]
+          (is (= ["echo"] (mapv :name (get-in response [:result :tools]))))))
+      (testing "unregistering notifies and removes the tool"
+        (server/unregister-tool! context "echo")
+        (is (= (jsonrpc.requests/notification "notifications/tools/list_changed"
+                                              {})
+               (h/assert-take (:output-ch server))))
+        (async/put! (:input-ch server)
+                    (jsonrpc.requests/request 2 "tools/list" {}))
+        (let [response (h/assert-take (:output-ch server))]
+          (is (= [] (get-in response [:result :tools])))))
+      (testing "prompts and resources notify too"
+        (server/register-prompt! context
+                                 (dissoc prompt-analyze-code :handler)
+                                 (:handler prompt-analyze-code))
+        (is (= (jsonrpc.requests/notification
+                 "notifications/prompts/list_changed"
+                 {})
+               (h/assert-take (:output-ch server))))
+        (server/unregister-prompt! context "analyze-code")
+        (is (= (jsonrpc.requests/notification
+                 "notifications/prompts/list_changed"
+                 {})
+               (h/assert-take (:output-ch server))))
+        (server/register-resource! context
+                                   (dissoc resource-test-file :handler)
+                                   (:handler resource-test-file))
+        (is (= (jsonrpc.requests/notification
+                 "notifications/resources/list_changed"
+                 {})
+               (h/assert-take (:output-ch server))))
+        (server/unregister-resource! context "file:///test.txt")
+        (is (= (jsonrpc.requests/notification
+                 "notifications/resources/list_changed"
+                 {})
+               (h/assert-take (:output-ch server)))))
+      (jsonrpc.server/shutdown server)))
+  (testing "registration before the server starts stays silent"
+    (let [context (server/create-context! empty-spec)]
+      ;; No server attached: this must not throw and must not notify.
+      (server/register-tool! context
+                             (dissoc tool-echo :handler)
+                             (:handler tool-echo))
+      (is (= 1 (count @(:tools context)))))))
+
+(deftest concurrent-request-handling
+  (testing "a slow tool call does not block other requests"
+    (let [slow-tool {:name "slow",
+                     :description "Sleeps before answering",
+                     :inputSchema {:type "object"},
+                     :handler
+                     (fn [_] (Thread/sleep 500) {:type "text", :text "done"})}
+          {:keys [server]} (started-server (assoc empty-spec
+                                             :tools [slow-tool]))]
+      (async/put! (:input-ch server)
+                  (jsonrpc.requests/request 1 "tools/call" {:name "slow"}))
+      (async/put! (:input-ch server) (jsonrpc.requests/request 2 "ping" {}))
+      (testing "ping responds while the slow tool is still running"
+        (let [first-response (h/take-or-timeout (:output-ch server) 300)]
+          (is (= 2 (:id first-response))
+              "ping (id 2) should respond before the slow tool (id 1)")))
+      (testing "the slow tool still completes"
+        (let [second-response (h/take-or-timeout (:output-ch server) 1000)]
+          (is (= 1 (:id second-response)))
+          (is (= "done"
+                 (-> second-response
+                     :result
+                     :content
+                     first
+                     :text)))))
+      (jsonrpc.server/shutdown server))))
+
+(deftest server-initiated-requests
+  (testing "request-roots! sends a roots/list request"
+    (let [{:keys [server]} (started-server empty-spec)]
+      (server/request-roots! server)
+      (is (= (jsonrpc.requests/request 1 "roots/list" {})
+             (h/assert-take (:output-ch server))))
+      (jsonrpc.server/shutdown server)))
+  (testing "request-sampling! sends a sampling/createMessage request"
+    (let [{:keys [server]} (started-server empty-spec)
+          params {:messages [{:role "user",
+                              :content {:type "text", :text "Hi"}}],
+                  :maxTokens 10}]
+      (server/request-sampling! server params)
+      (is (= (jsonrpc.requests/request 1 "sampling/createMessage" params)
+             (h/assert-take (:output-ch server))))
+      (jsonrpc.server/shutdown server))))
