@@ -63,6 +63,11 @@
         ;; jsonrpc4clj, the excellent library provided by the clojure-lsp
         ;; team.
         com.github.clojure-lsp/jsonrpc4clj {:mvn/version "1.0.2"},
+        ;; Async: Request handlers that invoke user code run on promesa
+        ;; threads so slow handlers don't block the message loop. Already
+        ;; a transitive dep of jsonrpc4clj; pinned because we require it
+        ;; directly.
+        funcool/promesa {:mvn/version "11.0.678"},
         ;; HTTP server: Pedestal with Jetty, used by the Streamable HTTP
         ;; transport server. NOTE: Keep in sync with the pedestal.log
         ;; version pinned in utils/logger/deps.edn

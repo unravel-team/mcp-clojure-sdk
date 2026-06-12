@@ -4,7 +4,18 @@
             [io.modelcontext.clojure-sdk.specs :as specs]
             [jsonrpc4clj.coercer :as coercer]
             [jsonrpc4clj.server :as jsonrpc.server]
-            [me.vedang.logger.interface :as log]))
+            [me.vedang.logger.interface :as log]
+            [promesa.core :as p]))
+
+;; [tag: async_request_handlers]
+;;
+;; jsonrpc4clj delivers a response whenever the handler's return value
+;; resolves: plain values respond immediately, futures/promises respond
+;; on completion. Handlers that invoke user code (tool/prompt/resource/
+;; completion handlers) run inside `eventually` (a promesa thread) so a
+;; slow handler never blocks the message loop — other requests (ping,
+;; lists, parallel tool calls) keep being served concurrently.
+(defmacro eventually [& body] `(p/thread ~@body))
 
 ;;; Helper functions
 ;; Logging and Spec Checking
@@ -220,9 +231,10 @@
   (log/trace :fn :receive-request :method "tools/call" :params params)
   ;; [ref: log_bad_input_params]
   (conform-or-log ::specs/call-tool-request params)
-  (->> params
-       (handle-call-tool context)
-       (conform-or-log ::specs/call-tool-response)))
+  ;; [ref: async_request_handlers]
+  (eventually (->> params
+                   (handle-call-tool context)
+                   (conform-or-log ::specs/call-tool-response))))
 
 ;; [ref: list_resources_request]
 (defmethod jsonrpc.server/receive-request "resources/list"
@@ -240,9 +252,10 @@
   (log/trace :fn :receive-request :method "resources/read" :params params)
   ;; [ref: log_bad_input_params]
   (conform-or-log ::specs/read-resource-request params)
-  (->> params
-       (handle-read-resource context)
-       (conform-or-log ::specs/read-resource-response)))
+  ;; [ref: async_request_handlers]
+  (eventually (->> params
+                   (handle-read-resource context)
+                   (conform-or-log ::specs/read-resource-response))))
 
 ;; [ref: list_prompts_request]
 (defmethod jsonrpc.server/receive-request "prompts/list"
@@ -260,9 +273,10 @@
   (log/trace :fn :receive-request :method "prompts/get" :params params)
   ;; [ref: log_bad_input_params]
   (conform-or-log ::specs/get-prompt-request params)
-  (->> params
-       (handle-get-prompt context)
-       (conform-or-log ::specs/get-prompt-response)))
+  ;; [ref: async_request_handlers]
+  (eventually (->> params
+                   (handle-get-prompt context)
+                   (conform-or-log ::specs/get-prompt-response))))
 
 ;; [ref: list_resource_templates_request]
 (defmethod jsonrpc.server/receive-request "resources/templates/list"
@@ -308,9 +322,10 @@
   (log/trace :fn :receive-request :method "completion/complete" :params params)
   ;; [ref: log_bad_input_params]
   (conform-or-log ::specs/complete-request params)
-  (->> params
-       (handle-complete context)
-       (conform-or-log ::specs/complete-response)))
+  ;; [ref: async_request_handlers]
+  (eventually (->> params
+                   (handle-complete context)
+                   (conform-or-log ::specs/complete-response))))
 
 ;; [ref: cancelled_notification]
 (defmethod jsonrpc.server/receive-notification "notifications/cancelled"

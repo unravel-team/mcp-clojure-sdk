@@ -730,6 +730,33 @@
                   context
                   {:requestId 42, :reason "user cancelled"}))))))
 
+(deftest concurrent-request-handling
+  (testing "a slow tool call does not block other requests"
+    (let [slow-tool {:name "slow",
+                     :description "Sleeps before answering",
+                     :inputSchema {:type "object"},
+                     :handler
+                     (fn [_] (Thread/sleep 500) {:type "text", :text "done"})}
+          {:keys [server]} (started-server (assoc empty-spec
+                                             :tools [slow-tool]))]
+      (async/put! (:input-ch server)
+                  (jsonrpc.requests/request 1 "tools/call" {:name "slow"}))
+      (async/put! (:input-ch server) (jsonrpc.requests/request 2 "ping" {}))
+      (testing "ping responds while the slow tool is still running"
+        (let [first-response (h/take-or-timeout (:output-ch server) 300)]
+          (is (= 2 (:id first-response))
+              "ping (id 2) should respond before the slow tool (id 1)")))
+      (testing "the slow tool still completes"
+        (let [second-response (h/take-or-timeout (:output-ch server) 1000)]
+          (is (= 1 (:id second-response)))
+          (is (= "done"
+                 (-> second-response
+                     :result
+                     :content
+                     first
+                     :text)))))
+      (jsonrpc.server/shutdown server))))
+
 (deftest server-initiated-requests
   (testing "request-roots! sends a roots/list request"
     (let [{:keys [server]} (started-server empty-spec)]
