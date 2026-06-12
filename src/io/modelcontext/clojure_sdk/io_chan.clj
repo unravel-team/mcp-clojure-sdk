@@ -30,12 +30,18 @@
 
 (defn json-str->message
   "Parse a JSON string into an MCP message map with keyword keys. Returns
-  `:parse-error` if the string cannot be parsed."
+  `:parse-error` if the string is nil or cannot be parsed.
+
+  The nil check matters: some JSON providers (e.g. cheshire under
+  Babashka) return nil for nil input instead of throwing, and nil must
+  never be put on a core.async channel."
   [s]
-  (try (json/read-str s)
-       (catch Exception ex
-         (log/error :fn :json-str->message :ex ex)
-         :parse-error)))
+  (if (nil? s)
+    :parse-error
+    (try (json/read-str s)
+         (catch Exception ex
+           (log/error :fn :json-str->message :ex ex)
+           :parse-error))))
 
 (defn ^:private read-message
   [^java.io.BufferedReader input]
