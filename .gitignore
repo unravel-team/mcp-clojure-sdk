@@ -53,3 +53,8 @@ projects/**/pom.xml
 # Tempfiles for easy reference
 vendors/
 doc/plans/
+
+# Benchmark runtime artifacts
+bench/results/
+bench/classes/
+bench/.cpcache/

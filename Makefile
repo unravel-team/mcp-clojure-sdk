@@ -1,4 +1,4 @@
-.PHONY: install-antq install-kondo-configs install-zprint-config install-gitignore repl-enrich repl check-cljkondo check-tagref check-zprint-config check-zprint check test test-integration test-all test-coverage upgrade-libs build serve deploy clean-projects clean examples-jar servers-jar clean-examples clean-servers release-major release-minor check-clean-worktree .release-commit
+.PHONY: install-antq install-kondo-configs install-zprint-config install-gitignore repl-enrich repl check-cljkondo check-tagref check-zprint-config check-zprint check test test-integration test-all test-coverage upgrade-libs build serve deploy clean-projects clean examples-jar servers-jar clean-examples clean-servers release-major release-minor check-clean-worktree .release-commit bench
 
 HOME := $(shell echo $$HOME)
 HERE := $(shell echo $$PWD)
@@ -154,6 +154,9 @@ format:   ## Format the code using zprint
 
 test-coverage:
 	clojure -X:dev:test:clofidence
+
+bench:    ## Run the SDK comparison benchmarks
+	cd bench && mkdir -p classes && clojure -M:compile && clojure -M:run
 
 test:    ## Run all the tests for the code
 	clojure -T:build test
