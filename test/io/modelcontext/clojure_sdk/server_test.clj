@@ -730,6 +730,63 @@
                   context
                   {:requestId 42, :reason "user cancelled"}))))))
 
+(deftest dynamic-registration-lifecycle
+  (testing "registering on a running server notifies list_changed"
+    (let [{:keys [server context]} (started-server empty-spec)]
+      (server/register-tool! context
+                             (dissoc tool-echo :handler)
+                             (:handler tool-echo))
+      (is (= (jsonrpc.requests/notification "notifications/tools/list_changed"
+                                            {})
+             (h/assert-take (:output-ch server))))
+      (testing "the new tool is listed"
+        (async/put! (:input-ch server)
+                    (jsonrpc.requests/request 1 "tools/list" {}))
+        (let [response (h/assert-take (:output-ch server))]
+          (is (= ["echo"] (mapv :name (get-in response [:result :tools]))))))
+      (testing "unregistering notifies and removes the tool"
+        (server/unregister-tool! context "echo")
+        (is (= (jsonrpc.requests/notification "notifications/tools/list_changed"
+                                              {})
+               (h/assert-take (:output-ch server))))
+        (async/put! (:input-ch server)
+                    (jsonrpc.requests/request 2 "tools/list" {}))
+        (let [response (h/assert-take (:output-ch server))]
+          (is (= [] (get-in response [:result :tools])))))
+      (testing "prompts and resources notify too"
+        (server/register-prompt! context
+                                 (dissoc prompt-analyze-code :handler)
+                                 (:handler prompt-analyze-code))
+        (is (= (jsonrpc.requests/notification
+                 "notifications/prompts/list_changed"
+                 {})
+               (h/assert-take (:output-ch server))))
+        (server/unregister-prompt! context "analyze-code")
+        (is (= (jsonrpc.requests/notification
+                 "notifications/prompts/list_changed"
+                 {})
+               (h/assert-take (:output-ch server))))
+        (server/register-resource! context
+                                   (dissoc resource-test-file :handler)
+                                   (:handler resource-test-file))
+        (is (= (jsonrpc.requests/notification
+                 "notifications/resources/list_changed"
+                 {})
+               (h/assert-take (:output-ch server))))
+        (server/unregister-resource! context "file:///test.txt")
+        (is (= (jsonrpc.requests/notification
+                 "notifications/resources/list_changed"
+                 {})
+               (h/assert-take (:output-ch server)))))
+      (jsonrpc.server/shutdown server)))
+  (testing "registration before the server starts stays silent"
+    (let [context (server/create-context! empty-spec)]
+      ;; No server attached: this must not throw and must not notify.
+      (server/register-tool! context
+                             (dissoc tool-echo :handler)
+                             (:handler tool-echo))
+      (is (= 1 (count @(:tools context)))))))
+
 (deftest concurrent-request-handling
   (testing "a slow tool call does not block other requests"
     (let [slow-tool {:name "slow",

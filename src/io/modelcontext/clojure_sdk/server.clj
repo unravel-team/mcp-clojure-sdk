@@ -558,7 +558,28 @@
      (fn [args-map] ... )
        * arg-map      - map with string keys representing the mcp tool call args"
   [context tool handler]
-  (swap! (:tools context) assoc (:name tool) {:tool tool, :handler handler}))
+  (swap! (:tools context) assoc (:name tool) {:tool tool, :handler handler})
+  ;; [ref: auto_list_changed_notifications]
+  (when-let [server (some-> (:server* context)
+                            deref)]
+    (notify-tools-list-changed! server)))
+
+(defn unregister-tool!
+  "Remove the tool named `tool-name` from the MCP server. Notifies
+  connected clients when the server is running.
+
+  Args:
+
+  - context: Map containing all state for the current server. See:
+  `create-empty-context`
+
+  - tool-name: The name the tool was registered under."
+  [context tool-name]
+  (swap! (:tools context) dissoc tool-name)
+  ;; [ref: auto_list_changed_notifications]
+  (when-let [server (some-> (:server* context)
+                            deref)]
+    (notify-tools-list-changed! server)))
 
 (defn register-resource!
   "Register a resource against the MCP server.
@@ -583,7 +604,28 @@
   [context resource handler]
   (swap! (:resources context) assoc
     (:uri resource)
-    {:resource resource, :handler handler}))
+    {:resource resource, :handler handler})
+  ;; [ref: auto_list_changed_notifications]
+  (when-let [server (some-> (:server* context)
+                            deref)]
+    (notify-resources-list-changed! server)))
+
+(defn unregister-resource!
+  "Remove the resource identified by `uri` from the MCP server. Notifies
+  connected clients when the server is running.
+
+  Args:
+
+  - context: Map containing all state for the current server. See:
+  `create-empty-context`
+
+  - uri: The URI the resource was registered under."
+  [context uri]
+  (swap! (:resources context) dissoc uri)
+  ;; [ref: auto_list_changed_notifications]
+  (when-let [server (some-> (:server* context)
+                            deref)]
+    (notify-resources-list-changed! server)))
 
 (defn register-prompt!
   "Register a prompt against the MCP server.
@@ -607,7 +649,28 @@
   [context prompt handler]
   (swap! (:prompts context) assoc
     (:name prompt)
-    {:prompt prompt, :handler handler}))
+    {:prompt prompt, :handler handler})
+  ;; [ref: auto_list_changed_notifications]
+  (when-let [server (some-> (:server* context)
+                            deref)]
+    (notify-prompts-list-changed! server)))
+
+(defn unregister-prompt!
+  "Remove the prompt named `prompt-name` from the MCP server. Notifies
+  connected clients when the server is running.
+
+  Args:
+
+  - context: Map containing all state for the current server. See:
+  `create-empty-context`
+
+  - prompt-name: The name the prompt was registered under."
+  [context prompt-name]
+  (swap! (:prompts context) dissoc prompt-name)
+  ;; [ref: auto_list_changed_notifications]
+  (when-let [server (some-> (:server* context)
+                            deref)]
+    (notify-prompts-list-changed! server)))
 
 (defn register-resource-template!
   "Register a resource template against the MCP server.
@@ -673,6 +736,17 @@
    :log-level (atom nil),
    :completions (atom {}),
    :protocol (atom nil),
+   ;; [tag: auto_list_changed_notifications]
+   ;;
+   ;; Holds the jsonrpc server endpoint once `start!` runs. While a
+   ;; server is attached, register-*!/unregister-*! automatically send
+   ;; the matching list_changed notification, so live (un)registration
+   ;; behaves like mcp-java-sdk's add/remove API. Registration during
+   ;; `create-context!` happens before a server is attached and stays
+   ;; silent. NOTE: The Streamable HTTP transport runs one endpoint per
+   ;; session and does NOT set this atom; broadcast to HTTP sessions
+   ;; explicitly via the notify-*-list-changed! senders.
+   :server* (atom nil),
    ;; [tag: default_server_capabilities]
    ;;
    ;; The capabilities the server advertises by default, covering the
@@ -740,6 +814,8 @@
 (defn start!
   [server context]
   (log/info :msg "[SERVER] Starting server...")
+  ;; [ref: auto_list_changed_notifications]
+  (when-let [server* (:server* context)] (reset! server* server))
   (jsonrpc.server/start server context))
 
 (defn chan-server
