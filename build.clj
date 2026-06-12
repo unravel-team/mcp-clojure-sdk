@@ -1,10 +1,15 @@
 (ns build
   (:refer-clojure :exclude [test])
-  (:require [clojure.tools.build.api :as b]
+  (:require [clojure.string :as str]
+            [clojure.tools.build.api :as b]
             [deps-deploy.deps-deploy :as dd]))
 
 (def lib 'io.modelcontext/clojure-sdk)
-(def version (format "1.1.%s" (b/git-count-revs nil)))
+;; The version is maj.min.x: maj.min comes from the VERSION file (bump
+;; it with `make release-major` / `make release-minor`), x is the
+;; number of git commits at build time.
+(def version
+  (format "%s.%s" (str/trim (slurp "VERSION")) (b/git-count-revs nil)))
 (def class-dir "target/classes")
 
 (defn test
