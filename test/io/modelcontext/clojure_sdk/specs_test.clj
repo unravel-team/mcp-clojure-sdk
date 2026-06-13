@@ -27,7 +27,21 @@
       (let [invalid-prop {:name "test",
                           :inputSchema {:type "not-object",
                                         :properties {"test" "anything"}}}]
-        (is (not (specs/valid-tool? invalid-prop)))))))
+        (is (not (specs/valid-tool? invalid-prop))))))
+  (testing "Tool annotations"
+    (let [annotated-tool {:name "destructive-tool",
+                          :inputSchema {:type "object"},
+                          :annotations {:title "Destroys things",
+                                        :readOnlyHint false,
+                                        :destructiveHint true,
+                                        :idempotentHint false,
+                                        :openWorldHint true}}]
+      (is (specs/valid-tool? annotated-tool)))
+    (testing "annotation hints must be booleans"
+      (let [bad-annotations {:name "test",
+                             :inputSchema {:type "object"},
+                             :annotations {:readOnlyHint "yes"}}]
+        (is (not (specs/valid-tool? bad-annotations)))))))
 
 (deftest test-resource-validation
   (testing "Valid resource definitions"

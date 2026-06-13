@@ -1,9 +1,10 @@
-.PHONY: install-antq install-kondo-configs install-zprint-config install-gitignore repl-enrich repl check-cljkondo check-tagref check-zprint-config check-zprint check test test-all test-coverage upgrade-libs build serve deploy clean-projects clean examples-jar
+.PHONY: install-antq install-kondo-configs install-zprint-config install-gitignore repl-enrich repl check-cljkondo check-tagref check-zprint-config check-zprint check test test-integration test-all test-coverage upgrade-libs build serve deploy clean-projects clean examples-jar servers-jar clean-examples clean-servers release-major release-minor check-clean-worktree .release-commit bench
 
 HOME := $(shell echo $$HOME)
 HERE := $(shell echo $$PWD)
 ZPRINT_CONFIG := $(shell cat $(HERE)/.zprint.edn)
 CLOJURE_SOURCES := $(shell find . -name '**.clj' -not -path './.clj-kondo/*' -not -path './vendors/*')
+ZPRINT_CONFIG := $(shell cat $(HERE)/.zprint.edn)
 
 # Set bash instead of sh for the @if [[ conditions,
 # and use the usual safety flags:
@@ -156,8 +157,14 @@ format:   ## Format the code using zprint
 test-coverage:
 	clojure -X:dev:test:clofidence
 
+bench:    ## Run the SDK comparison benchmarks
+	cd bench && mkdir -p classes && clojure -M:compile && clojure -M:run
+
 test:    ## Run all the tests for the code
 	clojure -T:build test
+
+test-integration: examples-jar    ## Run integration tests (requires server command)
+	clojure -M:integration-test -m entrypoint $(COMMAND)
 
 install-antq:
 	@if [ -f .antqtool.lastupdated ] && find .antqtool.lastupdated -mtime +15 -print | grep -q .; then \
@@ -174,6 +181,41 @@ install-antq:
 upgrade-libs: .antqtool.lastupdated install-antq    ## Install all the deps to their latest versions
 	clojure -Tantq outdated :check-clojure-tools true :upgrade true
 
+# The library version is maj.min.x: maj.min lives in the VERSION file,
+# x is the git commit count at build time (see build.clj).
+VERSION_FILE := VERSION
+
+check-clean-worktree:
+	@if [ -d .jj ]; then \
+		if [ -n "$$(jj diff --summary)" ]; then \
+			echo "Error: working copy is not clean. Commit or abandon changes first."; \
+			exit 1; \
+		fi \
+	else \
+		git diff --quiet && git diff --cached --quiet || { \
+			echo "Error: working tree is not clean. Commit or stash changes first."; \
+			exit 1; }; \
+	fi
+
+.release-commit:
+	@if [ -d .jj ]; then \
+		jj commit $(VERSION_FILE) -m "chore(release): bump version to $$(cat $(VERSION_FILE))"; \
+	else \
+		git add $(VERSION_FILE) && \
+		git commit -m "chore(release): bump version to $$(cat $(VERSION_FILE))"; \
+	fi
+	@echo "Released version: $$(cat $(VERSION_FILE)).$$(git rev-list --count HEAD 2>/dev/null || echo '?')"
+
+release-major: check-clean-worktree    ## Bump the major version and commit the bump
+	@maj=$$(cut -d. -f1 $(VERSION_FILE)); \
+	echo "$$((maj+1)).0" > $(VERSION_FILE)
+	@$(MAKE) .release-commit
+
+release-minor: check-clean-worktree    ## Bump the minor version and commit the bump
+	@maj=$$(cut -d. -f1 $(VERSION_FILE)); min=$$(cut -d. -f2 $(VERSION_FILE)); \
+	echo "$$maj.$$((min+1))" > $(VERSION_FILE)
+	@$(MAKE) .release-commit
+
 build: check    ## Build the deployment artifact
 	clojure -T:build ci
 
@@ -183,13 +225,17 @@ install: build    ## Install the artifact locally
 deploy: build  ## Deploy to Clojars. needs `CLOJARS_USERNAME` and `CLOJARS_PASSWORD` env vars
 	clojure -T:build deploy
 
-clean-examples:
-	rm -rf examples/target
+clean-servers:
+	rm -rf integration-test/servers/target
+
+clean-examples: clean-servers
 
 clean-sdk:
 	rm -rf target/
 
-clean: clean-examples clean-sdk
+clean: clean-servers clean-sdk
 
-examples-jar: examples/Makefile
-	$(MAKE) -C examples build
+servers-jar: integration-test/servers/Makefile
+	$(MAKE) -C integration-test/servers build
+
+examples-jar: servers-jar

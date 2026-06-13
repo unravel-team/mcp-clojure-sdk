@@ -12,7 +12,8 @@
                 refactor-nrepl/refactor-nrepl {:mvn/version "3.11.0"}},
    :jvm-opts ["-Djdk.attach.allowAttachSelf"],
    :main-opts
-   ["-m" "nrepl.cmdline" "--interactive" "--color" "--middleware"
+   ["-m" "nrepl.cmdline" "--port" "7888" "--interactive" "--color"
+    "--middleware"
     "[cider.nrepl/cider-middleware,refactor-nrepl.middleware/wrap-refactor,portal.nrepl/wrap-portal]"]},
   :cider-storm
   {:classpath-overrides {org.clojure/clojure nil},
@@ -27,9 +28,11 @@
    ["-Dflowstorm.startRecording=false" "-Dclojure.storm.instrumentEnable=true"
     "-Dflowstorm.jarEditorCommand=emacsclient --eval '(let ((b (cider-find-file \"jar:file:<<JAR>>!/<<FILE>>\"))) (with-current-buffer b (switch-to-buffer b) (goto-char (point-min)) (forward-line (1- <<LINE>>))))'"
     "-Dflowstorm.fileEditorCommand=emacsclient -n +<<LINE>>:0 <<FILE>>"
-    "-Dclojure.storm.instrumentOnlyPrefixes=me.vedang., io.modelcontext.cljc-sdk."],
+    "-Dclojure.storm.instrumentOnlyPrefixes=me.vedang., io.modelcontext.clojure-sdk."
+    "-Djdk.attach.allowAttachSelf"],
    :main-opts
-   ["-m" "nrepl.cmdline" "--interactive" "--color" "--middleware"
+   ["-m" "nrepl.cmdline" "--port" "7888" "--interactive" "--color"
+    "--middleware"
     "[cider.nrepl/cider-middleware,refactor-nrepl.middleware/wrap-refactor,portal.nrepl/wrap-portal]"]},
   :logs-dev
   {:jvm-opts
@@ -44,14 +47,32 @@
                       io.github.cognitect-labs/test-runner {:git/sha "dfb30dd",
                                                             :git/tag "v0.5.1"},
                       org.clojure/test.check {:mvn/version "1.1.2"}},
-         :extra-paths ["test"]}},
+         :extra-paths ["test"]},
+  :integration-test {:extra-deps {babashka/process {:mvn/version "0.6.25"},
+                                  dev.weavejester/medley {:mvn/version "1.9.0"},
+                                  org.babashka/json {:mvn/version "0.1.6"}},
+                     :extra-paths ["integration-test" "utils/logger/src"
+                                   "utils/logger/resources"]}},
  ;; [tag: deps_rules_of_thumb]
  ;;
  ;; 1. Arrange deps alphabetically
  ;; 2. Write a short description about what the dep does
-:deps {;; STDIO / SSE transport implementation: Build on top of jsonrpc4clj,
-         ;; the excellent library provided by the clojure-lsp team.
-         com.github.clojure-lsp/jsonrpc4clj {:mvn/version "1.0.2"},
+ :deps {;; HTTP client: Used by the Streamable HTTP transport client
+        clj-http/clj-http {:mvn/version "3.13.0"},
+        ;; STDIO / SSE transport implementation: Build on top of
+        ;; jsonrpc4clj, the excellent library provided by the clojure-lsp
+        ;; team.
+        com.github.clojure-lsp/jsonrpc4clj {:mvn/version "1.0.2"},
+        ;; Async: Request handlers that invoke user code run on promesa
+        ;; threads so slow handlers don't block the message loop. Already
+        ;; a transitive dep of jsonrpc4clj; pinned because we require it
+        ;; directly.
+        funcool/promesa {:mvn/version "11.0.678"},
+        ;; HTTP server: Pedestal with Jetty, used by the Streamable HTTP
+        ;; transport server. NOTE: Keep in sync with the pedestal.log
+        ;; version pinned in utils/logger/deps.edn
+        io.pedestal/pedestal.jetty {:mvn/version "0.8.1"},
+        io.pedestal/pedestal.service {:mvn/version "0.8.1"},
         ;; Logging: Use me.vedang/logger as a thin wrapper over
         ;; pedestal.log and timbre. Uses log for Clojure, timbre for
         ;; Babashka projects. Uses SLF4J + Log4J2
