@@ -23,6 +23,7 @@ jobs:
         with:
           cli: latest
           zprint: latest
+          clj-kondo: latest
 
       - name: Install tagref
         run: |
