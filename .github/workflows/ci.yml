@@ -24,6 +24,14 @@ jobs:
           cli: latest
           zprint: latest
 
+      - name: Install tagref
+        run: |
+          TAGREF_VERSION=1.12.1
+          curl -LSfs -o /usr/local/bin/tagref \
+            "https://github.com/stepchowfun/tagref/releases/download/v$TAGREF_VERSION/tagref-x86_64-unknown-linux-gnu"
+          chmod +x /usr/local/bin/tagref
+          tagref --version
+
       - name: Run formatter
         run: make format
 
